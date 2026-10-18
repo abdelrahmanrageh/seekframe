@@ -1,0 +1,20 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - name: Validate and review the examples
+        run: |
+          node bin/seekframe.js validate examples/akked-tick --fast
+          node bin/seekframe.js validate examples/akked-tick-ar --fast
+          node bin/seekframe.js review examples/akked-tick --out review
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: review-sheets, path: review/ }

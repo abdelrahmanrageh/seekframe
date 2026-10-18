@@ -1,0 +1,10 @@
+node_modules/
+output/
+.DS_Store
+*.log
+# editor scratch
+films/*/uploads/
+examples/*/uploads/
+# non-redistributable assets are appended here by `seekframe brand add-font --no-redistribute`
+# non-redistributable font (Thmanyah Sans): get it from https://ask.thmanyah.com/hc/en-001/articles/45993930027281-Thmanyah-Font-for-Everyone
+examples/akked-tick/brand/fonts/
