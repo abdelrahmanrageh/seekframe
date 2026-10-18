@@ -3,6 +3,7 @@
 //   * text that leaves the frame (overflow) and text with too little contrast (WCAG 2.1 AA, measured from pixels)
 //   * photosensitivity (flashes per second) for that version's colours and cuts
 // Writes <out>/<film>-<version>-sheet.jpg, stills, and <out>/<film>-review.json. Returns {fail, warn, report}.
+import { probeText, type ProbeResult } from './probe';
 import type { FilmRef } from '../types';
 import { ensureBrands, BROWSER_DIR } from './workspace';
 import { ffmpegPath } from './ffmpeg';
@@ -27,21 +28,6 @@ const lum = c => .2126 * lin(c[0]) + .7152 * lin(c[1]) + .0722 * lin(c[2]);
 const ratio = (a, b) => { const la = lum(a), lb = lum(b); return (Math.max(la, lb) + .05) / (Math.min(la, lb) + .05); };
 const parseColor = s => { const m = /rgba?\(([^)]+)\)/.exec(s || ''); if (!m) return null; const p = m[1].split(',').map(x => parseFloat(x)); return { rgb: p.slice(0, 3), a: p.length > 3 ? p[3] : 1 }; };
 
-// everything the page can tell us about visible text at the current frame
-const PROBE = () => {
-  const out = [], W = innerWidth, H = innerHeight;
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-  const seen = new Set();
-  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-    const t = n.nodeValue.trim(); if (!t) continue; const e = n.parentElement; if (!e || seen.has(e) || ['SCRIPT', 'STYLE'].includes(e.tagName)) continue; seen.add(e);
-    let op = 1, vis = true; for (let x = e; x; x = x.parentElement) { const cs = getComputedStyle(x); op *= parseFloat(cs.opacity); if (cs.display === 'none' || cs.visibility === 'hidden' || x.hasAttribute('data-sf-decorative') || x.getAttribute('aria-hidden') === 'true') vis = false; }   // mock UI marked data-sf-decorative is illustration, not copy
-    if (!vis || op < .6) continue;
-    const range = document.createRange(); range.selectNodeContents(e); const r = range.getBoundingClientRect(); if (r.width < 4 || r.height < 4) continue;
-    const cs = getComputedStyle(e);
-    out.push({ text: t.slice(0, 40), x: r.left, y: r.top, w: r.width, h: r.height, color: cs.color, fill: cs.webkitTextFillColor, size: parseFloat(cs.fontSize), weight: +cs.fontWeight || 400, op });
-  }
-  return { items: out, W, H };
-};
 const HIDE_TEXT = '* { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; }';
 
 export interface ReviewOptions { version?: string; all?: boolean; out?: string; log?: (line: string) => void }
@@ -67,14 +53,14 @@ async function review(film: FilmRef, o: ReviewOptions = {}): Promise<ReviewResul
     await pg.addScriptTag({ path: path.join(BROWSER_DIR, 'timeline.js') });
     const manifest = await pg.evaluate(p => JSON.parse(JSON.stringify(Timeline.applyToFilm(window, p))), project.params || {});
     const tl = Timeline.build(manifest, project), seekTo = async f => { const { src } = Timeline.sourceFrame(tl, f); await pg.evaluate(x => window.seek(x), src); };
-    const stills = [], issues = new Map();
+    const stills: string[] = [], issues = new Map<string, string>();
     for (const c of tl.clips) {
       const sc = manifest.scenes.find(s => s.id === c.scene), len = c.t1 - c.t0;
       for (const [k, t] of [['mid', .5], ['late', .85]] as Array<[string, number]>) {
         const f = c.t0 + len * t; await seekTo(f);
         const png = await pg.screenshot({ type: 'png' }), file = path.join(out, `${film.id}-${v}-${c.i + 1}-${c.scene}-${k}.png`); fs.writeFileSync(file, png);
         if (k === 'mid') stills.push(file);
-        const info = await pg.evaluate(PROBE);
+        const info = await pg.evaluate(probeText as () => ProbeResult);
         // text-hidden screenshot -> background under each text box
         await pg.addStyleTag({ content: HIDE_TEXT }).then(async h => { const bgPng = PNG.sync.read(await pg.screenshot({ type: 'png' })); await h.evaluate((n: any) => n.remove());
           for (const it of info.items) {

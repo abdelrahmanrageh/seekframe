@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
-let cached = null;
+let cached: string | null = null;
 function ffmpegPath() {
   if (cached) return cached;
   try { const p = require('ffmpeg-static'); if (p && fs.existsSync(p)) return (cached = p); } catch (e) {}

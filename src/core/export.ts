@@ -1,10 +1,11 @@
 // The export pipeline shared by the editor server, the CLI and the MCP server:
 //   project -> (generated score) -> parallel Playwright workers -> ffmpeg -> MP4
-import type { AudioTrack, FilmRef, Manifest, ProjectInput } from '../types';
+import type { AudioTrack, CustomTrack, FilmRef, Manifest, ProjectInput } from '../types';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn } from 'node:child_process';
+import type { ChildProcess } from 'node:child_process';
 import * as Timeline from './timeline';
 import { openFilm } from './render';
 import { ROOT } from './workspace';
@@ -30,7 +31,7 @@ function run(cmd: string, args: string[], opts?: any, procs?: any[]): Promise<vo
 export interface ExportOptions {
   film: FilmRef; project: ProjectInput; fps?: number; size?: string | null; out: string;
   onProgress?: (p: { phase: 'preparing' | 'frames' | 'encoding'; done: number; total: number }) => void;
-  procs?: any[];                                                          // collects spawned processes so a caller can cancel
+  procs?: ChildProcess[];                                                 // collects spawned processes so a caller can cancel
   generateScore?: (track: AudioTrack, manifest: Manifest) => Promise<string>;   // renders a `generated: 'cues'` track to a wav path
 }
 
@@ -47,7 +48,7 @@ async function exportFilm(o: ExportOptions): Promise<{ out: string; frames: numb
     const tl = Timeline.build(manifest, project);
     const n = Math.round(tl.total * fps / manifest.fps);
     const frames = path.join(tmp, 'frames'); fs.mkdirSync(frames);
-    const workers = Math.max(1, Math.min(4, os.cpus().length - 1)), per = Math.ceil(n / workers), ps = [];
+    const workers = Math.max(1, Math.min(4, os.cpus().length - 1)), per = Math.ceil(n / workers), ps: Promise<void>[] = [];
     for (let w = 0; w < workers; w++) {
       const a = w * per, z = Math.min(n, a + per); if (a >= z) break;
       ps.push(run('node', [path.join(__dirname, 'render.js'), '--film', film.dir, '--project', pfile, '--out', frames, '--fps', String(fps), '--range', `${a}:${z}`, ...(size ? ['--size', size] : [])], { cwd: ROOT }, procs));
@@ -57,16 +58,19 @@ async function exportFilm(o: ExportOptions): Promise<{ out: string; frames: numb
     onProgress({ phase: 'encoding', done: n, total: n });
 
     // audio: file tracks + generated score + user tracks, all enabled in the project
-    const tracks = [];
+    const tracks: Array<AudioTrack | CustomTrack> = [];
     const st = (project.audio && project.audio.tracks) || {};
     for (const t of manifest.audio || []) { const s = st[t.id] || {}; if (s.enabled == null ? !!t.default : s.enabled) tracks.push({ ...t, volume: s.volume == null ? (t.volume == null ? 1 : t.volume) : s.volume }); }
     for (const t of (project.audio && project.audio.custom) || []) if (t.enabled !== false) tracks.push({ sync: 'free', ...t });
-    const inputs = []; const args = ['-y', '-framerate', String(fps), '-i', path.join(frames, '%05d.jpg')];
+    const inputs: Timeline.AudioInput[] = []; const args = ['-y', '-framerate', String(fps), '-i', path.join(frames, '%05d.jpg')];
     for (const t of tracks) {
-      let f = null;
-      if (t.generated) f = await o.generateScore(t, manifest);           // {id, generated:'cues'} -> wav path
-      else { f = path.resolve(film.dir, t.src); if (!(f.startsWith(ROOT + path.sep))) f = null; }
-      if (f && fs.existsSync(f)) { args.push('-i', f); inputs.push({ index: inputs.length + 1, track: t.generated ? { ...t, sync: 'timeline' } : t }); }
+      const generated = 'generated' in t && t.generated === 'cues';
+      let f: string | null = null;
+      if (generated) {
+        if (!o.generateScore) throw new Error(`audio track "${t.id}" requires a score generator`);
+        f = await o.generateScore(t as AudioTrack, manifest);           // {id, generated:'cues'} -> wav path
+      } else if (t.src) { f = path.resolve(film.dir, t.src); if (!(f.startsWith(ROOT + path.sep))) f = null; }
+      if (f && fs.existsSync(f)) { args.push('-i', f); inputs.push({ index: inputs.length + 1, track: generated ? { ...t, sync: 'timeline' } : t }); }
     }
     args.push('-vf', 'crop=trunc(iw/2)*2:trunc(ih/2)*2', '-c:v', 'libx264', '-crf', '18', '-preset', fps > 30 ? 'slow' : 'medium', '-pix_fmt', 'yuv420p');
     if (inputs.length) args.push('-filter_complex', Timeline.audioFilter(tl, manifest.fps, inputs), '-map', '0:v', '-map', '[aout]', '-c:a', 'aac', '-b:a', '192k');

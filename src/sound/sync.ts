@@ -52,13 +52,13 @@ async function sync(film: FilmRef, o: { version?: string; log?: (line: string) =
     const want = manifest.duration / manifest.fps;
     if (Math.abs(secs - want) > .1) { fail++; log(`  \x1b[31m✘\x1b[0m [${v}] score is ${secs.toFixed(2)} s but the film is ${want.toFixed(2)} s`); }
     // picture activity series
-    const step = 2, series = []; let prev = null;
+    const step = 2, series: number[] = []; let prev: PNG | null = null;
     for (let f = 0; f < manifest.duration; f += step) { await page.evaluate(x => window.seek(x), f); const png = PNG.sync.read(await page.screenshot({ type: 'png' })); series.push(prev ? changed(prev, png) : 0); prev = png; }
     await page.close();
     const act = (a, b) => { let mx = 0; for (let f = Math.max(0, a); f <= Math.min(manifest.duration - 1, b); f += step) mx = Math.max(mx, series[Math.floor(f / step)] || 0); return mx; };
-    const issues = [];
+    const issues: string[] = [];
     for (const c of cues) if (HIT.has(c.kind) && act(c.f - 4, c.f + 8) < .004) issues.push(`sound without picture: ${c.kind} at frame ${Math.round(c.f)} (${(c.f / manifest.fps).toFixed(2)} s) — nothing visibly changes there`);
-    const times = cues.filter(c => HIT.has(c.kind) || c.kind === 'silence').map(c => c.f), events = [];
+    const times = cues.filter(c => HIT.has(c.kind) || c.kind === 'silence').map(c => c.f), events: number[] = [];
     for (let k = 1; k < series.length - 1; k++) if (series[k] > .18 && series[k] >= series[k - 1] && series[k] >= series[k + 1]) events.push(k * step);
     for (const f of events) if (!times.some(t => Math.abs(t - f) <= 6) && !cues.some(c => Math.abs(c.f - f) <= 6)) issues.push(`picture without sound: big change at frame ${f} (${(f / manifest.fps).toFixed(2)} s) has no cue within ±6 frames`);
     const uniq = [...new Set(issues)];

@@ -5,6 +5,8 @@ import path from 'node:path';
 import { loadImage, hex } from './palette';
 import ImageTracer from 'imagetracerjs';
 import * as km from './palette';
+type PixelPath = number[];
+type StrokeRecord = { color: string; width: number; d: string; length: number };
 
 
 
@@ -37,10 +39,10 @@ function backgroundColor(im) {
   const k = [...m.entries()].sort((a, b) => b[1] - a[1])[0][0].split(',').map(v => v * 16 + 8); return k;
 }
 function components(mask, w, h, minArea) {          // 8-connected labelling, removes small blobs
-  const lab = new Int32Array(w * h), sizes = []; let n = 0; const stack = [];
+  const lab = new Int32Array(w * h), sizes: number[] = []; let n = 0; const stack: number[] = [];
   for (let i = 0; i < w * h; i++) if (mask[i] && !lab[i]) {
     n++; let sz = 0; stack.push(i); lab[i] = n;
-    while (stack.length) { const p = stack.pop(); sz++; const x = p % w, y = (p / w) | 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue; const q = yy * w + xx; if (mask[q] && !lab[q]) { lab[q] = n; stack.push(q); } } }
+    while (stack.length) { const p = stack.pop()!; sz++; const x = p % w, y = (p / w) | 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue; const q = yy * w + xx; if (mask[q] && !lab[q]) { lab[q] = n; stack.push(q); } } }
     sizes[n] = sz;
   }
   const out = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) if (lab[i] && sizes[lab[i]] >= minArea) out[i] = 1; return out;
@@ -51,7 +53,7 @@ function thin(mask, w, h) {                         // Zhang-Suen thinning
   while (changed) {
     changed = false;
     for (let pass = 0; pass < 2; pass++) {
-      const del = [];
+      const del: number[] = [];
       for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
         const i = y * w + x; if (!m[i]) continue; const p = P(i); const B = p.reduce((a, b) => a + b, 0); if (B < 2 || B > 6) continue;
         let A = 0; for (let k = 0; k < 8; k++) if (!p[k] && p[(k + 1) % 8]) A++; if (A !== 1) continue;
@@ -70,14 +72,14 @@ function distanceTransform(mask, w, h) {            // two-pass chamfer (3-4)
   return d;
 }
 function tracePaths(sk, w, h) {                     // skeleton pixels -> ordered pixel paths
-  const vis = new Uint8Array(w * h), N8 = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, -1], [1, -1]];
-  const nb = i => { const x = i % w, y = (i / w) | 0, o = []; for (const [dx, dy] of N8) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < w && yy < h && sk[yy * w + xx]) o.push(yy * w + xx); } return o; };
+  const vis = new Uint8Array(w * h), N8: number[][] = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, -1], [1, -1]];
+  const nb = (i: number): number[] => { const x = i % w, y = (i / w) | 0, o: number[] = []; for (const [dx, dy] of N8) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < w && yy < h && sk[yy * w + xx]) o.push(yy * w + xx); } return o; };
   const deg = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) if (sk[i]) deg[i] = nb(i).length;
-  const starts = []; for (let i = 0; i < w * h; i++) if (sk[i] && deg[i] === 1) starts.push(i);
+  const starts: number[] = []; for (let i = 0; i < w * h; i++) if (sk[i] && deg[i] === 1) starts.push(i);
   for (let i = 0; i < w * h; i++) if (sk[i] && deg[i] > 1) starts.push(i);
-  const paths = [];
+  const paths: PixelPath[] = [];
   for (const s of starts) {
-    if (vis[s]) continue; const path = [s]; vis[s] = 1; let cur = s;
+    if (vis[s]) continue; const path: PixelPath = [s]; vis[s] = 1; let cur = s;
     for (;;) { const c = nb(cur).filter(q => !vis[q]); if (!c.length) break; c.sort((a, b) => Number(deg[a] > 2) - Number(deg[b] > 2)); const nx = c[0]; vis[nx] = 1; path.push(nx); cur = nx; }
     if (path.length > 1) paths.push(path);
   }
@@ -98,17 +100,17 @@ function smoothPath(p) {                            // Catmull-Rom -> cubic bezi
 
 function strokes(file, { colors = 3, maxSize = 720, minArea = 150 } = {}) {
   const orig = loadImage(file), im = flatten(downscale(orig, maxSize)), { w, h, s } = im;
-  const bg = backgroundColor(im), fg = [];
+  const bg = backgroundColor(im), fg: number[] = [];
   for (let i = 0; i < w * h; i++) { const p = [im.data[i * 4], im.data[i * 4 + 1], im.data[i * 4 + 2]]; if (dist(p, bg) > 90) fg.push(i); }
   if (!fg.length) throw new Error('no foreground found (is the logo on a plain background?)');
   // cluster foreground colours with a tiny k-means
-  const px = fg.map(i => [im.data[i * 4], im.data[i * 4 + 1], im.data[i * 4 + 2]]);
+  const px: number[][] = fg.map(i => [im.data[i * 4], im.data[i * 4 + 1], im.data[i * 4 + 2]]);
   
-  let cen = []; { // reuse palette k-means through a fake image: simple farthest-point seeding is enough here
-    cen.push(px[0].slice()); while (cen.length < colors) { let best = null, bd = -1; for (const p of px.filter((_, i) => i % 7 === 0)) { const d = Math.min(...cen.map(c => dist(p, c))); if (d > bd) { bd = d; best = p; } } if (bd < 60) break; cen.push(best.slice()); }
-    for (let it = 0; it < 8; it++) { const acc = cen.map(() => [0, 0, 0, 0]); for (const p of px) { let b = 0, bdd = 1e18; cen.forEach((c, j) => { const d = dist(p, c); if (d < bdd) { bdd = d; b = j; } }); acc[b][0] += p[0]; acc[b][1] += p[1]; acc[b][2] += p[2]; acc[b][3]++; } cen = cen.map((c, j) => acc[j][3] ? [acc[j][0] / acc[j][3], acc[j][1] / acc[j][3], acc[j][2] / acc[j][3]] : c); }
+  let cen: number[][] = []; { // reuse palette k-means through a fake image: simple farthest-point seeding is enough here
+    cen.push(px[0].slice()); while (cen.length < colors) { let best: number[] | null = null, bd = -1; for (const p of px.filter((_, i) => i % 7 === 0)) { const d = Math.min(...cen.map(c => dist(p, c))); if (d > bd) { bd = d; best = p; } } if (bd < 60 || !best) break; cen.push(best.slice()); }
+    for (let it = 0; it < 8; it++) { const acc: number[][] = cen.map(() => [0, 0, 0, 0]); for (const p of px) { let b = 0, bdd = 1e18; cen.forEach((c, j) => { const d = dist(p, c); if (d < bdd) { bdd = d; b = j; } }); acc[b][0] += p[0]; acc[b][1] += p[1]; acc[b][2] += p[2]; acc[b][3]++; } cen = cen.map((c, j) => acc[j][3] ? [acc[j][0] / acc[j][3], acc[j][1] / acc[j][3], acc[j][2] / acc[j][3]] : c); }
   }
-  const result = [];
+  const result: StrokeRecord[] = [];
   cen.forEach(c => {
     let mask = new Uint8Array(w * h); fg.forEach((i, k) => { let b = 0, bd = 1e18; cen.forEach((cc, j) => { const d = dist(px[k], cc); if (d < bd) { bd = d; b = j; } }); if (cen[b] === c) mask[i] = 1; });
     mask = components(mask, w, h, minArea); if (!mask.some(Boolean)) return;

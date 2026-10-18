@@ -13,7 +13,7 @@ function meanLuminance(png) {
 }
 // swings: alternating luminance moves of >= h (zig-zag over the series). A move only counts when its darker end is < 0.8.
 function swings(L, h = .1) {
-  const out = []; let ext = L[0], dir = 0;
+  const out: number[] = []; let ext = L[0] ?? 0, dir = 0;
   for (let k = 1; k < L.length; k++) {
     const v = L[k];
     if (dir === 0) { if (Math.abs(v - ext) >= h) { if (Math.min(v, ext) < .8) out.push(k); dir = Math.sign(v - ext); ext = v; } }
@@ -25,7 +25,7 @@ function swings(L, h = .1) {
 /* Samples the film (source timeline) through `seekFor(i)` and returns {maxFlashes, at, series}.
    page must have been opened with a small deviceScaleFactor so the screenshots are cheap. */
 async function flashScan(page, total, fps, { rate = 15, from = 0, to = total, seekFor = f => f } = {}) {
-  const step = fps / rate, L = [], T = [];
+  const step = fps / rate, L: number[] = [], T: number[] = [];
   for (let f = from; f < to; f += step) {
     await page.evaluate(x => window.seek(x), seekFor(f));
     L.push(meanLuminance(PNG.sync.read(await page.screenshot({ type: 'png' })))); T.push(f / fps);

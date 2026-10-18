@@ -53,13 +53,13 @@ function build() {
 
   s.tool('validate_film', 'Check a film against the contract (determinism, params really change the picture, audio, cues, no network, photosensitivity). Returns failures and warnings. Fix every failure and read every warning.',
     { film: z.string(), fast: z.boolean().optional().describe('skip the slow per-param effect check') }, wrap(async ({ film: id, fast }) => {
-      const lines = []; const r = await validate(film(id).dir, { fast: !!fast, log: m => lines.push(m), color: false });
+      const lines: string[] = []; const r = await validate(film(id).dir, { fast: !!fast, log: m => lines.push(m), color: false });
       return text({ passed: r.fail.length === 0, failures: r.fail, warnings: r.warn, passedChecks: r.ok.length, log: lines.join('\n') });
     }));
 
   s.tool('review_film', 'Render stills and a contact sheet per saved version, and check text overflow, WCAG text contrast and flashing. Returns the report AND the contact sheet image(s) so you can LOOK at the film. Always do this before saying a film is done.',
     { film: z.string(), version: z.string().optional() }, wrap(async ({ film: id, version }) => {
-      const out = path.join(os.tmpdir(), 'seekframe-review-' + Date.now()), lines = [];
+      const out = path.join(os.tmpdir(), 'seekframe-review-' + Date.now()), lines: string[] = [];
       const r = await review(film(id), { version, out, log: m => lines.push(m.replace(/\x1b\[[0-9;]*m/g, '')) });
       const content: any[] = [{ type: 'text', text: JSON.stringify({ failures: r.fail, warnings: r.warn, versions: Object.fromEntries(Object.entries(r.report.versions).map(([v, x]) => [v, { issues: x.issues, maxFlashesPerSecond: x.maxFlashesPerSecond }])) }, null, 2) }];
       for (const v of Object.values(r.report.versions)) if (v.sheet) { const f = path.join(out, path.basename(v.sheet)); if (fs.existsSync(f)) content.push(image(f, 'image/jpeg')); }
@@ -70,7 +70,7 @@ function build() {
     { film: z.string(), frames: z.array(z.number()).min(1).max(6), version: z.string().optional(), params: z.record(z.any()).optional() }, wrap(async ({ film: id, frames, version, params }) => {
       const f = film(id); const pf = version && path.join(f.dir, 'projects', slug(version) + '.json');
       let project = pf && fs.existsSync(pf) ? JSON.parse(fs.readFileSync(pf, 'utf8')) : {}; if (params) project = { ...project, params: { ...(project.params || {}), ...params } };
-      const { browser, page, manifest } = await openFilm(f.dir, project), tl = Timeline.build(manifest, project), content = [];
+      const { browser, page, manifest } = await openFilm(f.dir, project), tl = Timeline.build(manifest, project), content: any[] = [];
       for (const fr of frames) { await page.evaluate(x => window.seek(x), Timeline.sourceFrame(tl, Math.min(fr, tl.total - 1)).src); const file = path.join(os.tmpdir(), `sf-still-${Date.now()}-${fr}.png`); fs.writeFileSync(file, await page.screenshot({ type: 'png' })); content.push({ type: 'text', text: `frame ${fr}` }, image(file)); fs.rmSync(file); }
       await browser.close(); return { content };
     }));
@@ -93,7 +93,7 @@ function build() {
 
   s.tool('check_sound_sync', 'Compare the generated score with the picture: sound cues with nothing happening on screen, and big picture changes with no sound.',
     { film: z.string(), version: z.string().optional() }, wrap(async ({ film: id, version }) => {
-      const lines = []; const r = await sync(film(id), { version, log: m => lines.push(m.replace(/\x1b\[[0-9;]*m/g, '')) }); return text(lines.join('\n'));
+      const lines: string[] = []; const r = await sync(film(id), { version, log: m => lines.push(m.replace(/\x1b\[[0-9;]*m/g, '')) }); return text(lines.join('\n'));
     }));
 
   s.tool('generate_score', 'Render the film\'s cues to a wav with a sound theme (deep, bright, minimal).',

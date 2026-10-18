@@ -1,0 +1,21 @@
+{
+  "name": "SeekFrame",
+  "colors": {
+    "accent": "#b5ca42",
+    "ink": "#0e0e0d",
+    "paper": "#f8f4e9",
+    "muted": "#b2b19e"
+  },
+  "fonts": [],
+  "voice": {
+    "tone": "calm, confident, short sentences",
+    "tagline": ""
+  },
+  "languages": [
+    "en"
+  ],
+  "logo": {
+    "strokes": "assets/logo-strokes.json",
+    "svg": "assets/logo.svg"
+  }
+}

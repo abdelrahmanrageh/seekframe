@@ -26,7 +26,7 @@ function scaffoldFilm({ name, width, height, fps, brand: brandArg }: ScaffoldOpt
   if (fps) s = s.replace('fps: 30', 'fps: ' + +fps);
   fs.writeFileSync(f, s);
   for (const name of ['film.html', 'film.js']) { const h = path.join(dst, name); fs.writeFileSync(h, viaPackage(fs.readFileSync(h, 'utf8'))); }
-  if (width || height) { const h = path.join(dst, 'film.html'); fs.writeFileSync(h, fs.readFileSync(h, 'utf8').replace('width:1280px;height:720px', `width:${+width || 1280}px;height:${+height || 720}px`)); }
+  if (width || height) { const h = path.join(dst, 'film.html'); fs.writeFileSync(h, fs.readFileSync(h, 'utf8').replace('width:1280px;height:720px', `width:${+width! || 1280}px;height:${+height! || 720}px`)); }
   return { id: name, dir: dst, brand: brandCopied };
 }
 function scaffold(a) {

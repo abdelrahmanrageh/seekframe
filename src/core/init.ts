@@ -7,7 +7,7 @@ import { build } from '../brand/build';
 
 function copyTemplate(src: string, dst: string, vars: Record<string, string>, created: string[]): void {
   for (const e of fs.readdirSync(src, { withFileTypes: true })) {
-    const s = path.join(src, e.name), d = path.join(dst, e.name);
+    const s = path.join(src, e.name), d = path.join(dst, e.name === 'gitignore' ? '.gitignore' : e.name);   // npm drops files named .gitignore, so the template ships it as `gitignore`
     if (e.isDirectory()) { fs.mkdirSync(d, { recursive: true }); copyTemplate(s, d, vars, created); continue; }
     if (fs.existsSync(d)) continue;                                      // never overwrite the user's files
     fs.mkdirSync(path.dirname(d), { recursive: true });

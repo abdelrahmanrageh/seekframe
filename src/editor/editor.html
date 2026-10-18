@@ -4,151 +4,72 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Seekframe Editor</title>
-<style>
-:root{
-  --bg:#0E1110; --panel:#151917; --card:#1B201D; --line:#2A312D; --ink:#F2F5F0; --muted:#9AA59E;
-  --lime:#84FF00; --limeInk:#1D3300; --warn:#FFB84D; --err:#FF6B6B;
-  font-family:system-ui,-apple-system,'Segoe UI',sans-serif;
-}
-*{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden}
-button,input,select,textarea{font:inherit;color:inherit}
-#app{display:grid;grid-template-columns:1fr 440px;height:100%}
-
-/* preview + transport */
-#left{display:flex;flex-direction:column;min-width:0;height:100%}
-#stageWrap{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#18201B,#0E1110 70%)}
-#frameBox{position:relative;box-shadow:0 30px 80px rgba(0,0,0,.55);border-radius:6px;overflow:hidden;background:#fff}
-#film{position:absolute;left:0;top:0;border:0;transform-origin:0 0}
-#loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;pointer-events:none}
-#transport{padding:12px 20px 16px;border-top:1px solid var(--line);background:var(--panel)}
-#bar{display:flex;align-items:center;gap:14px;margin-bottom:10px}
-#play{width:40px;height:40px;border-radius:50%;border:0;background:var(--lime);color:var(--limeInk);cursor:pointer;display:grid;place-items:center;flex:none}
-#play svg{width:16px;height:16px}
-#time{font-variant-numeric:tabular-nums;font-size:15px;font-weight:600}
-#time small{color:var(--muted);font-weight:500;margin-left:8px}
-.hint{margin-left:auto;color:var(--muted);font-size:12px;text-align:right}
-#track{position:relative;height:50px;display:flex;gap:3px;cursor:ew-resize;touch-action:none;user-select:none}
-.seg{position:relative;height:100%;min-width:6px;border-radius:6px;background:var(--card);border:1px solid var(--line);overflow:hidden;display:flex;align-items:flex-end;padding:4px 8px 4px 6px;font-size:11px;color:var(--muted);white-space:nowrap}
-.seg.cur{background:#243018;border-color:#4C7A12;color:var(--ink)}
-.seg.sel{outline:2px solid rgba(132,255,0,.55)}
-.seg .grip{position:absolute;top:0;right:0;bottom:0;width:9px;cursor:col-resize;background:linear-gradient(90deg,transparent,rgba(132,255,0,.28))}
-.seg .grip:hover{background:linear-gradient(90deg,transparent,rgba(132,255,0,.7))}
-#head{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--lime);box-shadow:0 0 8px var(--lime);pointer-events:none}
-#head::before{content:'';position:absolute;top:-2px;left:-5px;width:12px;height:8px;background:var(--lime);border-radius:3px}
-
-/* side panel */
-#side{display:flex;flex-direction:column;height:100%;background:var(--panel);border-left:1px solid var(--line);min-height:0}
-#top{padding:12px 14px;border-bottom:1px solid var(--line);display:grid;gap:8px}
-#top .r{display:flex;gap:8px;align-items:center}
-#top select{flex:1;min-width:0}
-#saved{font-size:12px;color:var(--muted);white-space:nowrap}
-.btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;white-space:nowrap}
-.btn:hover{border-color:#44504A}
-.btn.sm{padding:3px 7px;min-width:26px}
-.btn[disabled]{opacity:.35;cursor:default}
-#tabs{display:flex;border-bottom:1px solid var(--line);padding:0 8px}
-#tabs button{flex:1;background:none;border:0;border-bottom:2px solid transparent;padding:10px 4px;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer}
-#tabs button.on{color:var(--ink);border-color:var(--lime)}
-.pane{display:none;flex:1;overflow:auto;padding:12px 14px 20px;min-height:0}
-.pane.on{display:block}
-.note{font-size:12px;color:var(--muted);line-height:1.45;margin:0 0 10px}
-.empty{color:var(--muted);font-size:13px;padding:14px 4px}
-
-.scene{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
-.scene.cur{border-color:#4C7A12}
-.scene>summary{list-style:none;display:flex;align-items:center;gap:8px;padding:9px 10px;cursor:pointer}
-.scene summary::-webkit-details-marker{display:none}
-.num{width:24px;height:24px;border-radius:7px;background:#232A26;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
-.scene.cur .num{background:var(--lime);color:var(--limeInk)}
-.nm{font-size:14px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nm i{font-style:normal;font-weight:500;font-size:11px;color:var(--muted);margin-left:6px}
-.rng{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.ops{display:flex;gap:3px}
-.body{padding:2px 12px 12px;border-top:1px solid var(--line)}
-.row{display:flex;align-items:center;gap:8px;margin-top:10px}
-.row>label{font-size:12px;color:var(--muted);flex:none;width:64px}
-.row .grow{flex:1}
-.spd{font-size:11px;color:var(--muted)} .spd.warn{color:var(--warn)}
-.field{margin-top:12px}
-.field>label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
-input[type=number],input[type=text],textarea,select{background:#101412;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px;width:100%}
-input[type=number]{width:84px}
-textarea{resize:none;line-height:1.35;display:block;overflow:hidden}
-.mod{border-color:#5A8F14 !important}
-input:focus,textarea:focus,select:focus{outline:2px solid rgba(132,255,0,.35);border-color:#5A8F14}
-input[type=range]{accent-color:var(--lime);width:100%}
-.c2{display:flex;gap:8px;align-items:center}
-.c2 input[type=color]{width:42px;height:34px;padding:2px;border-radius:8px;background:#101412;border:1px solid var(--line);flex:none;cursor:pointer}
-.sw{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px}
-.img{display:flex;align-items:center;gap:10px}
-.img img{width:54px;height:54px;object-fit:cover;border-radius:8px;background:#101412;border:1px solid var(--line)}
-.shared{font-size:11px;color:var(--warn);margin-top:10px}
-.adv{margin-top:10px;font-size:12px;color:var(--muted)} .adv summary{cursor:pointer}
-
-.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.vcard{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;text-align:left;padding:0;color:inherit}
-.vcard:hover,.vcard:focus-visible{border-color:#5A8F14;outline:none}
-.vcard.on{border-color:var(--lime)}
-.vcard img{display:block;width:100%;background:#101412;aspect-ratio:16/9;object-fit:cover}
-.vcard b{display:block;font-size:13px;padding:8px 10px 2px}.vcard small{display:block;font-size:11px;color:var(--muted);padding:0 10px 9px}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
-.trk{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
-.trk .h{display:flex;align-items:center;gap:8px}
-.trk .h b{flex:1;font-size:13px;font-weight:600}
-.trk .rest{margin-top:8px;display:grid;gap:8px}
-
-#renderBox{max-width:100%}
-#go{width:100%;border:0;border-radius:10px;background:var(--lime);color:var(--limeInk);font-weight:700;font-size:14px;padding:11px;cursor:pointer;margin-top:12px}
-#go[disabled]{opacity:.55;cursor:default}
-#prog{height:6px;border-radius:3px;background:#232A26;margin-top:10px;overflow:hidden;display:none}
-#prog i{display:block;height:100%;width:0;background:var(--lime);transition:width .3s}
-#msg{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.4}
-#msg.err{color:var(--err);white-space:pre-wrap}
-#msg.warn{color:var(--warn)}
-#result{margin-top:10px;display:none}
-#result video{width:100%;max-height:300px;border-radius:8px;background:#000}
-#result a{color:var(--lime);font-size:12px}
-</style>
+<link rel="icon" href="/assets/brand/favicon.png">
+<link rel="stylesheet" href="editor.css">
 </head>
 <body>
+<a class="skip" href="#side" data-i18n="skip">Skip to the controls</a>
+<header id="top" role="banner">
+  <a class="brand" href="/" aria-label="Seekframe"><img src="/assets/brand/favicon.png" alt="" width="28" height="28"><b>seekframe</b></a>
+  <label class="vh" for="filmSel" data-i18n="film">Film</label><select id="filmSel"></select>
+  <label class="vh" for="verSel" data-i18n="version">Version</label><select id="verSel"></select>
+  <button class="btn" id="newFilm" type="button" data-i18n="newFilm">New film</button>
+  <button class="btn" id="saveAs" type="button" data-i18n="saveAs">Save as…</button>
+  <button class="btn" id="delVer" type="button" data-i18n="delete">Delete</button>
+  <button class="btn" id="hist" type="button" data-i18n="history">History</button>
+  <span class="sp"></span>
+  <button class="btn" id="undo" type="button" data-i18n="undo" disabled>Undo</button><button class="btn" id="redo" type="button" data-i18n="redo" disabled>Redo</button>
+  <span id="saved" class="saved" role="status"></span>
+  <button class="btn" id="resetAll" type="button" data-i18n="resetAll">Reset all</button>
+  <button class="btn" id="setup" type="button" data-i18n="setup">Setup</button>
+  <button class="btn" id="keys" type="button" data-i18n="shortcuts" aria-label="Keyboard shortcuts">Shortcuts</button>
+  <button class="btn" id="theme" type="button" data-i18n-aria="theme"></button>
+  <label class="vh" for="langSel" data-i18n="language">Language</label><select id="langSel"></select>
+</header>
 <div id="app">
-  <section id="left">
+  <main id="left">
     <div id="stageWrap">
-      <div id="frameBox"><iframe id="film" title="film"></iframe></div>
-      <div id="loading">Loading film…</div>
+      <div id="stageTools"><button class="btn sm" id="safeBtn" type="button" aria-pressed="false" data-i18n="safeArea">Safe area</button><button class="btn sm" id="checkBtn" type="button" data-i18n="checkText">Check text</button></div>
+      <div id="frameBox" hidden><iframe id="film" title="Film preview"></iframe><div id="safe" hidden aria-hidden="true"><i class="s1"></i><i class="s2"></i><i class="cx"></i><i class="cy"></i></div></div>
+      <div id="loading" data-i18n="loading">Loading film…</div>
     </div>
-    <div id="transport">
+    <section id="transport" aria-label="Transport">
       <div id="bar">
-        <button id="play" title="Play / pause (space)" aria-label="Play"></button>
-        <div id="time">0:00.00<small></small></div>
-        <div class="hint">space play · ←/→ frame · shift ±1 s<br>drag a scene's right edge to change its length</div>
+        <button id="play" type="button" aria-label="Play"></button>
+        <div id="time" aria-hidden="true">0:00.00<small></small></div>
+        <div class="hint"><span data-i18n="hint.keys"></span><br><span data-i18n="hint.drag"></span></div>
       </div>
-      <div id="track"><div id="head"></div></div>
+      <div id="scrub" role="slider" tabindex="0" aria-label="Timeline" data-i18n-aria="timeline" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+        <div id="track"><canvas id="wave" aria-hidden="true"></canvas><div id="head"></div></div>
+      </div>
+    </section>
+  </main>
+  <aside id="side" tabindex="-1">
+    <div id="tabs" role="tablist" aria-label="Editor sections">
+      <button role="tab" data-t="scenes" aria-controls="p-scenes" data-i18n="tab.scenes">Scenes</button>
+      <button role="tab" data-t="style" aria-controls="p-style" data-i18n="tab.style">Style</button>
+      <button role="tab" data-t="variants" aria-controls="p-variants" data-i18n="tab.variants">Variants</button>
+      <button role="tab" data-t="brand" aria-controls="p-brand" data-i18n="tab.brand">Brand</button>
+      <button role="tab" data-t="audio" aria-controls="p-audio" data-i18n="tab.audio">Audio</button>
+      <button role="tab" data-t="export" aria-controls="p-export" data-i18n="tab.export">Export</button>
     </div>
-  </section>
-  <aside id="side">
-    <div id="top">
-      <div class="r"><select id="filmSel" aria-label="Film"></select></div>
-      <div class="r"><select id="verSel" aria-label="Version"></select><button class="btn" id="saveAs">Save as…</button><button class="btn" id="delVer" title="Delete this version">Delete</button></div>
-      <div class="r"><span id="saved"></span><span style="flex:1"></span><button class="btn" id="resetAll">Reset all</button></div>
-    </div>
-    <nav id="tabs" role="tablist" aria-label="Editor sections"><button data-t="scenes" class="on" role="tab">Scenes</button><button data-t="style" role="tab">Style</button><button data-t="variants" role="tab">Variants</button><button data-t="audio" role="tab">Audio</button><button data-t="export" role="tab">Export</button></nav>
-    <div class="pane on" id="p-scenes"></div>
-    <div class="pane" id="p-style"></div>
-    <div class="pane" id="p-variants"></div>
-    <div class="pane" id="p-audio"></div>
-    <div class="pane" id="p-export">
-      <div class="field"><label for="size">Size</label><select id="size"></select></div>
-      <div class="field"><label for="fps">Frame rate</label><select id="fps"><option value="30">30 fps (draft)</option><option value="60" selected>60 fps (final)</option><option value="24">24 fps</option></select></div>
+    <div class="pane" id="p-scenes" role="tabpanel"></div>
+    <div class="pane" id="p-style" role="tabpanel" hidden></div>
+    <div class="pane" id="p-variants" role="tabpanel" hidden></div>
+    <div class="pane" id="p-brand" role="tabpanel" hidden></div>
+    <div class="pane" id="p-audio" role="tabpanel" hidden></div>
+    <div class="pane" id="p-export" role="tabpanel" hidden>
+      <div class="field" id="sizeField"><label for="size" data-i18n="size">Size</label><select id="size"></select></div>
+      <div class="field"><label for="fps" data-i18n="export.fps">Frame rate</label><select id="fps"><option value="30" data-i18n="export.fps30">30 fps (draft)</option><option value="60" selected data-i18n="export.fps60">60 fps (final)</option><option value="24" data-i18n="export.fps24">24 fps</option></select></div>
       <p class="note" id="outname"></p>
-      <button id="go">Render MP4</button>
-      <div id="prog"><i></i></div>
-      <div id="msg"></div>
-      <div id="result"><video controls></video><div><a id="dl" download></a></div></div>
+      <label class="sw"><input type="checkbox" id="notify"> <span data-i18n="export.notify">Notify me when a render finishes</span></label>
+      <button id="go" type="button" class="btn primary wide" data-i18n="export.add">Add to render queue</button>
+      <h3 data-i18n="export.queue">Render queue</h3>
+      <div id="queue" aria-live="polite"></div>
     </div>
   </aside>
 </div>
+<div id="live" class="vh" role="status" aria-live="polite"></div>
 <script src="../browser/editor.js"></script>
 </body>
 </html>

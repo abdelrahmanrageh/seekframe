@@ -2,7 +2,7 @@
    A project's `clips` are an ordered list of scene excerpts; each plays for `frames` (film-fps frames) and shows
    the source range [in, out) of its scene, time-scaled to fit. The film itself never knows about any of this:
    the editor just calls film.seek(sourceFrame). */
-import type { BuiltTimeline, Clip, Manifest, NormalizedClip, Project, ProjectInput, TimelineClip } from '../types';
+import type { BuiltTimeline, Clip, Manifest, NormalizedClip, NormalizedProject, ProjectInput, TimelineClip } from '../types';
 
 export const MIN_FRAMES = 3;
 
@@ -12,7 +12,7 @@ export function defaultClips(manifest: Manifest): Clip[] {
 }
 
 /** normalise a project against a manifest (drops clips of unknown scenes, fills defaults) */
-export function normalize(manifest: Manifest, project?: ProjectInput | null): Project & { clips: NormalizedClip[] } {
+export function normalize(manifest: Manifest, project?: ProjectInput | null): NormalizedProject {
   const p: any = Object.assign({ version: 1, params: {}, clips: null, audio: { tracks: {}, custom: [] }, output: {} }, project || {});
   p.params = p.params || {}; p.audio = Object.assign({ tracks: {}, custom: [] }, p.audio || {}); p.output = p.output || {};
   const byId = Object.fromEntries(manifest.scenes.map(s => [s.id, s]));
@@ -32,7 +32,7 @@ export function normalize(manifest: Manifest, project?: ProjectInput | null): Pr
 /** compute clip positions on the edited timeline */
 export function build(manifest: Manifest, project?: ProjectInput | null): BuiltTimeline {
   const p = normalize(manifest, project); let t = 0;
-  const clips: TimelineClip[] = p.clips.map((c, i) => { const o = { i, id: c.id, scene: c.scene, in: c.in, out: c.out, t0: t, t1: t + c.frames, rate: (c.out - c.in) / c.frames }; t += c.frames; return o; });
+  const clips: TimelineClip[] = p.clips.map((c: NormalizedClip, i: number) => { const frames = c.frames, sourceIn = c.in, sourceOut = c.out; const o: TimelineClip = { i, id: c.id, scene: c.scene, in: sourceIn, out: sourceOut, t0: t, t1: t + frames, rate: (sourceOut - sourceIn) / frames }; t += frames; return o; });
   return { project: p, clips, total: t };
 }
 

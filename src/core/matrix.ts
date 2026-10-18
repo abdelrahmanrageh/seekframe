@@ -1,5 +1,5 @@
 // seekframe render / seekframe matrix — the export pipeline from the command line, and variant matrices.
-import type { FilmRef, Manifest } from '../types';
+import type { FilmRef, Manifest, ProjectInput } from '../types';
 import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,6 +23,8 @@ function parseParams(str, manifest) {
   return o;
 }
 const optValues = p => p.type === 'select' ? p.options.map(o => typeof o === 'object' ? o.value : o) : p.type === 'boolean' ? [true, false] : [];
+interface MatrixJob { film: FilmRef; name: string; project: ProjectInput }
+interface Axis { k: string; vals: unknown[] }
 
 async function manifestOf(film: FilmRef, project?: any): Promise<Manifest> { const { browser, manifest } = await openFilm(film.dir, project || {}); await browser.close(); return manifest; }
 
@@ -45,17 +47,17 @@ async function renderCmd(film, a) {
    --versions renders every saved version instead */
 async function matrixCmd(a) {
   const ids = String(a._[1] || '').split(',').filter(Boolean); if (!ids.length) { console.error('usage: seekframe matrix <film[,film2]> [--axes hook=*,theme=a|b] [--versions] [--fps 30]'); process.exit(2); }
-  const jobs = [];
+  const jobs: MatrixJob[] = [];
   for (const id of ids) {
     const film = resolveFilm(id); if (!film) { console.error('unknown film ' + id); process.exit(2); }
     if (a.versions) { for (const v of listVersions(film)) jobs.push({ film, name: v, project: loadProject(film, v) }); continue; }
-    const m = await manifestOf(film), axes = [];
+    const m = await manifestOf(film), axes: Axis[] = [];
     for (const part of String(a.axes || '').split(',').filter(Boolean)) {
       const [k, vals] = part.split('='), p = (m.params || []).find(x => x.id === k); if (!p) { console.error(`${film.id} has no param "${k}"`); process.exit(2); }
       axes.push({ k, vals: !vals || vals === '*' ? optValues(p) : vals.split('|').map(v => coerce(p, v)) });
     }
-    let combos = [{}]; for (const ax of axes) combos = combos.flatMap(c => ax.vals.map(v => ({ ...c, [ax.k]: v })));
-    for (const params of combos) jobs.push({ film, name: Object.entries(params).map(([k, v]) => `${k}-${v}`).join('_') || 'default', project: { params } });
+    let combos: Array<Record<string, unknown>> = [{}]; for (const ax of axes) combos = combos.flatMap(c => ax.vals.map(v => ({ ...c, [ax.k]: v })));
+    for (const params of combos) jobs.push({ film, name: Object.entries(params).map(([k, v]) => `${k}-${v}`).join('_') || 'default', project: { params: params as Record<string, string | number | boolean> } });
   }
   console.log(`Rendering ${jobs.length} variant(s) at ${a.fps || 30} fps…`);
   for (const j of jobs) await renderOne(j.film, j.project, j.name, a);
