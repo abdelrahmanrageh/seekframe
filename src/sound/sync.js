@@ -33,7 +33,7 @@ async function sync(film, o = {}) {
     // audio: length + loudness
     const tmp = path.join(require('os').tmpdir(), `sf-sync-${process.pid}.wav`);
     await renderScore({ manifest, theme: (manifest.soundtrack && manifest.soundtrack.theme) || 'deep', out: tmp, rtl: !!(manifest.lang && manifest.lang.rtl) });
-    let ff = 'ffmpeg'; try { ff = require('ffmpeg-static'); } catch (e) {}
+    const ff = require('../core/ffmpeg.js').ffmpegPath();
     const probeA = spawnSync(ff, ['-hide_banner', '-i', tmp, '-af', 'ebur128=peak=true', '-f', 'null', '-']).stderr.toString();
     const lufs = +(/\n\s*I:\s+(-?[\d.]+) LUFS/.exec(probeA.slice(probeA.lastIndexOf('Summary'))) || [])[1], dur = /Duration: (\d+):(\d+):([\d.]+)/.exec(probeA);
     const secs = dur ? (+dur[1]) * 3600 + (+dur[2]) * 60 + (+dur[3]) : NaN; fs.rmSync(tmp, { force: true });

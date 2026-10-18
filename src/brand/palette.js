@@ -11,7 +11,7 @@ const contrast = (a, b) => { const la = lum(a), lb = lum(b); return (Math.max(la
 // any raster format -> {width,height,data(RGBA)} (png natively, others via ffmpeg)
 function loadImage(file) {
   if (/\.png$/i.test(file)) return PNG.sync.read(fs.readFileSync(file));
-  let ff = 'ffmpeg'; try { ff = require('ffmpeg-static'); } catch (e) {}
+  const ff = require('../core/ffmpeg.js').ffmpegPath();
   const tmp = path.join(require('os').tmpdir(), 'sf-img-' + process.pid + '.png');
   const r = spawnSync(ff, ['-v', 'error', '-y', '-i', file, '-frames:v', '1', tmp]); if (r.status) throw new Error('cannot read image: ' + file);
   const p = PNG.sync.read(fs.readFileSync(tmp)); fs.rmSync(tmp); return p;

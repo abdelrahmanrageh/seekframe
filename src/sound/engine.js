@@ -106,7 +106,7 @@ function writeWav(m, file, gain) {
 }
 // Two-pass loudness normalisation (EBU R128) to `loudness` LUFS with a -1 dBTP ceiling.
 function master(rawFile, outFile, { eq, loudness = -16 }) {
-  let FF = 'ffmpeg'; try { FF = require('ffmpeg-static'); } catch (e) {}
+  const FF = require('../core/ffmpeg.js').ffmpegPath();
   const af = `${eq},loudnorm=I=${loudness}:TP=-1:LRA=11`;
   const log = spawnSync(FF, ['-hide_banner', '-i', rawFile, '-af', `${af}:print_format=json`, '-f', 'null', '-']).stderr.toString();
   const j = JSON.parse(log.slice(log.lastIndexOf('{'), log.lastIndexOf('}') + 1));
