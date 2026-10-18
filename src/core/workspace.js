@@ -20,4 +20,14 @@ function resolveFilm(arg) {
   if (fs.existsSync(path.join(p, 'film.html'))) return { id: path.basename(p), root: path.relative(ROOT, path.dirname(p)), dir: p };
   return null;
 }
-module.exports = { ROOT, ROOTS, slug, listFilms, findFilm, resolveFilm };
+
+// brand/brand.css and brand.js are GENERATED from brand.json (and are git-ignored): rebuild them (once per process) so they match the
+// fonts that actually exist on this machine. A clone without a licensed font simply gets the bundled fallbacks, with no missing-file requests.
+let brandsBuilt = false;
+function ensureBrands() {
+  if (brandsBuilt) return; brandsBuilt = true;
+  const { build } = require('../brand/build.js'), dirs = [path.join(ROOT, 'brand')];
+  for (const r of [...ROOTS, 'templates']) { const d = path.join(ROOT, r); if (fs.existsSync(d)) for (const id of fs.readdirSync(d)) dirs.push(path.join(d, id, 'brand')); }
+  for (const d of dirs) if (fs.existsSync(path.join(d, 'brand.json'))) { try { build(d); } catch (e) { console.error(`brand build failed in ${path.relative(ROOT, d)}: ${e.message}`); } }
+}
+module.exports = { ROOT, ROOTS, slug, listFilms, findFilm, resolveFilm, ensureBrands };

@@ -6,7 +6,7 @@ const http = require('http'), fs = require('fs'), path = require('path'), os = r
 const Timeline = require('../core/timeline.js');
 const { openFilm } = require('../core/render.js');
 const { exportFilm } = require('../core/export.js');
-const { ROOT, slug, listFilms, findFilm } = require('../core/workspace.js');
+const { ROOT, slug, listFilms, findFilm, ensureBrands } = require('../core/workspace.js');
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.otf': 'font/otf', '.mp4': 'video/mp4', '.wav': 'audio/wav', '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.ogg': 'audio/ogg', '.md': 'text/plain' };
 const UPLOAD_EXT = /\.(png|jpe?g|webp|gif|svg|wav|mp3|m4a|ogg)$/i;
@@ -114,6 +114,7 @@ const server = http.createServer(async (req, res) => {
   } catch (e) { json(res, 500, { error: String(e.message || e) }); }
 });
 function start(port = +process.env.PORT || 4173) {
+  ensureBrands();
   return new Promise(resolve => server.listen(port, '127.0.0.1', () => { console.log(`Seekframe editor: http://localhost:${port}/`); resolve(server); }));
 }
 module.exports = { start, server };

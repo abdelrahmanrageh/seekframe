@@ -23,6 +23,7 @@ async function validate(dirArg, opts = {}) {
   const warn = m => { res.warn.push(m); out(`  ${C[1]}!${C[3]} ${m}`); };
   const fail = m => { res.fail.push(m); out(`  ${C[2]}✘${C[3]} ${m}`); };
   const Abort = new Error('abort');
+  require('./workspace.js').ensureBrands();
   if (!fs.existsSync(path.join(dir, 'film.html'))) { fail('No film.html in ' + dir); return res; }
   out(`Validating ${path.relative(process.cwd(), dir) || '.'}`);
   const browser = await chromium.launch({ args: ['--force-color-profile=srgb', '--font-render-hinting=none'] });

@@ -14,6 +14,7 @@ function args() {
 
 // opens the film page and returns { browser, page, manifest } with the project's params applied
 async function openFilm(filmDir, project, size, browser) {
+  require('./workspace.js').ensureBrands();
   const file = path.resolve(filmDir, 'film.html');
   const b = browser || await chromium.launch({ args: ['--force-color-profile=srgb', '--font-render-hinting=none'] });
   const probe = await b.newPage({ viewport: { width: 1280, height: 720 } });

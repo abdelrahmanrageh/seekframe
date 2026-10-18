@@ -34,6 +34,7 @@ const PROBE = () => {
 const HIDE_TEXT = '* { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; }';
 
 async function review(film, o = {}) {
+  require('./workspace.js').ensureBrands();
   const log = o.log || (() => {}), out = path.resolve(o.out || path.join(ROOT, 'output', 'review'));
   fs.mkdirSync(out, { recursive: true });
   const pd = path.join(film.dir, 'projects'), saved = fs.existsSync(pd) ? fs.readdirSync(pd).filter(f => f.endsWith('.json')).map(f => f.slice(0, -5)) : [];
