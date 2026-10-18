@@ -12,3 +12,5 @@ examples/client-tick/brand/fonts/
 # generated from brand.json by `seekframe brand build` (rebuilt automatically; depends on which fonts exist locally)
 **/brand/brand.css
 **/brand/brand.js
+dist/
+dist-test/

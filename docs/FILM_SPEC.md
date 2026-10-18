@@ -47,7 +47,7 @@ films/<name>/            yours (examples/<name>/ ships with Seekframe)
 | `window.manifest` | The object in §4. Plain data. |
 | `window.applyParams(values)` | `{paramId: value}` (changed ones only; fall back to defaults). Idempotent; may rebuild the DOM. The editor calls `seek` again afterwards. |
 
-You normally don't write these by hand: **`SF.define({...})` from `src/runtime/seekframe.js` creates all four** from a
+You normally don't write these by hand: **`SF.define({...})` from the runtime (`dist/browser/runtime.js`) creates all four** from a
 spec (see [RUNTIME.md](RUNTIME.md)). The editor sets CSS custom properties itself for params that declare `cssVar`,
 *before* `applyParams`, so a film made only of `cssVar` params needs no JavaScript for them.
 
@@ -158,3 +158,8 @@ then offers them under Export and loads the film in that viewport. Fixed-size fi
 - `templates/blank`: the smallest complete film, every param type, commented.
 - `examples/client-tick` (+ `-ar`): a real 35 s film with 3 hooks × 3 styles × 2 card shapes, EN and Arabic RTL, brand kit, generated score.
 - Guides: [RUNTIME](RUNTIME.md) · [SOUND](SOUND.md) · [BRAND](BRAND.md) · [VARIANTS](VARIANTS.md) · [ACCESSIBILITY](ACCESSIBILITY.md) · [RTL](RTL.md) · [LLM](LLM.md)
+
+## 12. Types for film authors (optional)
+`film.js` files from `seekframe new` start with `// @ts-check` and a `/// <reference …film-globals.d.ts />` line, so any editor shows autocomplete and
+errors for `SF.*`, `SF.define({...})`, params, cues and the manifest, with no build step for the film itself. The declarations are generated from the
+framework's TypeScript (`dist/types/`).

@@ -1,0 +1,8 @@
+---
+description: Build or change Seekframe films (HTML animation films with params, cues, brand kit)
+alwaysApply: false
+globs: ["films/**", "brand/**"]
+---
+Follow `AGENTS.md` in the repo root and read `{{DOCS}}/FILM_SPEC.md` before writing or changing any film.
+Key points: `seek(frame)` must be a pure function of the frame (no timers/Math.random/CSS animation); expose every editable thing as a manifest param;
+declare sound as cues on the animation's frame numbers; run `seekframe validate`, `review` (LOOK at the contact sheets) and `sync` until clean; never weaken a check.

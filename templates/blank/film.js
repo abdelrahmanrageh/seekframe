@@ -1,3 +1,5 @@
+// @ts-check
+/// <reference path="../../dist/types/browser/film-globals.d.ts" />
 /* Blank film — copy this folder (`seekframe new my-film`) and replace the content.
    Contract: docs/FILM_SPEC.md · runtime helpers: docs/RUNTIME.md.
    Golden rule: seek(frame) is a PURE FUNCTION of the frame number — no Date.now(), Math.random(), timers or CSS animation. */
