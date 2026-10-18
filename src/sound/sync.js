@@ -17,6 +17,7 @@ function changed(a, b) {                                  // fraction of pixels 
   return n / len;
 }
 async function sync(film, o = {}) {
+  require('../core/workspace.js').ensureBrands();
   const log = o.log || (() => {}), pd = path.join(film.dir, 'projects');
   const versions = o.version ? [o.version] : (fs.existsSync(pd) && fs.readdirSync(pd).some(f => f.endsWith('.json')) ? fs.readdirSync(pd).filter(f => f.endsWith('.json')).map(f => f.slice(0, -5)) : ['default']);
   const browser = await chromium.launch({ args: ['--force-color-profile=srgb', '--font-render-hinting=none'] }); let fail = 0, warn = 0;

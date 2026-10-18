@@ -6,6 +6,7 @@ const { ROOT, slug } = require('./workspace.js');
 function scaffoldFilm({ name, width, height, fps, brand: brandArg }) {
   name = slug(name);
   if (!name || name.startsWith('_')) throw new Error('give the film a name, e.g. "spring-sale"');
+  require('./workspace.js').ensureBrands();
   const src = path.join(ROOT, 'templates', 'blank'), dst = path.join(ROOT, 'films', name);
   if (fs.existsSync(dst)) throw new Error(`films/${name} already exists`);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
