@@ -1,0 +1,61 @@
+name: Render Seekframe films
+description: Install Seekframe, validate films, and render a film or variant matrix.
+inputs:
+  film:
+        description: Film id or comma-separated film ids.
+    required: true
+  axes:
+    description: Optional matrix axes, for example hook=*,theme=mono|lime.
+    required: false
+    default: ''
+  versions:
+    description: Render every saved version.
+    required: false
+    default: 'false'
+  fps:
+    description: Output frame rate.
+    required: false
+    default: '30'
+  artifact-name:
+    description: Name for the uploaded render artifact.
+    required: false
+    default: seekframe-renders
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+    - run: npm ci
+      shell: bash
+    - run: npx playwright install --with-deps chromium
+      shell: bash
+    - run: npm run build
+      shell: bash
+    - name: Validate film
+      shell: bash
+      env:
+        FILM: ${{ inputs.film }}
+      run: |
+        IFS=',' read -ra films <<< "$FILM"
+        for film in "${films[@]}"; do
+          node bin/seekframe.js validate "$film" --fast
+        done
+    - name: Render matrix
+      shell: bash
+      env:
+        FILM: ${{ inputs.film }}
+        AXES: ${{ inputs.axes }}
+        VERSIONS: ${{ inputs.versions }}
+        FPS: ${{ inputs.fps }}
+      run: |
+        args=("$FILM" --fps "$FPS")
+        if [[ -n "$AXES" ]]; then args+=(--axes "$AXES"); fi
+        if [[ "$VERSIONS" == "true" ]]; then args+=(--versions); fi
+        node bin/seekframe.js matrix "${args[@]}"
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: output/*.mp4
+        if-no-files-found: error

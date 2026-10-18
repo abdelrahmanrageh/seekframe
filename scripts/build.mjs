@@ -20,7 +20,7 @@ const common = { bundle: true, format: 'iife', platform: 'browser', target: 'es2
 const browserBuilds = [
   { ...common, entryPoints: { runtime: 'src/browser/runtime.ts' }, outdir: 'dist/browser' },
   { ...common, entryPoints: { timeline: 'src/core/timeline.ts' }, outdir: 'dist/browser', globalName: 'Timeline' },
-  { ...common, entryPoints: { editor: 'src/browser/editor.ts' }, outdir: 'dist/browser' },
+  { ...common, entryPoints: { editor: 'src/browser/editor/main.ts' }, outdir: 'dist/browser' },
 ];
 
 // 3. type declarations for film authors (dist/types/browser/film-globals.d.ts)

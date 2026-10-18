@@ -38,7 +38,12 @@
     "AGENTS.md",
     "LICENSE",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "!examples/*/brand/fonts/**",
+    "!**/brand/brand.css",
+    "!**/brand/brand.js",
+    "!**/uploads/**",
+    "!**/.DS_Store"
   ],
   "scripts": {
     "editor": "node bin/seekframe.js editor",

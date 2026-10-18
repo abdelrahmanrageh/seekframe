@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "params": {
+    "mood": "ink",
+    "accent": "#DEFF32",
+    "shape": "ribbon"
+  },
+  "clips": [
+    {
+      "id": "c1",
+      "scene": "intro",
+      "frames": 87
+    },
+    {
+      "id": "c2",
+      "scene": "identity",
+      "frames": 105
+    },
+    {
+      "id": "c3",
+      "scene": "motion",
+      "frames": 111
+    },
+    {
+      "id": "c4",
+      "scene": "variants",
+      "frames": 151
+    },
+    {
+      "id": "c5",
+      "scene": "outro",
+      "frames": 114
+    }
+  ],
+  "audio": {
+    "tracks": {
+      "score": {
+        "enabled": true
+      }
+    },
+    "custom": []
+  },
+  "output": {}
+}

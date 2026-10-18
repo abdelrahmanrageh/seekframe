@@ -1,36 +1,52 @@
 # Roadmap
 
-**Shipped in 0.1:** the film contract + validator, runtime, editor with variants, renderer + matrix, brand kit (palette, logo → SVG and strokes, fonts),
-cue-driven sound engine with themes and a sync check, `review` (contact sheets, overflow, contrast, flashing per version), MCP server, prompts and guides for
-Claude / Codex / Cursor / opencode, and the Client example (EN + Arabic).
+The original phases 0–4 established the TypeScript framework, LLM kit, runtime, brand kit, and cue-driven sound engine. The current work completes the implementation foundation for phases 5–7.
 
-**Known limits of 0.1**
-- Clone/fork-first: the workspace is the repo folder. `npx seekframe` from an installed package (workspace = current directory) is next.
-- Fixed-size films are the norm; the responsive `sizes` path works (see the blank template) but has one example only.
-- Sound is synthesised (no samples); voice-over files work as tracks but there are no TTS adapters yet.
-- No captions export, no audio description, editor accessibility has not been audited.
-- Logo stroke extraction is assisted (review the preview); filled lettering should be revealed with a mask instead.
+## Phase 5: Editor v1
 
-## Next
-**0.2: editor**
-- Undo/redo and a shortcut help overlay; version history with param diffs; render queue and ETA.
-- Waveform and cue markers on the timeline, snap-to-cue when resizing scenes; safe-area overlay; size switcher.
-- Brand panel (edit `brand.json`, propagate to films); live text-overflow warnings on fields.
-- Accessibility audit of the editor (labels, focus, reduced motion), light theme, editor i18n including RTL.
+Implemented:
 
-**0.3: the LLM loop**
-- Frame comments in the editor (`@frame 412: logo too small`) exportable as a task list for an agent; optional "ask the model" button with your own API key.
-- More examples with prompt + result + what went wrong: vertical app promo, logo sting, data story, event countdown.
-- `npx seekframe` / `create-seekframe`: workspace = current directory; devcontainer / Codespaces; Docker image for identical renders.
+- Undo/redo, keyboard shortcuts and a shortcut overlay.
+- Timestamped version snapshots, restore, and parameter diffs.
+- Variants cards, audio waveform and cue markers, cue snapping while resizing scenes.
+- Safe-area overlay, responsive size switcher, live text overflow scan.
+- Brand panel for palette editing, logo upload/tracing, font licence metadata, and applying the kit to a film.
+- Render queue with progress, ETA, cancel, download and completion notification.
+- English and Arabic interface strings, RTL layout, light/dark themes, keyboard focus states, dialog focus trap, and reduced-motion styling.
 
-**0.4: output**
-- Captions (SRT/VTT) from text params and voice-over lines; TTS adapters (ElevenLabs, OpenAI, Piper) tied to scene ids; audio-description track.
-- Resume and per-scene frame cache; ProRes/WebM/GIF/alpha output; poster images; GitHub Action to render a matrix on push.
-- Sound themes contributed by the community; sample-based instruments (optional).
+Remaining: a formal assistive-technology audit and fixes based on that audit. Scene drag-to-reorder remains a later editor feature; scenes can be reordered with buttons.
 
-**Later:** plugin param types (charts, maps), collaboration/hosted mode, TypeScript types for the manifest.
+## Phase 6: Distribution
 
-## Decisions on record
-- MIT licence; the code never bundles GPL code. FFmpeg comes from `ffmpeg-static` (GPL-licensed binaries; use your own ffmpeg if that matters to you).
-- Examples use brands the author owns (Client) or fictional ones. Fonts with restrictive licences are never committed.
-- Reference footage from other brands is analysed locally and never committed.
+Implemented:
+
+- TypeScript migration with strict null checks, browser and Node builds, and generated author declarations.
+- `npm create seekframe` workspace bootstrap and workspace discovery outside the framework checkout.
+- Docker and devcontainer definitions, a reusable GitHub render Action, and a GitHub Pages workflow/static landing page.
+- `films/seekframe-launch` source film for the project launch story.
+
+Remaining: run the render Action in GitHub, inspect the launch film contact sheet and rendered video, and deploy Pages/publish npm packages when a release is approved. This repository does not publish or deploy automatically from the current branch.
+
+## Phase 7: Community
+
+Implemented:
+
+- `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, pull request template, and bug/feature issue forms.
+- Example submission template with ownership, licensing, and review requirements.
+
+Ongoing: accept and review community examples, translations, and contributions; maintain releases and the showcase.
+
+## Known product limits
+
+- Audio is synthesised from cues or supplied as an audio track; there are no TTS adapters yet.
+- Captions export, audio description, render resume/cache, and alternate video formats remain future work.
+- Stroke extraction from raster logos is assisted and needs a human review of the generated paths.
+- The formal editor accessibility audit and visual review of the launch film remain before a public release.
+
+## Release checklist
+
+- [ ] Inspect the launch film contact sheet and play a rendered draft.
+- [ ] Complete the editor accessibility audit.
+- [ ] Run CI and the reusable render Action on GitHub.
+- [ ] Review npm package contents, version, changelog, and release notes.
+- [ ] Publish npm packages and deploy Pages after release approval.

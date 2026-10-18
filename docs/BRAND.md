@@ -3,6 +3,8 @@
 The kit lives in `brand/` (copied into each film by `seekframe new`). Films read it via `brand/brand.css`
 (fonts + `--brand-*` variables + `--font-display`/`--font-text`) and `brand/brand.js` (`window.BRAND`).
 
+You can set it up in the editor: open **Brand** to edit the name, tagline, tone, colours, logo, and fonts; drop a logo image to trace it and preview suggested palette colours; use **Apply to this film** to copy the kit into the selected film. The **New film** wizard uses the workspace brand automatically. The Setup panel checks Node, Chromium, ffmpeg, and workspace readiness. Use the CLI below for scripts and CI; both paths call the same brand-kit functions.
+
 ```bash
 seekframe brand init --name "Acme"                    # brand/brand.json (+ bundled Inter and IBM Plex Sans Arabic fallbacks)
 seekframe brand palette logo.png --write              # colours + suggested accent/ink/paper/muted + WCAG contrast table

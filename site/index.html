@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Seekframe is an open-source framework for making brand films as code, with an editor and MP4 renderer.">
+  <title>Seekframe — brand films as code</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0e1110;--panel:#151917;--ink:#f2f5f0;--muted:#a4afa7;--line:#2a312d;--lime:#a2ff41;--max:1120px;font-family:Inter,ui-sans-serif,system-ui,sans-serif}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 70% 0,#1b281b,var(--bg) 52%);color:var(--ink);line-height:1.55}a{color:inherit}main{max-width:var(--max);margin:auto;padding:24px}header{display:flex;align-items:center;gap:18px;padding:12px 0 56px}header a{text-decoration:none}header .logo{font-weight:800;letter-spacing:.1em;color:var(--lime)}header nav{margin-left:auto;display:flex;gap:20px;color:var(--muted);font-size:14px}.hero{display:grid;grid-template-columns:1fr .85fr;align-items:center;gap:52px;padding:12px 0 72px}.eyebrow{color:var(--lime);font-size:13px;text-transform:uppercase;letter-spacing:.14em;font-weight:700}h1{font-size:clamp(44px,7vw,82px);line-height:.98;letter-spacing:-.055em;margin:16px 0 22px}h2{font-size:32px;line-height:1.1;letter-spacing:-.035em}.lead{font-size:19px;color:var(--muted);max-width:620px}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.button{display:inline-flex;padding:11px 16px;border:1px solid var(--line);border-radius:9px;text-decoration:none;font-weight:650}.button.primary{background:var(--lime);border-color:var(--lime);color:#17210e}.preview{border:1px solid #425044;border-radius:18px;background:#090b09;overflow:hidden;box-shadow:0 24px 90px #0008}.preview img{display:block;width:100%;height:auto}.caption{padding:12px 16px;color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:28px 0 72px}.card{padding:22px;border:1px solid var(--line);border-radius:13px;background:linear-gradient(145deg,#191f1a,var(--panel))}.card h3{margin:8px 0}.card p{color:var(--muted);margin:0}.step{color:var(--lime);font-weight:800}section{padding:28px 0 12px}.code{white-space:pre-wrap;background:#090b09;border:1px solid var(--line);border-radius:12px;padding:20px;color:#dce8dc;font:14px/1.7 ui-monospace,monospace;overflow:auto}footer{border-top:1px solid var(--line);padding:24px 0 36px;color:var(--muted);font-size:13px}footer nav{display:flex;gap:18px;flex-wrap:wrap}@media(max-width:760px){main{padding:18px}.hero{grid-template-columns:1fr;gap:28px;padding-bottom:40px}header{padding-bottom:34px}header nav{gap:12px}.grid{grid-template-columns:1fr;margin-bottom:42px}h1{font-size:52px}}
+  </style>
+</head>
+<body>
+<main>
+  <header><a class="logo" href="#top">SEEKFRAME</a><nav><a href="#how">How it works</a><a href="https://github.com/abdelrahmanrageh/seekframe">GitHub</a><a href="https://github.com/abdelrahmanrageh/seekframe/tree/main/docs">Docs</a></nav></header>
+  <section class="hero" id="top">
+    <div><div class="eyebrow">Open-source motion-film framework</div><h1>Brand films,<br>frame by frame.</h1><p class="lead">Your LLM writes a film in HTML. You edit it in the browser. Seekframe checks it and renders it to MP4.</p><div class="actions"><a class="button primary" href="https://github.com/abdelrahmanrageh/seekframe">Explore the project</a><a class="button" href="https://github.com/abdelrahmanrageh/seekframe/blob/main/docs/GETTING_STARTED.md">Start making a film</a></div></div>
+    <div class="preview"><img src="examples/client-tick/preview/v1-doubt-mono.gif" alt="A film preview made with Seekframe"><div class="caption">One film, several hooks, styles, and languages. The code and checks stay together.</div></div>
+  </section>
+  <section id="how"><div class="eyebrow">A practical workflow</div><h2>From brief to film, with a human in the loop.</h2><div class="grid"><article class="card"><div class="step">01 · WRITE</div><h3>Give your agent a brief</h3><p>Describe the audience, message, brand, and formats. The film contract keeps each scene editable.</p></article><article class="card"><div class="step">02 · REVIEW</div><h3>Inspect and refine</h3><p>Use the editor for wording, timing, sound, and variants. Validation catches common implementation mistakes.</p></article><article class="card"><div class="step">03 · RENDER</div><h3>Export the versions</h3><p>Render one film or a matrix of hooks, themes, sizes, and saved versions to MP4.</p></article></div></section>
+  <section><div class="eyebrow">Quick start</div><h2>Try it locally.</h2><pre class="code">npm create seekframe@latest my-films
+cd my-films
+npx seekframe doctor
+npx seekframe editor</pre><p class="lead">The editor includes a brand panel for colours, logos, fonts, a new-film wizard, and setup checks. The CLI and MCP server expose the same core operations to agents and CI.</p></section>
+  <footer><nav><a href="https://github.com/abdelrahmanrageh/seekframe">GitHub</a><a href="https://github.com/abdelrahmanrageh/seekframe/blob/main/README.md">README</a><a href="https://github.com/abdelrahmanrageh/seekframe/blob/main/docs/FILM_SPEC.md">Film contract</a><a href="https://github.com/abdelrahmanrageh/seekframe/blob/main/CONTRIBUTING.md">Contributing</a><a href="https://github.com/abdelrahmanrageh/seekframe/blob/main/LICENSE">MIT licence</a></nav><p>Seekframe is open source. Example brand assets remain subject to their owners’ rights.</p></footer>
+</main>
+</body>
+</html>

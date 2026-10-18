@@ -27,7 +27,7 @@ export interface Manifest {
 /** One excerpt of a scene on the edited timeline. `frames` = how long it plays; `in`/`out` = which part of the scene (source frames). */
 export interface Clip { id?: string; scene: string; frames?: number; in?: number; out?: number }
 export interface NormalizedClip extends Clip { id: string; in: number; out: number; frames: number }
-export interface CustomTrack { id: string; label?: string; src: string; sync?: 'timeline' | 'free'; offset?: number; volume?: number; enabled?: boolean }
+export interface CustomTrack { id: string; label?: string; src: string; sync?: 'timeline' | 'free'; offset?: number; volume?: number; enabled?: boolean; generated?: never }
 export interface TrackState { enabled?: boolean; volume?: number }
 
 /** A saved version of a film (`films/<film>/projects/<name>.json`). */
@@ -38,10 +38,11 @@ export interface Project {
   audio: { tracks: Record<string, TrackState>; custom: CustomTrack[] };
   output: { size?: string };
 }
+export interface NormalizedProject extends Project { clips: NormalizedClip[] }
 export type ProjectInput = Partial<Omit<Project, 'audio'>> & { audio?: Partial<Project['audio']> };
 
 export interface TimelineClip { i: number; id: string; scene: string; in: number; out: number; t0: number; t1: number; rate: number }
-export interface BuiltTimeline { project: Project; clips: TimelineClip[]; total: number }
+export interface BuiltTimeline { project: NormalizedProject; clips: TimelineClip[]; total: number }
 
 /** A film on disk. `root` is the workspace folder it lives in ('films' = yours, 'examples' = the gallery). */
 export interface FilmRef { id: string; root: string; dir: string }

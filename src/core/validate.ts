@@ -32,7 +32,7 @@ export interface ValidateOptions { fast?: boolean; stills?: string; flash?: bool
 export interface ValidateResult { fail: string[]; warn: string[]; ok: string[] }
 async function validate(dirArg: string, opts: ValidateOptions = {}): Promise<ValidateResult> {
   const dir = path.resolve(dirArg), FAST = !!opts.fast, STILLS = opts.stills ? path.resolve(opts.stills) : null, FLASH = opts.flash !== false;
-  const res = { fail: [], warn: [], ok: [] }, out = opts.log || (m => console.log(m)), C = opts.color === false ? ['', '', '', ''] : ['\x1b[32m', '\x1b[33m', '\x1b[31m', '\x1b[0m'];
+  const res: ValidateResult = { fail: [], warn: [], ok: [] }, out = opts.log || ((m: string) => console.log(m)), C = opts.color === false ? ['', '', '', ''] : ['\x1b[32m', '\x1b[33m', '\x1b[31m', '\x1b[0m'];
   const ok = m => { res.ok.push(m); out(`  ${C[0]}✔${C[3]} ${m}`); };
   const warn = m => { res.warn.push(m); out(`  ${C[1]}!${C[3]} ${m}`); };
   const fail = m => { res.fail.push(m); out(`  ${C[2]}✘${C[3]} ${m}`); };
@@ -42,13 +42,13 @@ async function validate(dirArg: string, opts: ValidateOptions = {}): Promise<Val
   out(`Validating ${path.relative(process.cwd(), dir) || '.'}`);
   const browser = await chromium.launch({ args: ['--force-color-profile=srgb', '--font-render-hinting=none'] });
   let page: Page, manifest: Manifest, errs: string[];
-  const external = new Set();
+  const external = new Set<string>();
   try {
-    let timer = null;
+    let timer: NodeJS.Timeout | undefined;
     ({ page, manifest, errs } = await (async () => {
       const b2 = browser; const file = 'file://' + path.join(dir, 'film.html');
       const p = await b2.newPage({ viewport: { width: 1280, height: 720 } });
-      const e = []; p.on('pageerror', x => e.push('pageerror: ' + x)); p.on('console', m => { if (m.type() === 'error') e.push('console.error: ' + m.text()); });
+      const e: string[] = []; p.on('pageerror', x => e.push('pageerror: ' + x)); p.on('console', m => { if (m.type() === 'error') e.push('console.error: ' + m.text()); });
       p.on('request', r => { const u = r.url(); if (!/^(file:|data:|blob:|about:)/.test(u)) external.add(u); });
       await p.goto(file); await Promise.race([p.evaluate(() => window.ready), new Promise((_, no) => { timer = setTimeout(() => { fail('window.ready did not resolve within 30 s'); no(Abort); }, 30000); })]);
       const hasApi = await p.evaluate(() => ({ seek: typeof window.seek, manifest: typeof window.manifest, ap: typeof window.applyParams }));
@@ -64,7 +64,7 @@ async function validate(dirArg: string, opts: ValidateOptions = {}): Promise<Val
     const schema = JSON.parse(fs.readFileSync(path.join(__dirname, 'film.schema.json'), 'utf8'));
     const ajv = new Ajv({ allErrors: true, strict: false }); const valid = ajv.compile(schema);
     if (valid(manifest)) ok(`manifest matches film.schema.json (${manifest.scenes.length} scenes, ${(manifest.params || []).length} params, ${(manifest.audio || []).length} audio tracks)`);
-    else { valid.errors.slice(0, 12).forEach(e => fail(`manifest ${e.instancePath || '/'} ${e.message}`)); throw Abort; }
+    else { (valid.errors || []).slice(0, 12).forEach(e => fail(`manifest ${e.instancePath || '/'} ${e.message}`)); throw Abort; }
 
     const ids = new Set();
     manifest.scenes.forEach(s => { if (ids.has(s.id)) fail(`duplicate scene id "${s.id}"`); ids.add(s.id); if (s.start >= s.end) fail(`scene "${s.id}" has start >= end`); if (s.end > manifest.duration) fail(`scene "${s.id}" ends at ${s.end}, after the film's duration ${manifest.duration}`); });
@@ -84,7 +84,7 @@ async function validate(dirArg: string, opts: ValidateOptions = {}): Promise<Val
     }
     if (!(manifest.params || []).length) warn('no params: the editor can only reorder/retime this film');
     const aids = new Set();
-    for (const a of manifest.audio || []) { if (aids.has(a.id)) fail(`duplicate audio id "${a.id}"`); aids.add(a.id); if (a.generated) { (manifest.cues || []).length ? ok(`audio "${a.id}": generated from ${manifest.cues.length} cues`) : fail(`audio "${a.id}" is generated but the film declares no cues`); continue; } if (!a.src) { fail(`audio "${a.id}" needs a src or generated`); continue; } const f = path.resolve(dir, a.src); fs.existsSync(f) ? ok(`audio "${a.id}": ${path.relative(process.cwd(), f)} (${(fs.statSync(f).size / 1e6).toFixed(1)} MB)`) : fail(`audio "${a.id}" file not found: ${a.src}`); }
+    for (const a of manifest.audio || []) { if (aids.has(a.id)) fail(`duplicate audio id "${a.id}"`); aids.add(a.id); if (a.generated) { const cues = manifest.cues || []; cues.length ? ok(`audio "${a.id}": generated from ${cues.length} cues`) : fail(`audio "${a.id}" is generated but the film declares no cues`); continue; } if (!a.src) { fail(`audio "${a.id}" needs a src or generated`); continue; } const f = path.resolve(dir, a.src); fs.existsSync(f) ? ok(`audio "${a.id}": ${path.relative(process.cwd(), f)} (${(fs.statSync(f).size / 1e6).toFixed(1)} MB)`) : fail(`audio "${a.id}" file not found: ${a.src}`); }
     if (!res.fail.length) ok('manifest semantics are consistent');
 
     /* ----- rendering behaviour ----- */
@@ -93,9 +93,9 @@ async function validate(dirArg: string, opts: ValidateOptions = {}): Promise<Val
     const shot = async f => { await page.evaluate(f => window.seek(f), f); return page.screenshot({ type: 'png' }); };
     const mids = manifest.scenes.map(s => Math.floor((s.start + s.end) / 2));
     const probes = [...new Set([0, ...mids, manifest.duration - 1])];
-    const base = {}; for (const f of probes) base[f] = await shot(f);
+    const base: Record<number, Buffer> = {}; for (const f of probes) base[f] = await shot(f);
     // pure-function check: jump around, come back
-    let bad = [];
+    const bad: number[] = [];
     for (const f of probes.slice().reverse()) if (!same(await shot(f), base[f])) bad.push(f);
     if (probes.length > 2) { const x = probes[Math.floor(probes.length / 2)]; await shot(probes[1]); await shot(0); if (!same(await shot(x), base[x])) bad.push(x); }
     bad.length ? fail(`seek() is not a pure function of the frame: frame(s) ${[...new Set(bad)].join(', ')} look different when revisited. No Date.now/Math.random/CSS animations/mutable state that survives between seeks.`) : ok('seek() is deterministic when frames are visited in any order');
@@ -123,7 +123,7 @@ async function validate(dirArg: string, opts: ValidateOptions = {}): Promise<Val
       const baseH = {};                                       // baseline hashes with default params
       await page.evaluate(() => Timeline.applyToFilm(window, {}));
       for (const p of testable) for (const f of sample(p)) if (!(f in baseH)) baseH[f] = await shot(f);
-      const noEffect = [];
+      const noEffect: string[] = [];
       for (const p of testable) {
         await page.evaluate(([id, v]) => Timeline.applyToFilm(window, { [id]: v }), [p.id, vals(p)]);
         let changed = false; for (const f of sample(p)) if (differs(await shot(f), baseH[f])) { changed = true; break; }

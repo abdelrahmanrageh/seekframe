@@ -29,7 +29,7 @@ async function openFilm(filmDir: string, project?: ProjectInput | null, size?: s
   await probe.close();
   const [w, h] = size ? size.split('x').map(Number) : [m0.width, m0.height];
   const page = await b.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
-  const errs = []; page.on('pageerror', e => errs.push(String(e))); page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+  const errs: string[] = []; page.on('pageerror', e => errs.push(String(e))); page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
   await page.goto('file://' + file); await page.evaluate(() => window.ready);
   await page.addScriptTag({ path: path.join(BROWSER_DIR, 'timeline.js') });
   const manifest = await page.evaluate(p => JSON.parse(JSON.stringify(Timeline.applyToFilm(window, p))), (project && project.params) || {});
@@ -44,7 +44,7 @@ async function main() {
   const k = manifest.fps / fps;                      // film frames per output frame
   fs.mkdirSync(a.out, { recursive: true });
   const stills = !!a.frames;
-  const list = stills ? a.frames.split(',').map(Number) : (() => { const [x, z] = a.range.split(':').map(Number); const r = []; for (let i = x; i < z; i++) r.push(i); return r; })();
+  const list: number[] = stills ? a.frames.split(',').map(Number) : (() => { const [x, z] = a.range.split(':').map(Number); const r: number[] = []; for (let i = x; i < z; i++) r.push(i); return r; })();
   for (const i of list) {
     const f = stills ? i : i * k;                     // edited-timeline position in film frames
     const { src } = Timeline.sourceFrame(tl, f);

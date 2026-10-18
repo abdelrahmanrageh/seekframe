@@ -15,5 +15,4 @@
 - Captions/subtitles and audio description are on the roadmap; until then provide a transcript (the film's text params are all in the manifest).
 - Set `lang` and `dir` correctly (`<html lang="ar" dir="rtl">`), bundle fonts with the right glyph coverage.
 
-**The editor**: keyboard operable (space, ←/→, shift ±1 s; tabs and controls are real buttons/inputs with visible focus). A full audit (screen-reader
-labels for the timeline, reduced motion, editor i18n/RTL) is on the roadmap.
+**The editor**: keyboard controls include transport, frame stepping, scene selection and resizing; tabs use roving focus, controls have labels, dialogs trap and restore focus, render progress is announced, and reduced-motion styling is enabled. The interface includes English/Arabic labels, RTL layout, light/dark themes, and visible focus. A formal assistive-technology audit remains before public release.
