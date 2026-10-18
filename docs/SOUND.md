@@ -1,6 +1,6 @@
 # Sound: cues, themes, loudness
 
-A film declares **cues** (events on its own frame numbers); `src/sound/engine.js` renders them to a stereo wav.
+A film declares **cues** (events on its own frame numbers); `src/sound/engine.ts` renders them to a stereo wav.
 Because cues come from the same code that animates, the score follows every variant, language and scene edit.
 
 ```js

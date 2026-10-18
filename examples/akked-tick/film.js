@@ -5,7 +5,7 @@
 'use strict';
 const LANG = SF.lang.code === 'ar' ? 'ar' : 'en', RTL = SF.lang.rtl, BASE = window.ASSET_BASE || '';
 const W = 1920, H = 1080, FPS = 30;
-const { clamp, lerp, rng, E, kf, el, css, esc, wipe, pop } = SF;       // shared helpers from src/runtime/seekframe.js
+const { clamp, lerp, rng, E, kf, el, css, esc, wipe, pop } = SF;       // shared helpers from the Seekframe runtime
 const $ = (s, r = document) => r.querySelector(s);
 const X = x => SF.X(x, W);                         // mirror horizontal layout for right-to-left
 const words = SF.words;

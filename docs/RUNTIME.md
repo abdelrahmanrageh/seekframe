@@ -1,9 +1,9 @@
-# Runtime (`src/runtime/seekframe.js`)
+# Runtime (`src/browser/runtime.ts` → `dist/browser/runtime.js`)
 
 Include it before your film code:
 ```html
 <script src="brand/brand.js"></script>                  <!-- optional: window.BRAND -->
-<script src="../../src/runtime/seekframe.js"></script>  <!-- window.SF -->
+<script src="../../dist/browser/runtime.js"></script>  <!-- window.SF (the path `seekframe new` writes for you) -->
 <script src="film.js"></script>
 ```
 Everything is pure (no clocks, no randomness).

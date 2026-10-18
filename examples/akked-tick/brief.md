@@ -98,7 +98,7 @@ Calm, low male voice, a lot of space between lines. Only on scenes 2, 5 and 10:
 - (sc. 5) "Akked confirms every order on WhatsApp — before you ship it."
 - (sc. 10) "Akked. Every order, confirmed."
 
-## 5. Sound design spec (to synthesise with the existing Seekframe sound engine (`src/sound/engine.js`))
+## 5. Sound design spec (to synthesise with the existing Seekframe sound engine (`src/sound/engine.ts`))
 
 - **Key/tempo:** D minor, 75 bpm (0.8 s per beat). Hits land on cuts, and cuts land on the grid where possible.
 - **Sub boom:** sine 55→38 Hz pitch drop over 0.25 s, 2–3 s exponential decay, a little saturation for harmonics

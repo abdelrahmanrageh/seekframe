@@ -23,7 +23,7 @@ Seekframe works with any coding agent that can read files and run shell commands
 | **Claude Desktop / any MCP client** | – | add the same stdio command to the client's MCP config |
 | **ChatGPT / chat UIs** | paste `AGENTS.md` + `docs/FILM_SPEC.md` + one prompt from `llm/prompts/` | no shell access: ask for the files, save them, run the commands yourself |
 
-Use the absolute path of your clone (`npm run mcp-path` prints it). The MCP server only touches this workspace (`films/`, `brand/`, `output/`).
+In a workspace created by `seekframe init` use `npx seekframe mcp`; in a clone use the absolute path of `bin/seekframe.js` (`npm run mcp-path` prints it). The MCP server only touches this workspace (`films/`, `brand/`, `output/`).
 
 ## MCP tools
 `read_docs` · `list_films` · `get_film` · `create_film` · `validate_film` · `review_film` (returns contact-sheet images) · `render_stills` (images) ·

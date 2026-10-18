@@ -1,0 +1,7 @@
+node_modules/
+output/
+.DS_Store
+films/*/uploads/
+# generated from brand.json by `seekframe brand build` (rebuilt automatically)
+**/brand/brand.css
+**/brand/brand.js
