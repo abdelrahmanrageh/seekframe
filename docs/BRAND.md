@@ -1,0 +1,22 @@
+# Brand kit
+
+The kit lives in `brand/` (copied into each film by `seekframe new`). Films read it via `brand/brand.css`
+(fonts + `--brand-*` variables + `--font-display`/`--font-text`) and `brand/brand.js` (`window.BRAND`).
+
+```bash
+seekframe brand init --name "Acme"                    # brand/brand.json (+ bundled Inter and IBM Plex Sans Arabic fallbacks)
+seekframe brand palette logo.png --write              # colours + suggested accent/ink/paper/muted + WCAG contrast table
+seekframe brand import-logo logo.png --strokes        # trace to SVG; extract centre-line strokes for the "draw the logo" effect
+seekframe brand add-font Brand-Bold.woff2 --family "Brand Sans" --weight "600 700" --license "OFL-1.1"
+seekframe brand build                                 # regenerate brand.css / brand.js after editing brand.json
+```
+
+**brand.json** `{ name, nameLocal, colors:{accent,ink,paper,muted}, fonts:[{family, role, files:{weight:path}, license, redistributable}], logo:{svg,strokes}, voice:{tone,tagline}, languages }`.
+Font `files` keys may be weight ranges (`"600 700"`).
+
+- **PNG/JPG → SVG** uses *imagetracerjs* (public domain). For clean flat logos it is excellent; photographic logos need a manual redraw.
+- **Strokes**: thinning + tracing of each colour layer. It gives the draw-on animation for logos made of strokes (like a check mark);
+  review `assets/logo-strokes.svg`, delete stray strokes, reorder the array for draw order. Filled lettering is better revealed with a mask.
+- **Fonts and licences:** `redistributable: false` (or `--no-redistribute`) puts the files in `.gitignore`; the CSS falls back to the bundled
+  OFL fonts for everyone who clones without them. Never commit a font whose licence forbids redistribution.
+- `palette` warns when your accent has poor contrast on paper (a bright lime on white is ~1.3:1): use it as a *fill* behind dark text, not as text.
