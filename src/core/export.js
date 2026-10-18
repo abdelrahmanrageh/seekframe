@@ -5,7 +5,7 @@ const { spawn } = require('child_process');
 const Timeline = require('./timeline.js');
 const { openFilm } = require('./render.js');
 const { ROOT } = require('./workspace.js');
-let FFMPEG = 'ffmpeg'; try { FFMPEG = require('ffmpeg-static') || 'ffmpeg'; } catch (e) {}
+const { ffmpegPath } = require('./ffmpeg.js');
 
 function run(cmd, args, opts, procs) {
   return new Promise((resolve, reject) => {
@@ -56,8 +56,8 @@ async function exportFilm(o) {
     if (inputs.length) args.push('-filter_complex', Timeline.audioFilter(tl, manifest.fps, inputs), '-map', '0:v', '-map', '[aout]', '-c:a', 'aac', '-b:a', '192k');
     args.push('-t', (tl.total / manifest.fps).toFixed(3), '-movflags', '+faststart');
     fs.mkdirSync(path.dirname(out), { recursive: true }); args.push(out);
-    await run(FFMPEG, args, { cwd: ROOT }, procs);
+    await run(ffmpegPath(), args, { cwd: ROOT }, procs);
     return { out, frames: n, seconds: tl.total / manifest.fps };
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 }
-module.exports = { exportFilm, run, FFMPEG };
+module.exports = { exportFilm, run };

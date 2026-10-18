@@ -90,7 +90,7 @@ async function review(film, o = {}) {
     else if (fr.maxFlashes >= 2) Wn(v, `photosensitivity: up to ${fr.maxFlashes} full-frame flashes per second at ${fr.at.toFixed(1)} s (limit 3). Fine for most viewers; soften if your audience is broad.`);
     else log(`  \x1b[32m✔\x1b[0m [${v}] no rapid flashing`);
     // contact sheet
-    let ff = 'ffmpeg'; try { ff = require('ffmpeg-static'); } catch (e) {}
+    const ff = require('./ffmpeg.js').ffmpegPath();
     const cols = manifest.width >= manifest.height ? 4 : 5, tw = manifest.width >= manifest.height ? 480 : 270, th = Math.round(tw * manifest.height / manifest.width);
     const args = ['-v', 'error', '-y']; stills.forEach(s => args.push('-i', s));
     const filt = stills.map((_, i) => `[${i}:v]scale=${tw}:${th}[v${i}]`).join(';') + ';' + stills.map((_, i) => `[v${i}]`).join('') + `xstack=inputs=${stills.length}:layout=${stills.map((_, i) => `${(i % cols) * tw}_${Math.floor(i / cols) * th}`).join('|')}:fill=black`;
