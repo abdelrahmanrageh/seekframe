@@ -16,7 +16,11 @@ export interface FilmSpec {
   audio?: AudioTrack[] | ((values: Record<string, ParamValue>) => AudioTrack[]);
   /** sound events on the same frames you animate on */
   cues?: (values: Record<string, ParamValue>) => Cue[];
-  soundtrack?: { theme?: string; loudness?: number }; variants?: Variants; sizes?: SizeOption[];
+  /** sound theme and loudness; may be a function of the current values (each variant can sound different) */
+  soundtrack?: { theme?: string; loudness?: number } | ((values: Record<string, ParamValue>) => { theme?: string; loudness?: number });
+  variants?: Variants; sizes?: SizeOption[];
+  /** source frame the editor opens on (default 0) */
+  poster?: number;
   /** (re)build the DOM for these param values */
   build(values: Record<string, ParamValue>): void;
   /** draw frame f (film fps units, may be fractional). MUST be a pure function of f. */

@@ -62,7 +62,8 @@ Machine-readable schema: [`src/core/film.schema.json`](../src/core/film.schema.j
   params:  [...],                                                      // §5
   audio:   [...],                                                      // §6
   cues:    [...],                                                      // §7  events for the generated score
-  soundtrack: { theme: 'deep', loudness: -16 },
+  soundtrack: { theme: 'deep', loudness: -16 },                        // with SF.define it may be a function of the param values
+  poster:  60,                                                         // frame the editor opens on (frame 0 is often blank)
   variants: { axes: [...], presets: [...], thumbFrame: 100 },          // §8
   sizes:   [{ width: 1080, height: 1920, label: 'Vertical' }],         // optional, §9
   lang:    { code: 'ar', rtl: true },                                  // set by SF.define

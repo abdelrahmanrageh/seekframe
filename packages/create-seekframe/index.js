@@ -9,7 +9,7 @@ const run = (cmd, a, cwd) => { const r = spawnSync(cmd, a, { cwd, stdio: 'inheri
 
 if (fs.existsSync(dir) && fs.readdirSync(dir).length) { console.error(`${dirArg} is not empty. Choose a new folder, e.g. npm create seekframe my-films`); process.exit(1); }
 fs.mkdirSync(dir, { recursive: true });
-fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name, private: true, scripts: { editor: 'seekframe editor', doctor: 'seekframe doctor' }, devDependencies: { seekframe: val('spec') || 'latest' } }, null, 2) + '\n');
+fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name, private: true, scripts: { editor: 'seekframe editor', doctor: 'seekframe doctor' }, devDependencies: { seekframe: val('spec') || 'latest' }, allowScripts: { esbuild: true, 'ffmpeg-static': true } }, null, 2) + '\n');
 console.log(`Creating a Seekframe workspace in ${dirArg} …`);
 if (!flag('no-install')) run('npm', ['install'], dir);
 run('npx', ['--no-install', 'seekframe', 'init', '.'], dir);

@@ -22,6 +22,8 @@ export interface Manifest {
   schema: 1; title: string; width: number; height: number; fps: number; duration: number;
   scenes: Scene[]; params?: Param[]; audio?: AudioTrack[]; cues?: Cue[];
   soundtrack?: { theme?: string; loudness?: number }; variants?: Variants; sizes?: SizeOption[]; lang?: { code: string; rtl: boolean };
+  /** source frame the editor opens on and thumbnails use (a frame that shows what the film is) */
+  poster?: number;
 }
 
 /** One excerpt of a scene on the edited timeline. `frames` = how long it plays; `in`/`out` = which part of the scene (source frames). */

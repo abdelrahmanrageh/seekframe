@@ -25,7 +25,7 @@ jobs:
           mkdir -p public
           cp site/index.html public/index.html
           mkdir -p public/examples/seekframe-launch/preview
-          cp examples/seekframe-launch/preview/launch.gif public/examples/seekframe-launch/preview/
+          cp examples/seekframe-launch/preview/*.mp4 examples/seekframe-launch/preview/poster.jpg public/examples/seekframe-launch/preview/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public

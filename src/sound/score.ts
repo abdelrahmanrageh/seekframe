@@ -18,6 +18,6 @@ async function soundCmd(film, a) {
   const theme = a.theme || (manifest.soundtrack && manifest.soundtrack.theme) || 'deep'; if (!THEMES[theme]) { console.error(`unknown theme ${theme}. Available: ${Object.keys(THEMES).join(', ')}`); process.exit(2); }
   const out = path.resolve(a.out || path.join('output', `${film.id}-${a.version || 'default'}-score.wav`)); fs.mkdirSync(path.dirname(out), { recursive: true });
   const r = await renderScore({ manifest, theme, out, rtl: !!(manifest.lang && manifest.lang.rtl) });
-  console.log(`${path.relative(process.cwd(), out)}  (${manifest.cues.length} cues, theme ${theme}, input ${r.inputLUFS} LUFS → -16, LRA ${r.lra})`);
+  console.log(`${path.relative(process.cwd(), out)}  (${manifest.cues.length} cues, theme ${theme}, input ${r.inputLUFS} LUFS → ${(manifest.soundtrack && manifest.soundtrack.loudness) ?? -16}, LRA ${r.lra})`);
 }
 export { renderScore, soundCmd };

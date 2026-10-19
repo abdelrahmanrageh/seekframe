@@ -2,6 +2,10 @@
 
 **Brand films as code.** Your LLM writes the film. You edit it in the browser: text, colours, scene order, length, sound, variants. It renders to MP4.
 
+![The Seekframe launch film](examples/seekframe-launch/preview/launch.gif)
+
+*The launch film, made with Seekframe: 3 hooks × 4 looks, a halftone logo built dot by dot, and a generated 120 BPM score. [Watch it with sound](https://abdelrahmanrageh.github.io/seekframe/) · [how it's made](examples/seekframe-launch/).*
+
 | Doubt · mono | Counter · deep green | Cash on delivery · lime | Arabic · RTL |
 |---|---|---|---|
 | ![](examples/akked-tick/preview/v1-doubt-mono.gif) | ![](examples/akked-tick/preview/v2-counter-deep.gif) | ![](examples/akked-tick/preview/v3-cod-lime.gif) | ![](examples/akked-tick/preview/v1-doubt-mono-ar.gif) |

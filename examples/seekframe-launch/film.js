@@ -1,148 +1,513 @@
 // @ts-check
 /// <reference path="../../dist/types/browser/film-globals.d.ts" />
-/* Seekframe launch film: "Your LLM can write code. Can it see a film?" 1920x1080, 30 fps, 28 s.
-   Made with Seekframe itself. Every wording and colour is an editable param; the score is generated from the cues below. */
+/* Seekframe launch film. 1920x1080, 30 fps, 32 s, made with Seekframe itself.
+   Variants: hook (3 stories) x look (4 colourways) x sound (full score / hits only). Every text and colour is a param.
+   The score is generated from cues at 120 BPM (one beat = 15 frames), so every cut lands on a beat. */
 'use strict';
-const { E, rng, lerp, clamp, kf, hash, esc } = SF;
-// el(tag, class, html, parent): local helper (SF.el takes (tag, cls, parent, html))
-const el = (tag, cls, html, parent) => SF.el(tag, cls, parent, html || undefined);
+const { E, rng, lerp, clamp, hash, esc } = SF;
+// el(tag, class, html, parent); SF.el takes (tag, cls, parent, html)
+const el = (tag, cls, html, parent) => SF.el(tag, cls, parent, html == null || html === '' ? undefined : html);
 
 const SCENES = [
   { id: 'hook', name: 'Hook', start: 0, end: 120 },
-  { id: 'logo', name: 'Logo', start: 120, end: 210 },
-  { id: 'prompt', name: 'Prompt', start: 210, end: 360 },
-  { id: 'editor', name: 'Editor', start: 360, end: 510 },
-  { id: 'variants', name: 'Variants', start: 510, end: 630 },
-  { id: 'sound', name: 'Sound', start: 630, end: 720 },
-  { id: 'end', name: 'End card', start: 720, end: 840 },
+  { id: 'agents', name: 'Your agent', start: 120, end: 240 },
+  { id: 'prompt', name: 'Prompt', start: 240, end: 360 },
+  { id: 'generate', name: 'Generate + check', start: 360, end: 480 },
+  { id: 'editor', name: 'Editor', start: 480, end: 600 },
+  { id: 'variants', name: 'Variants', start: 600, end: 720 },
+  { id: 'sound', name: 'Sound', start: 720, end: 795 },
+  { id: 'logo', name: 'Logo reveal', start: 795, end: 960 },
 ];
 const S0 = Object.fromEntries(SCENES.map(s => [s.id, s.start]));
+const BEAT = 15;
+
+/* ---------- looks ---------- */
+const LOOKS = {
+  night: { label: 'Night · lime glow', bg: '#0c0c0b', fg: '#f5f2e9', acc: '#c9f23d', glow: '#7fa313', glow2: '#22300a', theme: 'deep',
+    blobs: [{ c: 'glow', x: .5, y: 1.12, r: 820, amp: 70, o: .95 }, { c: 'glow2', x: .12, y: .9, r: 640, amp: 140, o: .9 }, { c: 'glow2', x: .9, y: .85, r: 560, amp: 140, o: .8 }] },
+  cream: { label: 'Cream · editorial', bg: '#f4ecda', fg: '#141411', acc: '#b4cf3a', glow: '#e7d9a9', glow2: '#ffffff', theme: 'deep',
+    blobs: [{ c: 'glow', x: .86, y: .08, r: 720, amp: 120, o: .9 }, { c: 'glow2', x: .18, y: .9, r: 720, amp: 140, o: .9 }, { c: '#d7e59a', x: .55, y: 1.15, r: 520, amp: 120, o: .55 }] },
+  electric: { label: 'Electric · blue gradient', bg: '#1733e6', fg: '#ffffff', acc: '#dcff4f', glow: '#6e8cff', glow2: '#0a17a6', theme: 'bright',
+    blobs: [{ c: 'glow', x: .22, y: .28, r: 820, amp: 220, o: 1 }, { c: '#a9bfff', x: .82, y: .72, r: 700, amp: 240, o: .85 }, { c: 'glow2', x: .62, y: .05, r: 640, amp: 200, o: 1 }] },
+  sunset: { label: 'Sunset · warm gradient', bg: '#1a0c12', fg: '#fff3ea', acc: '#ffb547', glow: '#ff4f6d', glow2: '#6f2bd0', theme: 'bright',
+    blobs: [{ c: 'glow', x: .18, y: .82, r: 800, amp: 190, o: .9 }, { c: 'glow2', x: .86, y: .22, r: 700, amp: 210, o: .85 }, { c: '#ffb547', x: .55, y: 1.15, r: 560, amp: 120, o: .6 }] },
+};
+const LOOK_IDS = Object.keys(LOOKS);
+const HOOKS = [
+  { value: 'whatif', label: 'What if: kinetic type' },
+  { value: 'clock', label: 'Clock: every frame is code' },
+  { value: 'scale', label: 'Scale: one prompt, hundreds of films' },
+];
+const lumOf = hex => { const n = parseInt(String(hex).slice(1), 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+const inkOn = hex => lumOf(hex) > .38 ? '#0c0c0b' : '#ffffff';
 
 /* ---------- params ---------- */
 const DEF = {
-  'hook-1': 'Your LLM can write code.', 'hook-2': 'Can it [see] a film?',
-  'logo-line': 'Brand films as code.',
-  'prompt': 'Read docs/FILM_SPEC.md. Build a 20 s product reveal for Acme, with every wording and colour as an editable option. Then validate, review and fix.',
-  'chk-1': 'validate: determinism, params, flashing', 'chk-2': 'review: overflow, contrast, contact sheets', 'chk-3': 'sync: sound lands on the picture',
-  'ed-field': 'Spring sale', 'ed-label': 'Headline',
-  'v-1': 'Doubt', 'v-2': 'Counter', 'v-3': 'Cash on delivery', 'v-4': 'عربي · RTL', 'v-5': 'Folded tiles', 'v-6': 'Chat bubbles',
-  'sound-line': 'Sound that can’t drift: cues sit on the frames you animate.',
-  'end-tag': 'Brand films as code.', 'end-url': 'github.com/abdelrahmanrageh/seekframe', 'end-note': 'Open source · MIT',
-  'logo': 'brand/assets/logo.jpg', 'size': 100,
+  hook: 'whatif', look: 'night', music: 'score', size: 100, logo: '',
+  'w-1': 'What if your AI', 'w-2': 'could make [films]?',
+  'c-1': 'Every frame', 'c-2': 'is a line of [code].', 'c-unit': 'frame',
+  's-1': 'One prompt.', 's-p': 'make a launch film for my brand', 's-2': '[Hundreds] of films.',
+  'a-label': 'Works with your agent', 'a-1': 'Write it with', 'a-list': 'Claude Code, Codex, Cursor, opencode, Gemini CLI, Copilot', 'a-2': 'or any agent with MCP.',
+  'a-sub': 'AGENTS.md · CLAUDE.md · Cursor rules · MCP server · prompt library',
+  'p-tool': 'Seekframe MCP', 'p-text': 'Make a 30-second launch film for Seekframe. Three hooks, four looks, and sound that hits on every cut.', 'p-file': 'brand/ · logo, colours, fonts',
+  'g-1': 'It writes the film.', 'g-2': 'Then it [checks] its own work.', 'g-steps': 'validate, review, sync, render',
+  'e-1': 'You take the last 10%.', 'e-2': '[Edit] it like a doc.', 'e-field': 'Spring sale',
+  'v-1': 'One film.', 'v-2': '[Every] variant.', 'v-chips': 'English, عربي RTL, 16:9, 9:16, 1:1, 4 looks, 3 hooks, MP4 at 60 fps',
+  'snd-1': 'Sound that lands', 'snd-2': 'on the [frame].',
+  'end-tag': 'Brand films as code', 'end-url': 'github.com/abdelrahmanrageh/seekframe', 'end-note': 'Open source · MIT',
 };
-const T = (/** @type {string} */ id) => SF.value(id, DEF[id]);
-const TXT = (id, label, scene, extra = {}) => ({ id, type: 'text', label, scene, default: DEF[id], ...extra });
-const PARAMS = [
-  ...SF.brandParams(),
-  { id: 'logo', type: 'image', label: 'Logo image', default: DEF.logo, help: 'Shown on the logo and end scenes.' },
-  { id: 'size', type: 'number', label: 'Headline size', scene: 'hook', default: 100, min: 70, max: 130, step: 2, unit: '', cssVar: '--title-size' },
-  TXT('hook-1', 'Line 1', 'hook'), TXT('hook-2', 'Line 2 ([word] = highlighted)', 'hook'),
-  TXT('logo-line', 'Tagline', 'logo'),
-  TXT('prompt', 'Prompt', 'prompt', { multiline: true }), TXT('chk-1', 'Check 1', 'prompt'), TXT('chk-2', 'Check 2', 'prompt'), TXT('chk-3', 'Check 3', 'prompt'),
-  TXT('ed-label', 'Field label', 'editor'), TXT('ed-field', 'Field text (typed live)', 'editor'),
-  ...['v-1', 'v-2', 'v-3', 'v-4', 'v-5', 'v-6'].map((id, i) => TXT(id, `Tile ${i + 1}`, 'variants')),
-  TXT('sound-line', 'Caption', 'sound', { multiline: true }),
-  TXT('end-tag', 'Tagline', 'end'), TXT('end-url', 'URL', 'end'), TXT('end-note', 'Note', 'end'),
-];
+const V = id => SF.value(id, DEF[id]);
+const lookOf = v => LOOKS[v.look] || LOOKS[DEF.look];
+const HOOK_LINE = { whatif: 'w-1', clock: 'c-1', scale: 's-1' };
 
-/* ---------- sound: cues on the same frames as the animation ---------- */
-function cues() {
-  const c = SF.cues();
-  c.drone(0, 118, { gain: .03, open0: 240, open1: 700 });
-  c.tick(34, { gain: .08, freq: 2000 }); c.boom(58, { gain: .55, decay: 1.6 });                         // "see" lands
-  c.silence(116, 120);
-  c.boom(S0.logo, { gain: .9, decay: 3.2 }); c.whoosh(S0.logo - 6, { dur: .6, gain: .2, p0: -.5, p1: .5 }); c.dtick(S0.logo + 34, { gain: .22 });
-  for (let f = S0.prompt + 14; f < S0.prompt + 96; f += 3) c.tick(f, { gain: .035, freq: 1700 + (f % 5) * 90, pan: (f % 2 ? .2 : -.2) });   // typing
-  [0, 1, 2].forEach(i => { c.pluck(S0.prompt + 104 + i * 12, { note: ['D2', 'F2', 'A2'][i], gain: .35 }); c.tick(S0.prompt + 104 + i * 12, { gain: .12, freq: 2300 + i * 160 }); });
-  c.boom(S0.editor, { gain: .5, decay: 1.2 }); c.whoosh(S0.editor - 4, { dur: .5, gain: .14 });
-  for (let f = S0.editor + 40; f < S0.editor + 84; f += 4) c.tick(f, { gain: .04, freq: 1900 + (f % 3) * 120, pan: .15 });
-  c.dtick(S0.editor + 96, { gain: .2 }); c.boom(S0.editor + 112, { gain: .35, decay: .9, f0: 70, f1: 42 });
-  [0, 1, 2, 3, 4, 5].forEach(i => { const f = S0.variants + 8 + i * 16; c.pluck(f, { note: ['D2', 'F2', 'A2', 'D3', 'F2', 'A2'][i], gain: .4 }); c.boom(f, { gain: .22, decay: .5, f0: 70, f1: 44 }); c.tick(f, { gain: .08, freq: 2100 + i * 100, pan: (i % 3 - 1) * .4 }); });
-  c.kick(S0.sound, { gain: .4 }); for (let f = S0.sound; f < S0.sound + 88; f += 24) { c.kick(f, { gain: .26 }); c.shaker(f + 12, { gain: .04 }); }
-  c.riser(S0.sound + 20, S0.end, { gain: .24 }); c.silence(S0.end - 3, S0.end);
-  c.boom(S0.end, { gain: 1, decay: 4 }); c.dtick(S0.end + 32, { gain: .26 }); c.pad(S0.end + 20, 840, { gain: .02 });
+function params(v) {
+  const L = lookOf(v), hook = v.hook || DEF.hook;
+  const T = (id, label, scene, extra = {}) => ({ id, type: 'text', label, scene, default: DEF[id], ...extra });
+  const out = [
+    { id: 'hook', type: 'select', label: 'Hook (story)', default: DEF.hook, options: HOOKS },
+    { id: 'look', type: 'select', label: 'Look', default: DEF.look, options: LOOK_IDS.map(id => ({ value: id, label: LOOKS[id].label })) },
+    { id: 'music', type: 'select', label: 'Sound', default: DEF.music, options: [{ value: 'score', label: 'Full score: beat, bass, chords' }, { value: 'hits', label: 'Hits only (minimal)' }] },
+    { id: 'c-bg', type: 'color', label: 'Background', default: L.bg },
+    { id: 'c-fg', type: 'color', label: 'Text', default: L.fg },
+    { id: 'c-acc', type: 'color', label: 'Accent', default: L.acc },
+    { id: 'c-glow', type: 'color', label: 'Glow', default: L.glow },
+    { id: 'size', type: 'number', label: 'Headline size', default: DEF.size, min: 70, max: 120, step: 2, cssVar: '--title-size' },
+  ];
+  if (hook === 'whatif') out.push(T('w-1', 'Line 1', 'hook'), T('w-2', 'Line 2 ([word] = highlighted)', 'hook'));
+  if (hook === 'clock') out.push(T('c-1', 'Line 1', 'hook'), T('c-2', 'Line 2 ([word] = highlighted)', 'hook'), T('c-unit', 'Counter label', 'hook'));
+  if (hook === 'scale') out.push(T('s-1', 'Line 1', 'hook'), T('s-p', 'Prompt in the pill', 'hook'), T('s-2', 'Line 2 ([word] = highlighted)', 'hook'));
+  out.push(
+    T('a-label', 'Label', 'agents'), T('a-1', 'Before the logos', 'agents'), T('a-list', 'Agents (comma separated)', 'agents'), T('a-2', 'After the logos', 'agents'), T('a-sub', 'Second line', 'agents'),
+    T('p-tool', 'Tool name', 'prompt'), T('p-text', 'Prompt', 'prompt', { multiline: true }), T('p-file', 'Attachment', 'prompt'),
+    T('g-1', 'Line 1', 'generate'), T('g-2', 'Line 2', 'generate'), T('g-steps', 'Steps (comma separated)', 'generate'),
+    T('e-1', 'Line 1', 'editor'), T('e-2', 'Line 2', 'editor'), T('e-field', 'Text typed in the editor', 'editor'),
+    T('v-1', 'Line 1', 'variants'), T('v-2', 'Line 2', 'variants'), T('v-chips', 'Chips (comma separated)', 'variants'),
+    T('snd-1', 'Line 1', 'sound'), T('snd-2', 'Line 2', 'sound'),
+    T('end-tag', 'Tagline', 'logo'), T('end-url', 'URL', 'logo'), T('end-note', 'Note', 'logo'),
+    { id: 'logo', type: 'image', label: 'Logo (empty = animated Seekframe mark)', scene: 'logo', default: '' },
+  );
+  return out;
+}
+
+/* ---------- sound: 120 BPM, D minor (Dm, Bb, F, C) ---------- */
+const PROG = [['D3', 'F3', 'A3'], ['A#2', 'D3', 'F3'], ['F2', 'A2', 'C3'], ['C3', 'E3', 'G3']];
+const BASS = ['D2', 'A#1', 'F2', 'C2'];
+const ARP = [['D4', 'F4', 'A4', 'D5'], ['A#3', 'D4', 'F4', 'A#4'], ['F4', 'A4', 'C5', 'F5'], ['C4', 'E4', 'G4', 'C5']];
+const PROMPT_START = 40, PROMPT_END = 92;
+function cues(v) {
+  const c = SF.cues(), hook = v.hook || DEF.hook, sec = BEAT / 30;              // one beat in seconds
+  const bar = f => Math.floor(f / (BEAT * 4)) % 4;
+  // a groove from a to b: kick on the beat, offbeat hats, claps on 2 and 4, pumping bass and chords, optional arp
+  const groove = (a, b, o = {}) => {
+    for (let f = a; f < b; f += BEAT) {
+      const beatN = Math.round(f / BEAT) % 4;
+      if (o.kick !== false) c.kick(f, { gain: o.kickGain ?? .42 });
+      if (o.hat !== false) c.hat(f + BEAT / 2, { gain: .05, pan: beatN % 2 ? .25 : -.25 });
+      if (o.clap && beatN % 2 === 1) c.clap(f, { gain: .17 });
+      if (o.open && beatN === 0) c.hat(f, { open: true, gain: .05 });
+    }
+    for (let f = a; f < b; f += BEAT * 4) {
+      const k = bar(f), e = Math.min(b, f + BEAT * 4);
+      if (o.bass !== false) c.bass(f, e, { note: BASS[k], beat: sec, gain: .26 });
+      if (o.chord !== false) c.chord(f, e, { notes: PROG[k], beat: sec, gain: o.chordGain ?? .07, cut0: o.cut ?? 1100, cut1: o.cut ?? 1100 });
+      if (o.arp) for (let i = 0; i < 8 && f + i * BEAT / 2 < b; i++) c.keys(f + i * BEAT / 2, { note: ARP[k][[0, 1, 2, 3, 2, 1, 3, 2][i]], gain: .045, dur: .5, pan: (i % 2 ? .3 : -.3) });
+    }
+  };
+
+  /* hook: filtered intro, hook-specific hits, a reverse swell into the drop */
+  const H = S0.hook;
+  c.drone(H, H + 118, { gain: .045, open0: 220, open1: 900 });
+  c.chord(H, H + 118, { notes: ['D3', 'A3', 'F4'], cut0: 300, cut1: 1000, gain: .05, attack: 1.2, release: .1 });
+  if (hook === 'whatif') {
+    [4, 12, 20, 28, 44, 52].forEach((f, i) => { c.keys(H + f, { note: ['D4', 'F4', 'A4', 'C5', 'D5', 'F5'][i], gain: .08, dur: 1 }); c.tick(H + f, { gain: .06, freq: 2000 + i * 120 }); });
+    c.boom(H + 60, { gain: .5, decay: 1.4 }); c.dtick(H + 62, { gain: .2 }); c.whoosh(H + 64, { dur: .7, gain: .14, p0: -.2, p1: .2 });
+  } else if (hook === 'clock') {
+    c.thud(H + 2, { gain: .3 });
+    for (let f = 8; f < 100; f += 7.5) c.tick(H + f, { gain: .07, freq: Math.round(f / 7.5) % 2 ? 1800 : 2500, pan: Math.sin(f / 120 * 4 * Math.PI) * .5 });
+    c.keys(H + 30, { note: 'A4', gain: .07 }); c.keys(H + 50, { note: 'D5', gain: .08 }); c.boom(H + 50, { gain: .35, decay: 1 });
+    c.whoosh(H + 94, { dur: .6, gain: .22 });
+  } else {
+    for (let f = 8; f < 38; f += 2) c.key(H + f, { gain: .05, pan: (hash(f) - .5) * .5 });
+    [48, 63, 78, 93].forEach((f, i) => { c.pluck(H + f, { note: ['D2', 'F2', 'A2', 'D3'][i], gain: .35 }); c.glitch(H + f, { gain: .05, seed: i }); c.stamp(H + f, { gain: .16 + i * .05 }); });
+    c.dtick(H + 72, { gain: .2 });
+  }
+  c.reverse(H + 96, H + 120, { notes: ['D3', 'A3'], gain: .38 });
+
+  /* agents: the drop */
+  const A = S0.agents;
+  c.impact(A, { gain: .75, tail: 2.2 });
+  groove(A, A + 120, { clap: true, open: true });
+  for (let i = 0; i < 6; i++) c.dtick(A + 18 + i * 15, { gain: .11 });
+
+  /* prompt: breakdown, typing, click */
+  const P = S0.prompt;
+  groove(P, P + 120, { kick: false, bass: false, chordGain: .05, cut: 520 });
+  c.blip(P + 14, { freq: 520, gain: .07 }); [20, 26, 32].forEach(f => c.tick(P + f, { gain: .07, freq: 2300 }));
+  c.whoosh(P + 22, { dur: .5, gain: .12, p0: 0, p1: 0 });
+  for (let f = PROMPT_START; f < PROMPT_END; f += 2) c.key(P + f, { gain: .055, pan: (hash(f * 1.3) - .5) * .5, freq: 1300 + Math.round(hash(f) * 900) });
+  c.thud(P + 62, { gain: .22 }); c.swipe(P + 88, { dur: .45, gain: .06, p0: .3, p1: .5 });
+  c.riser(P + 70, P + 104, { gain: .2 });
+  c.tick(P + 104, { gain: .2, freq: 1500 }); c.kick(P + 104, { gain: .45 }); c.whoosh(P + 108, { dur: .4, gain: .16, p0: .3, p1: -.3 });
+
+  /* generate: full groove with arp; cards land, checks stamp */
+  const G = S0.generate;
+  groove(G, G + 120, { clap: true, arp: true });
+  for (let i = 0; i < 9; i++) c.tick(G + 24 + i * 5, { gain: .06, freq: 1900 + i * 70, pan: ((i % 3) - 1) * .4 });
+  [60, 75, 90, 105].forEach((f, i) => { c.stamp(G + f, { gain: .24 }); c.keys(G + f, { note: ['A4', 'C5', 'D5', 'F5'][i], gain: .07 }); });
+
+  /* editor */
+  const D = S0.editor;
+  groove(D, D + 120, { clap: true });
+  c.whoosh(D, { dur: .5, gain: .14 }); c.tick(D + 26, { gain: .1, freq: 2600 });
+  for (let f = 32; f < 58; f += 2) c.key(D + f, { gain: .05, pan: .25 });
+  [70, 84, 98].forEach((f, i) => c.blip(D + f, { freq: 440 + i * 110, gain: .07 }));
+
+  /* variants: groove + a glitch for every tile */
+  const VV = S0.variants;
+  groove(VV, VV + 120, { clap: true, open: true, arp: true });
+  for (let i = 0; i < 9; i++) c.glitch(VV + 6 + i * 7, { gain: .045, seed: i, pan: ((i % 3) - 1) * .5 });
+  c.slide(VV + 40, VV + 118, { gain: .04, p0: .8, p1: -.8 });
+
+  /* sound: heavy hits on the beat, then the music stops and swells backwards into the reveal */
+  const N = S0.sound;
+  groove(N, N + 60, { clap: true, kickGain: .5 });
+  [0, 15, 30, 45].forEach(f => c.boom(N + f, { gain: .35, decay: .7 }));
+  c.swipe(N + 56, { dur: .3, gain: .12, p0: -.5, p1: .5 });
+  c.reverse(N + 61, N + 75, { notes: ['D3', 'A3', 'F4'], gain: .42 });
+
+  /* logo: the hit, dots shimmering in, the wordmark */
+  const L = S0.logo;
+  c.impact(L, { gain: 1, tail: 4 });
+  c.chord(L, L + 165, { notes: ['D3', 'A3', 'E4', 'F4'], cut0: 450, cut1: 2200, gain: .085, attack: .05, release: 1.6 });
+  c.bass(L, L + 120, { note: 'D2', gain: .2 });
+  for (let f = 6; f < 60; f += 1.5) c.tick(L + f, { gain: .018 + .02 * hash(f), freq: 3000 + Math.round(hash(f * 7) * 2500), pan: (hash(f * 3) - .5) * 1.4 });
+  c.keys(L + 22, { note: 'A4', gain: .06, dur: 2 }); c.keys(L + 30, { note: 'D5', gain: .06, dur: 2 });
+  'seekframe'.split('').forEach((_, i) => c.keys(L + 92 + i * 3, { note: ['D5', 'E5', 'F5', 'A5', 'D6', 'A5', 'F5', 'E5', 'D5'][i], gain: .035, dur: .6 }));
+  c.dtick(L + 118, { gain: .24 }); c.tick(L + 132, { gain: .08 }); c.boom(L + 118, { gain: .3, decay: 2 });
   return c.list;
 }
+
+/* ---------- small drawing helpers ---------- */
+// neutral glyphs for the agent chips (not the vendors' marks)
+const ICONS = [
+  '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg>',
+  '<svg viewBox="0 0 24 24"><path d="M12 2l8.7 5v10L12 22l-8.7-5V7z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg>',
+  '<svg viewBox="0 0 24 24"><path d="M12 3l9 17H3z" fill="currentColor"/></svg>',
+  '<svg viewBox="0 0 24 24"><path d="M8 4C5 4 6 10 3 12c3 2 2 8 5 8M16 4c3 0 2 6 5 8-3 2-2 8-5 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
+  '<svg viewBox="0 0 24 24"><path d="M12 1c1 6 5 10 11 11-6 1-10 5-11 11-1-6-5-10-11-11 6-1 10-5 11-11z" fill="currentColor"/></svg>',
+  '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
+];
+const ARROW = '<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const CURSOR = '<svg viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L16 20l-3 1.4-3.4-7.3L4 18z" fill="#fff" stroke="#000" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+// the background of a little film frame in a given look
+const lookBg = (L, a = 0) => `radial-gradient(120% 90% at ${30 + a * 40}% 110%, ${L.glow} 0%, transparent 60%), radial-gradient(80% 70% at ${90 - a * 30}% 0%, ${L.glow2} 0%, transparent 70%), ${L.bg}`;
+const list = s => String(s).split(',').map(x => x.trim()).filter(Boolean);
+const pad3 = n => String(Math.max(0, Math.floor(n))).padStart(3, '0');
 
 /* ---------- build ---------- */
 /** @type {Record<string, any>} */ let R = {};
 SF.define({
-  title: 'Seekframe launch', width: 1920, height: 1080, fps: 30, duration: 840, scenes: SCENES, params: PARAMS, cues, soundtrack: { theme: 'deep' },
+  title: 'Seekframe launch', width: 1920, height: 1080, fps: 30, duration: 960, scenes: SCENES, poster: 82,
+  params, cues,
+  soundtrack: v => ({ theme: v.music === 'hits' ? 'minimal' : lookOf(v).theme, loudness: -14 }),
   audio: [{ id: 'score', label: 'Generated score', generated: 'cues', default: true }],
-  variants: { thumbFrame: 60, presets: [{ id: 'default', label: 'Launch · cream', params: {} }, { id: 'night', label: 'Launch · night', params: { 'brand-paper': '#14140f', 'brand-ink': '#faf3e3' } }] },
-  build() {
-    const st = document.getElementById('stage'); st.innerHTML = ''; R = {};
-    const sec = (id, cls) => { const s = el('section', 'sc ' + cls, '', st); s.id = 's-' + id; return s; };
-    // 1 hook
-    R.hook = sec('hook', 'B'); R.h1 = el('div', 'abs big', '', R.hook); R.h2 = el('div', 'abs big', '', R.hook);
-    R.h1.style.cssText = 'left:150px;top:300px'; R.h2.style.cssText = 'left:150px;top:' + (300 + SF.layout().unit * 130) + 'px';
-    R.hw1 = SF.words(R.h1, T('hook-1')); R.hw2 = SF.words(R.h2, T('hook-2'));
-    R.eye = el('div', 'abs label', 'a film is a pure function of the frame number', R.hook); R.eye.style.cssText = 'left:150px;bottom:110px';
-    // 2 logo
-    R.logo = sec('logo', 'A'); R.tile = el('div', 'logotile', '<img alt="Seekframe logo">', R.logo); R.tile.style.cssText = 'left:150px;top:190px;width:700px;height:700px';
-    R.tile.firstChild.src = T('logo'); R.tag = el('div', 'abs big', '', R.logo); R.tag.style.cssText = 'left:960px;top:360px;width:810px;font-size:96px'; R.tw = SF.words(R.tag, T('logo-line'));
-    R.sub = el('div', 'abs label', 'LLM writes · you edit · it renders', R.logo); R.sub.style.cssText = 'left:960px;top:700px';
-    // 3 prompt
-    R.prompt = sec('prompt', 'A'); R.term = el('div', 'term', '<div class="bar"><i></i><i></i><i></i><span class="mono">agent · seekframe</span></div>', R.prompt);
-    R.pre = el('pre', 'mono', '', R.term); R.ok = el('div', 'ok mono', [1, 2, 3].map(i => `<div><b>✓</b><span>${esc(T('chk-' + i))}</span></div>`).join(''), R.term);
-    // 4 editor
-    R.editor = sec('editor', 'B'); R.ed = el('div', 'ed', '<div class="top"><i></i><i></i><i></i><span style="margin-inline-start:18px">seekframe editor</span></div>', R.editor);
-    R.stage = el('div', 'stage', '<div class="t"></div>', R.ed); R.stageT = R.stage.firstChild;
-    R.panel = el('div', 'panel', `<div class="tabs"><span class="on">Scenes</span><span>Style</span><span>Variants</span><span>Brand</span><span>Audio</span><span>Export</span></div><div class="field"><label>${esc(T('ed-label'))}</label><div class="mod"></div></div><div class="field"><label>Length</label><div>3.00 s</div></div>`, R.ed);
-    R.fieldBox = R.panel.querySelector('.field div'); R.tl = el('div', 'tl', '<div class="cues"></div>', R.ed);
-    const segs = [['Hook', 90], ['Logo', 60], ['Prompt', 110], ['Editor', 100], ['Variants', 80], ['Sound', 60], ['End', 80]], total = segs.reduce((a, s) => a + s[1], 0), W = 1508; let x = 0; R.segs = [];
-    segs.forEach(([n, w]) => { const wpx = Math.round(w / total * W); const s = el('div', 'seg', esc(n), R.tl); s.style.left = x + 'px'; s.style.width = (wpx - 6) + 'px'; x += wpx; R.segs.push(s); });
-    R.head = el('div', 'head', '', R.tl); for (let i = 0; i < 24; i++) { const c = el('i', '', '', R.tl.querySelector('.cues')); c.style.left = Math.round(hash(i * 3.1) * W) + 'px'; }
-    // 5 variants
-    R.variants = sec('variants', 'B'); el('div', 'abs label', 'one film · every look', R.variants).style.cssText = 'left:150px;top:150px';
-    R.vg = el('div', 'vg', '', R.variants); const mk = ['<mark>Doubt</mark>', 'Counter', '<mark>Cash</mark>', '<mark>عربي</mark>', 'Tiles', 'Bubbles'];
-    R.tiles = [1, 2, 3, 4, 5, 6].map(i => el('div', 'tile t' + i, `<div class="nm">${esc(T('v-' + i))}</div><div class="sm">${mk[i - 1]}</div>`, R.vg));
-    // 6 sound
-    R.sound = sec('sound', 'A'); R.wb = el('div', 'wavebars', '', R.sound); R.bars = Array.from({ length: 64 }, () => el('i', '', '', R.wb));
-    R.cr = el('div', 'cuerow', '', R.sound); R.cues = Array.from({ length: 14 }, (_, i) => { const c = el('i', '', '', R.cr); c.style.left = Math.round(i / 13 * 1600) + 'px'; return c; });
-    R.cap = el('div', 'abs big', esc(T('sound-line')), R.sound); R.cap.style.cssText = 'left:150px;top:790px;width:1620px;font-size:58px';
-    // 7 end
-    R.end = sec('end', 'B'); R.t2 = el('div', 'logotile', '<img alt="Seekframe logo">', R.end); R.t2.style.cssText = 'left:660px;top:90px;width:600px;height:600px'; R.t2.firstChild.src = T('logo');
-    R.etag = el('div', 'abs big', '', R.end); R.etag.style.cssText = 'left:0;right:0;top:730px;text-align:center;font-size:84px'; R.ew = SF.words(R.etag, T('end-tag'));
-    R.url = el('div', 'abs mono', esc(T('end-url')), R.end); R.url.style.cssText = 'left:0;right:0;top:860px;text-align:center;font-size:42px';
-    R.note = el('div', 'abs label', esc(T('end-note')), R.end); R.note.style.cssText = 'left:0;right:0;top:940px;text-align:center';
+  variants: {
+    thumbFrame: 82,
+    axes: [{ id: 'hook', label: 'Hook' }, { id: 'look', label: 'Look' }],
+    presets: [
+      { id: 'whatif-night', label: 'What if · night', params: {} },
+      { id: 'clock-electric', label: 'Clock · electric', params: { hook: 'clock', look: 'electric' } },
+      { id: 'scale-sunset', label: 'Scale · sunset', params: { hook: 'scale', look: 'sunset' } },
+      { id: 'whatif-cream', label: 'What if · cream', params: { look: 'cream' } },
+      { id: 'clock-night', label: 'Clock · night', params: { hook: 'clock' } },
+      { id: 'scale-electric', label: 'Scale · electric', params: { hook: 'scale', look: 'electric' } },
+    ],
+  },
+
+  build(v) {
+    const L = lookOf(v), hook = v.hook || DEF.hook, col = k => SF.value('c-' + k, L[k]);
+    const rs = document.documentElement.style;
+    rs.setProperty('--bg', col('bg')); rs.setProperty('--fg', col('fg')); rs.setProperty('--acc', col('acc')); rs.setProperty('--accInk', inkOn(col('acc')));
+    rs.setProperty('--glow', col('glow')); rs.setProperty('--glow2', L.glow2);
+    const Tpx = 1.45 * V('size');
+    const st = document.getElementById('stage'); st.innerHTML = ''; R = { hookId: hook };
+
+    /* background: drifting blobs + grain */
+    const bg = el('div', '', '', st); bg.id = 'bg';
+    R.blobs = L.blobs.map((b, i) => { const d = el('div', 'blob', '', bg); d.style.width = d.style.height = b.r * 2 + 'px'; d.style.opacity = String(b.o); d.style.background = `radial-gradient(circle, ${b.c === 'glow' ? col('glow') : b.c === 'glow2' ? L.glow2 : b.c} 0%, transparent 68%)`; return { d, b, i }; });
+    el('div', '', '<svg width="1920" height="1080"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .9 0"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>', st).id = 'grain';
+    const sec = id => { const s = el('section', 'sc', '', st); s.id = 's-' + id; R[id] = s; return s; };
+
+    /* 1 hook */
+    const h = sec('hook');
+    if (hook === 'whatif') {
+      R.l1 = el('div', 'abs big center', '', h); R.l1.style.top = (540 - Tpx * 1.12) + 'px';
+      R.l2 = el('div', 'abs big center', '', h); R.l2.style.top = (540 + Tpx * .02) + 'px';
+      R.w1 = SF.words(R.l1, V('w-1')); R.w2 = SF.words(R.l2, V('w-2'));
+      R.rings = [0, 1, 2].map(() => { const r = el('i', 'abs', '', h); r.style.cssText = 'left:960px;top:600px;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%;border:6px solid var(--acc)'; return r; });
+      h.insertBefore(R.rings[0], h.firstChild); h.insertBefore(R.rings[1], h.firstChild); h.insertBefore(R.rings[2], h.firstChild);
+    } else if (hook === 'clock') {
+      R.clockWrap = el('div', 'abs', '', h); R.clockWrap.style.cssText = 'left:560px;top:540px;width:0;height:0';
+      R.clock = el('div', 'clock', '', R.clockWrap); R.clock.style.cssText = 'left:-300px;top:-300px;width:600px;height:600px';
+      R.ticks = Array.from({ length: 60 }, (_, i) => { const t = el('i', 'tickm', '', R.clockWrap); if (i % 5) { t.style.height = '14px'; t.style.marginTop = '-7px'; } return t; });
+      R.hand = el('i', 'hand', '', R.clock); R.hand.style.height = '190px'; R.hand.style.top = '110px';
+      el('i', '', '', R.clock).style.cssText = 'position:absolute;left:280px;top:280px;width:40px;height:40px;border-radius:50%;background:var(--accInk)';
+      R.counter = el('div', 'counter', '', R.clock); R.counter.style.top = '462px'; R.counter.style.fontSize = '44px';
+      R.c1 = el('div', 'abs big', '', h); R.c1.style.cssText = `left:1000px;top:${540 - Tpx * .8}px;font-size:${Tpx * .72}px`;
+      R.c2 = el('div', 'abs big', '', h); R.c2.style.cssText = `left:1000px;top:${540 + Tpx * .02}px;font-size:${Tpx * .72}px`;
+      R.cw1 = SF.words(R.c1, V('c-1')); R.cw2 = SF.words(R.c2, V('c-2'));
+    } else {
+      R.s1 = el('div', 'abs big center', '', h); R.s1.style.top = '200px'; R.sw1 = SF.words(R.s1, V('s-1'));
+      R.grid = el('div', 'abs', '', h); R.grid.style.cssText = 'left:0;top:0;width:1920px;height:1080px';
+      const cols = 14, rows = 8, w = 118, hh = 66, gx = 16, gy = 18, x0 = (1920 - cols * w - (cols - 1) * gx) / 2, y0 = (1080 - rows * hh - (rows - 1) * gy) / 2;
+      const tiles = [];
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const x = x0 + c * (w + gx), y = y0 + r * (hh + gy), d = Math.hypot(x + w / 2 - 960, (y + hh / 2 - 540) * 1.6);
+        const Lk = LOOKS[LOOK_IDS[Math.floor(hash(r * 31 + c * 7) * 4)]], t = el('div', 'mini', '<i></i>', R.grid);
+        t.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${hh}px;background:${lookBg(Lk, hash(c + r))}`; t.firstChild.style.background = Lk.acc;
+        tiles.push({ t, d });
+      }
+      tiles.sort((a, b) => a.d - b.d); tiles.forEach((o, i) => { o.at = i < 1 ? 48 : i < 8 ? 63 : i < 32 ? 78 : 93 + (i - 32) * .06; });
+      R.tiles = tiles;
+      R.pill = el('div', 'ppill', '<span class="dot"></span><span></span>', h); R.pill.style.left = '0'; R.pill.style.top = '0'; R.pillT = R.pill.lastChild;
+      R.s2 = el('div', 'abs big', '', h); R.s2.style.cssText = `left:50%;top:${540 - Tpx * .62}px;padding:.12em .3em .16em;border-radius:.28em;background:var(--bg);transform:translateX(-50%)`;
+      R.sw2 = SF.words(R.s2, V('s-2'));
+    }
+
+    /* 2 agents: one long sentence with agent chips, scrolling like a ticker */
+    const a = sec('agents'); a.style.background = 'var(--acc)'; a.style.color = 'var(--accInk)';
+    el('div', 'lbl', esc(V('a-label')), a).style.cssText = 'position:absolute;left:120px;top:140px;font-size:34px;color:var(--accInk);opacity:.75';
+    R.tr1 = el('div', 'track big', '', a); R.tr1.dataset.sfTicker = ''; R.tr1.style.top = (430 - Tpx * .4) + 'px'; R.tr1.style.fontSize = (Tpx * .86) + 'px';
+    R.tr1.innerHTML = `<span>${esc(V('a-1'))}</span> ${list(V('a-list')).map((n, i) => `<span class="chip">${ICONS[i % ICONS.length]}${esc(n)}</span>`).join(' ')} <span>${esc(V('a-2'))}</span>`;
+    R.tr2 = el('div', 'track sub', '', a); R.tr2.dataset.sfTicker = ''; R.tr2.style.top = '700px'; R.tr2.style.fontSize = '58px'; R.tr2.textContent = (V('a-sub') + '   ·   ').repeat(4);
+
+    /* 3 prompt: MCP toggle, the prompt box, an attachment, the send click */
+    const p = sec('prompt');
+    R.mcp = el('div', 'mcp', `<span class="toggle"><i></i></span><span>${esc(V('p-tool'))}</span>`, p); R.tog = R.mcp.querySelector('.toggle'); R.knob = R.tog.firstChild;
+    R.menu = el('div', 'menu', ['create_film', 'validate', 'review', 'render'].map(x => `<span>${x}</span>`).join(''), p);
+    R.box = el('div', 'box', '<div class="txt"></div>', p); R.boxT = R.box.firstChild;
+    R.att = el('div', 'attach', `<b>+</b><span>${esc(V('p-file'))}</span>`, R.box);
+    R.send = el('div', 'send', ARROW, R.box);
+    R.ring = el('div', 'ring', '', R.box);
+    R.cur = el('div', 'cursor', CURSOR, p);
+
+    /* 4 generate: code streams in, frames fly into a grid, checks light up */
+    const g = sec('generate');
+    R.g1 = el('div', 'abs big', '', g); R.g1.style.cssText = `left:110px;top:96px;font-size:${Tpx * .5}px`; R.gw1 = SF.words(R.g1, V('g-1'));
+    R.g2 = el('div', 'abs big', '', g); R.g2.style.cssText = `left:110px;top:${96 + Tpx * .6}px;font-size:${Tpx * .5}px`; R.gw2 = SF.words(R.g2, V('g-2'));
+    const CODE = ['<span class="k">SF.define</span>({', "  title: <span class=\"c\">'Launch'</span>, fps: 30,", '  scenes: [hook, agents, …],', "  params: [text(<span class=\"c\">'title'</span>)],", '  cues: c => c.<span class="k">boom</span>(120),', '  seek(f) { draw(f) }', '})   <span class="c">// pure: frame in, picture out</span>'];
+    R.code = el('div', 'code', '', g); R.lines = CODE.map(t => el('div', '', t, R.code));
+    const NAMES = ['What if', 'Spring sale', 'عربي', '50% off', 'New drop', 'Launch', 'Join us', 'Free trial', 'Now live'];
+    R.cards = NAMES.map((n, i) => {
+      const Lk = LOOKS[LOOK_IDS[i % 4]], cd = el('div', 'card', `<i class="b"></i><div class="t">${esc(n)}</div>`, g);
+      cd.style.cssText = `left:0;top:0;width:280px;height:158px;background:${lookBg(Lk, (i % 3) / 2)};color:${Lk.fg}`;
+      cd.firstChild.style.width = (60 + hash(i) * 90) + 'px'; cd.firstChild.style.background = Lk.acc;
+      if (n === 'عربي') { cd.lastChild.style.left = 'auto'; cd.lastChild.style.right = '18px'; cd.lastChild.dir = 'rtl'; }
+      const c = i % 3, r = Math.floor(i / 3);
+      return { cd, x: 930 + c * 300, y: 300 + r * 182, sx: 960 + (hash(i * 3) - .5) * 2400, sy: 540 + (hash(i * 5) - .5) * 1600, rot: (hash(i * 9) - .5) * 70, at: 8 + i * 5 };
+    });
+    R.steps = el('div', 'steps', '', g);
+    R.stepEls = list(V('g-steps')).map((s, i, arr) => { const e = el('div', 'step', `<span class="ok">✓</span><span>${esc(s)}</span>`, R.steps); if (i < arr.length - 1) el('span', 'arrow', '→', R.steps); return e; });
+
+    /* 5 editor: preview, fields, swatches, tracks, playhead */
+    const d = sec('editor');
+    R.e1 = el('div', 'abs big', '', d); R.e1.style.cssText = `left:120px;top:44px;font-size:${Tpx * .5}px`; R.ew1 = SF.words(R.e1, V('e-1') + ' ' + V('e-2'));
+    R.ed = el('div', 'ed', '', d);
+    R.prev = el('div', 'prev', '<div class="s">preview · 16:9</div><div class="h"></div>', R.ed); R.prevH = R.prev.lastChild;
+    R.panel = el('div', 'panel', `<div class="field"><label>Headline</label><div class="in"></div></div><div class="field"><label>Look</label><div class="sw">${LOOK_IDS.map(id => `<i style="background:${LOOKS[id].acc}"></i>`).join('')}</div></div><div class="field"><label>Length</label><div class="in">3.00 s</div></div>`, R.ed);
+    R.fieldIn = R.panel.querySelector('.in'); R.sws = [...R.panel.querySelectorAll('.sw i')];
+    R.before = V(HOOK_LINE[hook]).replace(/[[\]]/g, '');
+    R.tracks = el('div', 'tracks', '', R.ed);
+    const TC = ['var(--acc)', 'var(--glow)', '#ff7a59', '#6e8cff', 'color-mix(in srgb, var(--fg) 55%, transparent)'];
+    R.bars = [];
+    for (let row = 0; row < 5; row++) { let x = 0; for (let k = 0; x < 1560; k++) { const w = 120 + hash(row * 17 + k * 3) * 300, b = el('i', 'bar', '', R.tracks); b.style.left = x + 'px'; b.style.top = (row * 44) + 'px'; b.style.background = TC[row]; R.bars.push({ b, w: Math.min(w, 1600 - x), row, k }); x += w + 10; } }
+    R.head = el('i', 'head', '', R.tracks);
+
+    /* 6 variants: a 3x3 wall of looks, hooks, languages and sizes */
+    const vv = sec('variants');
+    R.v = el('div', 'abs big center', '', vv); R.v.style.top = '56px'; R.v.style.fontSize = (Tpx * .6) + 'px'; R.vw = SF.words(R.v, V('v-1') + ' ' + V('v-2'));
+    R.wall = el('div', 'abs', '', vv); R.wall.style.cssText = 'left:0;top:0;width:1920px;height:1080px;transform-origin:960px 560px';
+    const VT = [['night', 'What if your AI', '16:9'], ['electric', 'Frame = code', '16:9'], ['sunset', 'One prompt.', '9:16'], ['cream', 'Spring sale', '1:1'], ['night', 'عربي · RTL', '16:9'], ['electric', 'Now live', '9:16'], ['sunset', 'Hundreds of films', '16:9'], ['cream', 'What if your AI', '16:9'], ['night', 'Launch day', '1:1']];
+    R.vts = VT.map(([lk, t, size], i) => {
+      const Lk = LOOKS[lk], e = el('div', 'vt', `<div class="tag">${esc(Lk.label.split(' ·')[0])} · ${size}</div><div class="t">${esc(t)}</div>${size === '9:16' ? '<div class="phone"></div>' : ''}`, R.wall);
+      const c = i % 3, r = Math.floor(i / 3);
+      e.style.cssText = `left:${276 + c * 464}px;top:${196 + r * 266}px;width:440px;height:248px;background:${lookBg(Lk, (i % 3) / 2)};color:${Lk.fg}`;
+      if (/[؀-ۿ]/.test(t)) { const tt = e.querySelector('.t'); tt.dir = 'rtl'; tt.style.left = 'auto'; tt.style.right = '30px'; }
+      return e;
+    });
+    R.chips = el('div', 'chips', list(V('v-chips')).map(s => `<span>${esc(s)}</span>`).join('').repeat(2), vv); R.chips.dataset.sfTicker = '';
+
+    /* 7 sound: a waveform that hits on the beat, cue markers dropping onto it */
+    const n = sec('sound');
+    R.n1 = el('div', 'abs big center', '', n); R.n1.style.top = '70px'; R.n1.style.fontSize = (Tpx * .6) + 'px'; R.nw = SF.words(R.n1, V('snd-1') + ' ' + V('snd-2'));
+    R.wave = el('div', 'wave', '', n); R.wbars = Array.from({ length: 72 }, () => el('i', '', '', R.wave));
+    R.cueEls = ['boom', 'tick', 'whoosh', 'boom'].map((t, i) => { const c = el('div', 'cue', `<span>${t}</span>`, n); c.style.left = (330 + i * 420) + 'px'; return c; });
+
+    /* 8 logo: the halftone eye builds itself dot by dot, then the wordmark */
+    const lo = sec('logo');
+    el('div', 'paper', '', lo);
+    const custom = String(V('logo') || '');
+    if (custom) { R.ulogo = el('img', 'ulogo', '', lo); R.ulogo.src = custom; R.ulogo.alt = 'Logo'; }
+    else { R.cv = el('canvas', '', '', lo); R.cv.id = 'dots'; R.cv.width = 1920; R.cv.height = 1080; R.ctx = R.cv.getContext('2d'); }
+    R.word = el('div', 'word', '', lo); R.word.style.top = '590px';
+    R.letters = 'seekframe'.split('').map(ch => el('span', 'w', ch, R.word));
+    R.tag = el('div', 'tagl', esc(V('end-tag')), lo); R.tag.style.top = '800px';
+    R.url = el('div', 'url', esc(V('end-url')), lo); R.url.style.top = '876px';
+    R.note = el('div', 'url', esc(V('end-note')), lo); R.note.style.top = '930px'; R.note.style.fontSize = '24px';
+    // dot field from logo-dots.js: radius per cell for the ink and lime layers
+    const D = /** @type {any} */ (window).SEEKFRAME_DOTS;
+    if (D && R.ctx) {
+      const pcx = 45.7, pcy = 25.7, maxD = Math.hypot(D.cols, D.rows) * .62; R.dots = [];
+      for (let r = 0; r < D.rows; r++) for (let c = 0; c < D.cols; c++) {
+        const k = r * D.cols + c, ri = +D.ink[k], rl = +D.lime[k]; if (!ri && !rl) continue;
+        R.dots.push({ c, r, ri, rl, d: clamp(Math.hypot(c - pcx, (r - pcy) * 1.1) / maxD) });
+      }
+      R.D = D;
+    }
     for (const s of SCENES) R[s.id].style.display = 'none';
   },
 
   seek(f) {
     const sc = SCENES.find(s => f >= s.start && f < s.end) || SCENES[SCENES.length - 1], lf = f - sc.start, len = sc.end - sc.start;
     for (const s of SCENES) R[s.id].style.display = s === sc ? 'block' : 'none';
-    const fade = Math.min(rng(lf, 0, 6), 1 - rng(lf, len - 6, len));
-    R[sc.id].style.opacity = String(fade);
-    if (sc.id === 'hook') {
-      SF.pop(R.hw1, lf, 4, 5, 10, 34); SF.pop(R.hw2, lf, 30, 6, 10, 34);
-      R.hw2.forEach(w => { if (w.classList.contains('hl')) SF.wipe(w, E.expo(rng(lf, 50, 66))); });
-      R.eye.style.opacity = String(rng(lf, 70, 90) * .8);
-    } else if (sc.id === 'logo') {
-      const t = E.expo(rng(lf, 0, 22)); R.tile.style.transform = `scale(${lerp(1.18, 1, t)}) rotate(${lerp(-3, 0, t)}deg)`; R.tile.style.clipPath = `inset(0 ${(1 - E.out(rng(lf, 0, 18))) * 100}% 0 0 round 30px)`;
-      SF.pop(R.tw, lf, 22, 5, 10, 30); R.sub.style.opacity = String(rng(lf, 52, 70) * .8);
-    } else if (sc.id === 'prompt') {
-      const text = T('prompt'), shown = SF.typed(text, lf, 12, 100);
-      R.pre.innerHTML = `${esc(shown)}<span class="caret" style="opacity:${lf < 112 && Math.floor(lf / 8) % 2 === 0 || lf < 100 ? 1 : 0}"></span>`;
-      const kids = [...R.ok.children]; kids.forEach((c, i) => { const t = E.expo(rng(lf, 104 + i * 12, 116 + i * 12)); c.style.opacity = String(t); c.style.transform = `translateY(${(1 - t) * 24}px)`; });
-      R.term.style.transform = `translateY(${lerp(60, 0, E.expo(rng(lf, 0, 20)))}px) scale(${lerp(.96, 1, E.expo(rng(lf, 0, 20)))})`;
-    } else if (sc.id === 'editor') {
-      const t = E.expo(rng(lf, 0, 22)); R.ed.style.transform = `translateY(${lerp(80, 0, t)}px) scale(${lerp(.95, 1, t)})`;
-      const typed = SF.typed(T('ed-field'), lf, 40, 84), shown = lf < 40 ? 'Your headline here' : typed || '';
-      R.fieldBox.textContent = shown; R.fieldBox.style.opacity = lf < 40 ? '.45' : '1';
-      R.stageT.innerHTML = `${esc(lf < 40 ? 'Your headline here' : shown)}`;
-      const play = rng(lf, 92, 150), W = 1508; R.head.style.left = lerp(40, W - 40, play) + 'px';
-      R.segs.forEach((s, i) => s.classList.toggle('cur', play > 0 && play < 1 && i === Math.min(R.segs.length - 1, Math.floor(play * R.segs.length))));
-      R.stage.style.boxShadow = lf > 92 ? `0 0 0 6px ${getComputedStyle(document.documentElement).getPropertyValue('--brand-accent') || '#b2be6d'}` : 'none';
-    } else if (sc.id === 'variants') {
-      R.tiles.forEach((tl, i) => { const t = E.expo(rng(lf, 4 + i * 11, 18 + i * 11)), b = E.back(rng(lf, 4 + i * 11, 20 + i * 11)); tl.style.opacity = String(clamp(t * 2)); tl.style.transform = `translateY(${(1 - t) * 50}px) scale(${lerp(.85, 1, b)})`; });
-    } else if (sc.id === 'sound') {
-      R.bars.forEach((b, i) => { const beat = Math.max(0, 1 - ((lf % 24) / 24)), amp = .25 + .55 * hash(i * 1.7 + Math.floor(lf / 3) * .3) * (.5 + .5 * beat) + .2 * Math.sin(i * .35 + lf * .12); b.style.height = (clamp(amp, 0.05, 1) * 330) + 'px'; b.style.opacity = String(.35 + .65 * beat); });
-      R.cues.forEach((c, i) => { c.style.opacity = String(rng(lf, 4 + i * 3, 10 + i * 3)); c.style.transform = `scaleY(${E.back(rng(lf, 4 + i * 3, 14 + i * 3))})`; });
-      SF.pop([R.cap], lf, 26, 4, 14, 30);
-    } else {
-      const t = E.expo(rng(lf, 0, 24)); R.t2.style.transform = `scale(${lerp(.9, 1, t)})`; R.t2.style.opacity = String(t);
-      SF.pop(R.ew, lf, 24, 6, 12, 28); R.url.style.opacity = String(rng(lf, 52, 70)); R.note.style.opacity = String(rng(lf, 66, 84) * .8);
-    }
+    for (const { d, b, i } of R.blobs) { const x = b.x * 1920 + SF.wob(i * 3 + 1, f * 2.2, b.amp), y = b.y * 1080 + SF.wob(i * 5 + 2, f * 1.9, b.amp * .7); d.style.transform = `translate(${x - b.r}px,${y - b.r}px) scale(${1 + .06 * Math.sin(f * .03 + i)})`; }
+    SEEK[sc.id](lf, len);
   },
 });
+
+/* ---------- per-scene drawing ---------- */
+const op = (e, v) => { e.style.opacity = String(clamp(v)); };
+const tf = (e, s) => { e.style.transform = s; };
+const plain = ws => ws.filter(w => !w.classList.contains('hl'));
+// zoom-through exit: scale up + blur + fade over the last n frames
+const exitZoom = (e, lf, len, n = 14, s = .22) => { const t = E.in2(rng(lf, len - n, len)); tf(e, `scale(${1 + t * s})`); e.style.filter = t > 0 ? `blur(${t * 14}px)` : ''; op(e, 1 - t); };
+// [highlighted] words become an accent pill that springs in
+const popHl = (ws, lf, at) => ws.forEach(w => {
+  if (!w.classList.contains('hl')) return;
+  const t = E.back(rng(lf, at, at + 12)), i = w.firstChild;
+  w.style.background = 'var(--acc)'; w.style.borderRadius = '.2em'; w.style.padding = '0 .14em .04em'; i.style.color = 'var(--accInk)';
+  w.style.transform = `scale(${lerp(.6, 1, t)}) rotate(${lerp(-4, 0, t)}deg)`; w.style.opacity = String(clamp(rng(lf, at, at + 5)));
+});
+
+const SEEK = {
+  hook(lf, len) {
+    const h = R.hook;
+    if (R.w1) {
+      SF.pop(R.w1, lf, 4, 8, 12, 50); SF.pop(plain(R.w2), lf, 44, 8, 12, 50); popHl(R.w2, lf, 60);
+      R.rings.forEach((r, i) => { const t = rng(lf, 60 + i * 5, 90 + i * 5); tf(r, `scale(${1 + E.out(t) * (9 + i * 3)})`); op(r, t > 0 ? (1 - t) * .9 : 0); r.style.borderWidth = (8 - t * 6) + 'px'; });
+      const push = 1 + .08 * E.io(rng(lf, 0, 98)); tf(R.l1, `scale(${push})`); tf(R.l2, `scale(${push})`);
+      exitZoom(h, lf, len, 22, .3);
+    } else if (R.clock) {
+      const t0 = E.back(rng(lf, 0, 16)), grow = E.in(rng(lf, 98, 120));
+      tf(R.clock, `scale(${t0 * (1 + grow * 6)})`);
+      R.ticks.forEach((t, i) => { const on = rng(lf, 6 + i * .55, 10 + i * .55); t.style.transform = `rotate(${i * 6}deg) translateY(-340px) scaleY(${on})`; op(t, on * (1 - grow * 3)); });
+      tf(R.hand, `rotate(${(lf / 120) * 720}deg)`);
+      R.counter.textContent = `${V('c-unit')} ${pad3(lf)}`;
+      SF.pop(R.cw1, lf, 14, 6, 12, 40); SF.pop(plain(R.cw2), lf, 34, 6, 12, 40); popHl(R.cw2, lf, 50);
+      op(R.c1, 1 - grow * 3); op(R.c2, 1 - grow * 3);
+    } else {
+      SF.pop(R.sw1, lf, 2, 6, 12, 40);
+      const pin = E.back(rng(lf, 0, 14)), shrink = E.io(rng(lf, 42, 50));
+      R.pillT.textContent = SF.typed(V('s-p'), lf, 8, 38) + (lf < 44 && Math.floor(lf / 6) % 2 === 0 ? '|' : '');
+      const pw = R.pill.offsetWidth || 700;
+      tf(R.pill, `translate(${960 - pw / 2}px, ${470 - 52}px) scale(${Math.max(.001, pin * (1 - shrink * .9))})`); op(R.pill, 1 - shrink);
+      op(R.s1, 1 - rng(lf, 44, 52));
+      R.tiles.forEach(o => { const t = rng(lf, o.at, o.at + 8); tf(o.t, `scale(${E.back(t)})`); op(o.t, t * (1 - rng(lf, 66, 72) * .55)); });
+      SF.pop(plain(R.sw2), lf, 74, 6, 12, 40); popHl(R.sw2, lf, 70);
+      op(R.s2, rng(lf, 68, 74));
+      exitZoom(h, lf, len, 16, 1.4);
+    }
+  },
+  agents(lf, len) {
+    const a = R.agents, open = E.expo(rng(lf, 0, 12)), out = E.in2(rng(lf, len - 10, len));
+    a.style.clipPath = out > 0 ? `inset(0 0 ${out * 100}% 0)` : `circle(${open * 1250}px at ${R.hookId === 'clock' ? 560 : 960}px 540px)`;
+    const W1 = R.tr1.scrollWidth, W2 = R.tr2.scrollWidth;
+    tf(R.tr1, `translateX(${W1 > 1540 ? lerp(220, 1700 - W1, rng(lf, 4, 112)) : 220}px)`);
+    tf(R.tr2, `translateX(${lerp(-W2 / 4, 0, rng(lf, 0, len))}px)`);
+  },
+  prompt(lf, len) {
+    const on = E.out(rng(lf, 12, 18));
+    tf(R.knob, `translateX(${on * 42}px)`); R.tog.style.background = on > .5 ? 'var(--acc)' : 'var(--line)';
+    op(R.mcp, rng(lf, 0, 8)); tf(R.mcp, `translateY(${(1 - E.expo(rng(lf, 0, 12))) * 30}px)`);
+    [...R.menu.children].forEach((m, i) => { const t = E.back(rng(lf, 20 + i * 6, 30 + i * 6)); op(m, t); tf(m, `translateY(${(1 - t) * 16}px) scale(${lerp(.8, 1, t)})`); });
+    const bin = E.expo(rng(lf, 22, 40)), bout = E.in2(rng(lf, 110, 120));
+    op(R.box, bin * (1 - bout)); tf(R.box, `translateY(${(1 - bin) * 80 - bout * 40}px) scale(${lerp(.96, 1, bin) - bout * .04})`);
+    const typed = SF.typed(V('p-text'), lf, PROMPT_START, PROMPT_END);
+    R.boxT.innerHTML = esc(typed) + (lf < 104 && (lf < PROMPT_END || Math.floor(lf / 6) % 2 === 0) ? '<span class="caret"></span>' : '');
+    const at = E.back(rng(lf, 60, 72)); op(R.att, rng(lf, 60, 64)); tf(R.att, `translateY(${(1 - at) * 30}px) scale(${lerp(.6, 1, at)})`);
+    const lit = lf >= 92; R.send.style.background = lit ? 'var(--acc)' : 'var(--fg)'; R.send.style.color = lit ? 'var(--accInk)' : 'var(--bg)';
+    tf(R.send, `scale(${lf >= 104 && lf < 110 ? .88 : 1})`);
+    const rp = rng(lf, 104, 118); tf(R.ring, `scale(${1 + rp * 1.4})`); op(R.ring, rp > 0 ? 1 - rp : 0);
+    const cm = E.io(rng(lf, 84, 102));
+    tf(R.cur, `translate(${lerp(1720, 1524, cm)}px, ${lerp(1010, 686, cm)}px) scale(${lf >= 104 && lf < 110 ? .85 : 1})`); op(R.cur, rng(lf, 80, 86) * (1 - bout));
+  },
+  generate(lf, len) {
+    SF.pop(R.gw1, lf, 0, 4, 10, 30); SF.pop(plain(R.gw2), lf, 8, 4, 10, 30); popHl(R.gw2, lf, 20);
+    R.lines.forEach((l, i) => { const t = rng(lf, 6 + i * 6, 12 + i * 6); op(l, t); l.style.clipPath = `inset(0 ${(1 - t) * 100}% 0 0)`; });
+    op(R.code, 1 - rng(lf, 100, 112) * .6);
+    R.cards.forEach(o => {
+      const t = E.expo(rng(lf, o.at, o.at + 16));
+      tf(o.cd, `translate(${lerp(o.sx, o.x, t)}px, ${lerp(o.sy, o.y, t)}px) rotate(${(1 - t) * o.rot}deg) scale(${lerp(.5, 1, t)})`);
+      op(o.cd, rng(lf, o.at, o.at + 4)); o.cd.style.filter = t < .98 ? `blur(${(1 - t) * 10}px)` : '';
+    });
+    R.stepEls.forEach((s, i) => { const at = 60 + i * 15, t = E.back(rng(lf, at, at + 10)); op(s, .35 + .65 * clamp(t)); s.style.borderColor = lf >= at ? 'var(--acc)' : 'var(--line)'; tf(s.firstChild, `scale(${clamp(t, 0, 1.3)})`); });
+    op(R.steps, rng(lf, 40, 50));
+    op(R.generate, 1 - E.in2(rng(lf, len - 8, len)));
+  },
+  editor(lf, len) {
+    SF.pop(plain(R.ew1), lf, 2, 3, 10, 30); popHl(R.ew1, lf, 14);
+    const t = E.expo(rng(lf, 0, 20)); tf(R.ed, `translateY(${(1 - t) * 90}px) scale(${lerp(.95, 1, t)})`); op(R.ed, t);
+    const typed = SF.typed(V('e-field'), lf, 32, 58);
+    R.fieldIn.innerHTML = lf >= 26 && lf < 32 ? `<span style="background:color-mix(in srgb, var(--acc) 45%, transparent)">${esc(R.before)}</span>` : esc(lf < 26 ? R.before : typed) + (lf >= 32 && lf < 64 ? '<span class="caret"></span>' : '');
+    R.fieldIn.style.borderColor = lf >= 26 && lf < 66 ? 'var(--acc)' : 'var(--line)';
+    R.prevH.textContent = lf < 32 ? R.before : (typed || ' ');
+    const marks = [0, 70, 84, 98], pick = lf < 70 ? 0 : lf < 84 ? 1 : lf < 98 ? 2 : 3, Lk = LOOKS[LOOK_IDS[pick]];
+    R.prev.style.background = lookBg(Lk, .4); R.prev.style.color = Lk.fg;
+    R.sws.forEach((s, i) => { s.style.outlineColor = i === pick ? 'var(--fg)' : 'transparent'; tf(s, `scale(${i === pick && lf >= 70 ? lerp(1.2, 1, rng(lf, marks[pick], marks[pick] + 8)) : 1})`); });
+    R.bars.forEach(o => { const gr = E.expo(rng(lf, 4 + o.row * 3 + o.k * 1.5, 22 + o.row * 3 + o.k * 1.5)); o.b.style.width = (o.w * gr) + 'px'; });
+    R.head.style.left = lerp(0, 1600, rng(lf, 10, 116)) + 'px';
+    op(R.editor, 1 - E.in2(rng(lf, len - 8, len)));
+  },
+  variants(lf, len) {
+    SF.pop(plain(R.vw), lf, 0, 4, 10, 30); popHl(R.vw, lf, 10);
+    R.vts.forEach((e, i) => { const at = 6 + i * 7, t = rng(lf, at, at + 10); op(e, t * 2.5); tf(e, `scale(${lerp(.7, 1, E.back(t))})`); e.style.filter = t < 1 ? `blur(${(1 - t) * 8}px)${t < .3 ? ' hue-rotate(90deg)' : ''}` : ''; });
+    tf(R.wall, `scale(${lerp(1.12, 1, E.out(rng(lf, 0, 90)))})`);
+    const W = R.chips.scrollWidth / 2; tf(R.chips, `translateX(${lerp(1920, 1920 - W - 200, rng(lf, 30, len))}px)`); op(R.chips, rng(lf, 30, 40));
+    op(R.variants, 1 - E.in2(rng(lf, len - 8, len)));
+  },
+  sound(lf, len) {
+    SF.pop(plain(R.nw), lf, 0, 4, 10, 30); popHl(R.nw, lf, 12);
+    const pulse = Math.exp(-(lf % BEAT) / 4), beatN = Math.floor(lf / BEAT), col = E.io(rng(lf, 56, 66)), dot = E.in2(rng(lf, 64, 74));
+    R.wbars.forEach((b, i) => {
+      const bell = Math.exp(-Math.pow((i - 35.5) / 24, 2)), hgt = 420 * (.1 + bell * (.22 + .2 * hash(i * 1.7 + Math.floor(lf / 3))) + .62 * bell * pulse * (.4 + .6 * hash(i * 3.3 + beatN)) + .05 * Math.sin(i * .7 + lf * .4));
+      b.style.height = Math.max(6, hgt * (1 - col)) + 'px'; b.style.background = pulse > .6 && bell > .5 ? 'var(--acc)' : 'var(--fg)';
+    });
+    tf(R.wave, `scaleX(${Math.max(.002, 1 - dot)})`);
+    R.cueEls.forEach((c, i) => { const t = E.back(rng(lf, i * 15, i * 15 + 8)); op(c, clamp(t) * (1 - col)); tf(c, `translateY(${(1 - t) * -160}px)`); });
+    op(R.n1, 1 - col);
+  },
+  logo(lf, len) {
+    const iris = E.expo(rng(lf, 0, 18)); R.logo.style.clipPath = `circle(${iris * 1250}px at 960px 470px)`;
+    const mv = E.io(rng(lf, 72, 100)), sc = lerp(1, .6, mv), cy = lerp(470, 320, mv);
+    if (R.ctx && R.dots) {
+      const ctx = R.ctx, D = R.D, cell = 10, w = D.cols * cell, hh = D.rows * cell;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, 1920, 1080);
+      ctx.setTransform(sc, 0, 0, sc, 960 - w * sc / 2, cy - hh * sc / 2);
+      const layer = (key, color, a, spread) => {
+        ctx.fillStyle = color; ctx.beginPath();
+        for (const o of R.dots) {
+          if (!o[key]) continue; const t = rng(lf, a + o.d * spread, a + 12 + o.d * spread); if (t <= 0) continue;
+          const r = Math.max(0, (o[key] / 7) * .72 * cell * E.back(t)), x = o.c * cell + cell / 2, y = o.r * cell + cell / 2;
+          ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, Math.PI * 2);
+        }
+        ctx.fill();
+      };
+      layer('ri', '#0d0d0c', 4, 46); layer('rl', '#b4cf3a', 20, 40);
+    } else if (R.ulogo) {
+      const t = E.expo(rng(lf, 4, 30)); R.ulogo.style.cssText = `left:${960 - 380 * sc}px;top:${cy - 260 * sc}px;width:${760 * sc}px;height:${520 * sc}px;clip-path:circle(${t * 70}% at 50% 50%);opacity:${t}`;
+    }
+    R.letters.forEach((l, i) => { const t = rng(lf, 92 + i * 3, 104 + i * 3), e = E.expo(t); op(l, t * 2); tf(l, `translateY(${(1 - e) * 60}px)`); l.style.filter = t < 1 ? `blur(${(1 - e) * 10}px)` : ''; });
+    const tg = E.expo(rng(lf, 116, 132)); op(R.tag, tg); R.tag.style.letterSpacing = lerp(.8, .42, tg) + 'em';
+    op(R.url, rng(lf, 130, 142)); op(R.note, rng(lf, 140, 152) * .8);
+  },
+};
