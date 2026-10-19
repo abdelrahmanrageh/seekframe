@@ -23,7 +23,7 @@ const HELP = `Seekframe — brand films as code.
   seekframe brand init|import-logo|palette|add-font|build ...   brand kit tools (seekframe brand --help)
   seekframe mcp                                       start the MCP server (stdio) for Claude, Codex, Cursor, opencode
 
-<film> is an id (client-tick) or a path (examples/client-tick).`;
+<film> is an id (seekframe-launch) or a path (examples/seekframe-launch).`;
 
 export interface Args { _: string[]; [flag: string]: string | boolean | string[] }
 export function parse(argv: string[]): Args {

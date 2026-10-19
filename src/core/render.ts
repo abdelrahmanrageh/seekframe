@@ -1,6 +1,6 @@
 // Frame renderer (one worker). Renders output frames a..z of a project to numbered JPEGs.
-//   node src/core/render.js --film examples/client-tick --project p.json --out dir --fps 60 --range 0:600 [--size 1080x1920]
-//   node src/core/render.js --film examples/client-tick --project p.json --out dir --frames 0,300,900   (PNG stills, edited-timeline frames @ film fps)
+//   node src/core/render.js --film examples/seekframe-launch --project p.json --out dir --fps 60 --range 0:600 [--size 1080x1920]
+//   node src/core/render.js --film examples/seekframe-launch --project p.json --out dir --frames 0,300,900   (PNG stills, edited-timeline frames @ film fps)
 import type { Manifest, ProjectInput } from '../types';
 import type { Browser, Page } from 'playwright';
 import { ensureBrands, BROWSER_DIR } from './workspace';

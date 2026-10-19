@@ -8,6 +8,7 @@
 - **Brand**: raster logos are kept as-is when SVG tracing would be unreadable or huge; better palette role detection (paper/ink/accent/muted).
 - **Editor saves** store only what differs from the film's defaults.
 - **Distribution**: Dockerfile, devcontainer, reusable render Action, docs site on GitHub Pages.
+- **Examples**: the Client *The Tick* film (and its Arabic page) is removed from the starter samples; the gallery is the Seekframe launch film and the feature tour. They stay in git history.
 - **New launch film** (`examples/seekframe-launch`): 3 hooks × 4 looks, agent ticker, MCP prompt, generate-and-check, editor, variants wall, halftone logo reveal built dot by dot, and a sound-effects-only design (whooshes, hits, typing, clicks). Feature-tour moved to `examples/`.
 - **Sound engine**: realistic keyboard typing (`key`: click, thock and release, heavier space bar), `impact`, `reverse`, `glitch`, and optional music instruments (`hat`, `clap`, `bass`, `chord` with side-chain pump, `keys`); `soundtrack` can depend on params.
 - **Editor**: the Audio tab shows the sound style (params with `group: 'sound'`, the theme and loudness); Variants thumbnails render from one warm page per film and are pre-rendered after the film loads.

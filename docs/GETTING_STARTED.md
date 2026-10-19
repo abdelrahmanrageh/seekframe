@@ -12,7 +12,7 @@ npm run editor
 `seekframe init <dir>` creates a separate workspace (films/, brand/, agent files) that uses Seekframe as a dependency; it needs the package to be installable, so use it after the first npm release. Gallery films in `examples/` can be copied into `films/` with `seekframe copy <film>`.
 1. **Look around**: Scenes tab (reorder ↑↓, duplicate ⧉, delete ✕, change length, trim), Style tab, **Variants** tab, Audio tab (the score is generated),
    Export tab (24/30/60 fps). Drag the right edge of a scene on the timeline to change its length; the sound follows.
-2. **Render from the terminal**: `seekframe render client-tick --version v2-counter-deep --fps 30`
+2. **Render from the terminal**: `seekframe render seekframe-launch --params "hook=clock,look=electric" --fps 30`
 3. **Make your own film**:
    ```bash
    seekframe brand init --name "Acme" && seekframe brand palette logo.png --write && seekframe brand import-logo logo.png --strokes

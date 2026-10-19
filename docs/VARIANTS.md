@@ -1,7 +1,6 @@
 # Variants
 
-Variants are **params + presets**, not copies of the film. In `client-tick`: `hook` (3 openings) × `theme` (3 styles) × `cards` (2 shapes),
-plus Arabic as a second page sharing the same code.
+Variants are **params + presets**, not copies of the film. In `seekframe-launch`: `hook` (3 stories) × `look` (4 colourways), plus a `sound` style.
 
 ```js
 variants: {
@@ -14,11 +13,11 @@ variants: {
 - **Editor → Variants tab**: thumbnail per preset and saved version; click to apply/open.
 - **Matrix render** (CLI):
   ```bash
-  seekframe matrix client-tick --axes "hook=*,theme=mono|dark" --fps 30     # * = every option of a select/boolean param
-  seekframe matrix client-tick,client-tick-ar --versions --fps 60            # every saved version of both films
-  seekframe render client-tick --params "hook=cod,theme=lime" --fps 60
+  seekframe matrix seekframe-launch --axes "hook=*,look=night|cream" --fps 30     # * = every option of a select/boolean param
+  seekframe matrix seekframe-launch,seekframe-feature-tour --versions --fps 60   # every saved version of both films
+  seekframe render seekframe-launch --params "hook=clock,look=electric" --fps 60
   ```
   Output: `output/<film>-<param>-<value>_….mp4`.
-- **Languages**: either a second film page that shares code (`client-tick-ar`: `window.FILM_LANG='ar'`) or a `lang` param. See [RTL.md](RTL.md).
+- **Languages**: either a second film page that shares code (a second `film.html` that sets `window.FILM_LANG='ar'` and loads the same `film.js`) or a `lang` param. See [RTL.md](RTL.md).
 - **Sizes**: films using `SF.layout()` can declare `sizes` (16:9, 9:16, 1:1) and export each with `--size WxH`.
 - After building variants run `seekframe review <film>`: it checks **every saved version** (the dark theme and the lime theme differ in contrast and flashing).

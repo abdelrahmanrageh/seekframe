@@ -6,6 +6,6 @@ that last file is the most useful part when you write your own prompts.
 | Example | What it shows |
 |---|---|
 | [`seekframe-launch`](seekframe-launch/) | 32 s launch film for Seekframe itself. 3 hooks × 4 looks (night, cream, electric, sunset), agent ticker, MCP prompt, cards flying into a checked grid, editor, variants wall, a halftone logo that builds itself dot by dot, and generated sound effects (whooshes, hits, typing, clicks) on the frames they belong to. |
-| [`client-tick`](client-tick/) (+ [`client-tick-ar`](client-tick-ar/)) | 35 s horizontal brand film. 3 hooks × 3 styles × 2 card shapes, English and Arabic (RTL) from one code base, brand kit, logo drawn from strokes, kinetic type, product UI in 3D, a **generated** deep sound design that follows each variant. |
+| [`seekframe-feature-tour`](seekframe-feature-tour/) | A shorter tour of the contract: scenes, typed params, a stroke-drawn logo, variants and cues. |
 
 More examples are planned (vertical app promo, logo sting, data story). Contributions welcome: see [CONTRIBUTING](../CONTRIBUTING.md).

@@ -6,12 +6,6 @@
 
 *The launch film, made with Seekframe: 3 hooks × 4 looks, a halftone logo built dot by dot, and generated sound effects on every cut. [Watch it with sound](https://abdelrahmanrageh.github.io/seekframe/) · [how it's made](examples/seekframe-launch/).*
 
-| Doubt · mono | Counter · deep green | Cash on delivery · lime | Arabic · RTL |
-|---|---|---|---|
-| ![](examples/client-tick/preview/v1-doubt-mono.gif) | ![](examples/client-tick/preview/v2-counter-deep.gif) | ![](examples/client-tick/preview/v3-cod-lime.gif) | ![](examples/client-tick/preview/v1-doubt-mono-ar.gif) |
-
-*One film, six variants (3 hooks × 3 styles × 2 card shapes, English + Arabic), with a generated sound design that follows each one. [Details](examples/client-tick/).*
-
 ## Why
 Video tools are made for people who drag clips. LLMs are good at writing code but have no way to *see* a film or know it is broken. Seekframe gives an agent a strict contract
 (a film is a pure function from frame number to picture), checks that tell it exactly what's wrong (determinism, params, text overflow, contrast, flashing, sound vs picture),
@@ -68,4 +62,4 @@ The editor includes undo/redo, saved-version history, variants, cue waveform, sc
 
 ## Contributing, licence
 [CONTRIBUTING.md](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md) · [Security](SECURITY.md). Code: [MIT](LICENSE).
-The *Client* name, logo and wordmark in `examples/client-tick*` are © Client and used as a showcase. Bundled fonts: Inter and IBM Plex Sans Arabic (SIL OFL 1.1, see `src/assets/fonts/`). FFmpeg binaries come from `ffmpeg-static`.
+Bundled fonts: Inter and IBM Plex Sans Arabic (SIL OFL 1.1, see `src/assets/fonts/`). FFmpeg binaries come from `ffmpeg-static`.
