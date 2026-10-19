@@ -1,15 +1,13 @@
 # Getting started (10 minutes)
 
-Clone the repo (the npm packages are not published yet):
-
 ```bash
-git clone https://github.com/abdelrahmanrageh/seekframe && cd seekframe
-npm install && npx playwright install chromium
-node bin/seekframe.js doctor      # checks Node, Chromium and ffmpeg
-npm run editor
+npm create seekframe@latest my-films
+cd my-films && npx playwright install chromium
+npx seekframe doctor      # checks Node, Chromium and ffmpeg
+npx seekframe editor
 ```
 
-`seekframe init <dir>` creates a separate workspace (films/, brand/, agent files) that uses Seekframe as a dependency; it needs the package to be installable, so use it after the first npm release. Gallery films in `examples/` can be copied into `films/` with `seekframe copy <film>`.
+This creates a workspace (films/, brand/, agent files) that uses the `seekframe` npm package as a dependency (`seekframe init <dir>` does the same). To hack on Seekframe itself, clone the repo instead: `git clone https://github.com/abdelrahmanrageh/seekframe && cd seekframe && npm install && npm run editor`. Gallery films in `examples/` can be copied into `films/` with `seekframe copy <film>`.
 1. **Look around**: Scenes tab (reorder ↑↓, duplicate ⧉, delete ✕, change length, trim), Style tab, **Variants** tab, Audio tab (the score is generated),
    Export tab (24/30/60 fps). Drag the right edge of a scene on the timeline to change its length; the sound follows.
 2. **Render from the terminal**: `seekframe render seekframe-launch --params "hook=clock,look=electric" --fps 30`
