@@ -42,6 +42,7 @@
     "!examples/*/brand/fonts/**",
     "!**/brand/brand.css",
     "!**/brand/brand.js",
+    "!examples/*/preview/**",
     "!**/uploads/**",
     "!**/.DS_Store"
   ],
