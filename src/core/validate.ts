@@ -122,15 +122,17 @@ async function validate(dirArg: string, opts: ValidateOptions = {}): Promise<Val
       const testable = (manifest.params || []).filter(p => vals(p) != null && vals(p) !== p.default);
       const baseH = {};                                       // baseline hashes with default params
       await page.evaluate(() => Timeline.applyToFilm(window, {}));
+      const soundSig = () => page.evaluate(() => JSON.stringify([window.manifest.cues || [], window.manifest.soundtrack || {}]));
+      const baseSound = await soundSig();                   // a param may only change the sound (cues or soundtrack theme)
       for (const p of testable) for (const f of sample(p)) if (!(f in baseH)) baseH[f] = await shot(f);
       const noEffect: string[] = [];
       for (const p of testable) {
         await page.evaluate(([id, v]) => Timeline.applyToFilm(window, { [id]: v }), [p.id, vals(p)]);
-        let changed = false; for (const f of sample(p)) if (differs(await shot(f), baseH[f])) { changed = true; break; }
+        let changed = (await soundSig()) !== baseSound; if (!changed) for (const f of sample(p)) if (differs(await shot(f), baseH[f])) { changed = true; break; }
         if (!changed) noEffect.push(p.id);
       }
       await page.evaluate(() => Timeline.applyToFilm(window, {}));
-      noEffect.length ? warn(`${noEffect.length} param(s) showed no visible change at the sampled frames: ${noEffect.slice(0, 12).join(', ')}${noEffect.length > 12 ? ', …' : ''} (they may only act on other frames, or be wired incorrectly)`) : ok(`all ${testable.length} testable params change the picture`);
+      noEffect.length ? warn(`${noEffect.length} param(s) showed no visible change at the sampled frames: ${noEffect.slice(0, 12).join(', ')}${noEffect.length > 12 ? ', …' : ''} (they may only act on other frames, or be wired incorrectly)`) : ok(`all ${testable.length} testable params change the picture or the sound`);
     } else warn('param effect check skipped (--fast)');
 
     /* ----- cues (generated sound) ----- */

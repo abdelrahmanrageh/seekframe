@@ -68,8 +68,62 @@ const I = {
   stamp(m, t, o) { const g = o.gain ?? .32; I.boom(m, t, { gain: g, decay: .55, f0: 96, f1: 46 }); I.tick(m, t, { gain: g * .45, freq: 1300, pan: o.pan ?? 0 }); I.tick(m, t + .012, { gain: g * .3, freq: 700, pan: o.pan ?? 0 }); },
   roomtone(m, t, o) { const f = lp(380), n = Math.round((o.t1 - t) * SR); m.put(t, n, () => f(m.rnd()) * 4, 0, o.gain ?? .0012); },
   silence(m, t, o) { const a = Math.round(t * SR), b = Math.round(o.t1 * SR), fd = Math.round(.006 * SR); m.pendingSilence.push([a, b, fd]); },
+
+  /* ---------- music: a beat, bass, chords and bells, so a film can have a build and a drop ---------- */
+  hat(m, t, o) {                                           // closed (or open: o.open) hi-hat: high-passed noise
+    const dur = o.open ? .22 : .045, n = Math.round(dur * SR), f = lp(7000); let h = 0;
+    m.put(t, n, (i, s) => { const x = f(m.rnd()), y = x - h; h = x; return y * Math.exp(-s / (dur / 4)) * 2.2; }, o.pan ?? .2, o.gain ?? .06);
+  },
+  clap(m, t, o) {                                          // three quick noise bursts and a short room
+    const n = Math.round(.32 * SR), a = lp(2600), b = lp(900);
+    m.put(t, n, (i, s) => { const x = m.rnd(), bp = a(x) - b(x), burst = [0, .011, .023].reduce((v, d) => v + (s >= d ? Math.exp(-(s - d) / .006) : 0), 0); return bp * (burst + .35 * Math.exp(-s / .09)) * 2.4; }, o.pan ?? 0, o.gain ?? .22);
+  },
+  // bass note over a range (f..to); `beat` (seconds) re-triggers it so it pumps like a side-chained bass
+  bass(m, t, o) {
+    const D = o.t1 - t, n = Math.round(D * SR), fq = noteHz(o.note ?? 'D1'), beat = o.beat ?? 0, f = lp(o.cut ?? 420); let ph = 0;
+    m.put(t, n, (i, s) => {
+      ph += 2 * Math.PI * fq / SR; const ph2 = ph * 2;
+      const raw = Math.sin(ph) * .9 + .35 * Math.tanh(3 * Math.sin(ph2)) + .25 * (((ph / Math.PI) % 2) - 1);
+      const u = beat ? (s % beat) : s, pump = beat ? Math.min(1, u / .11) ** 1.6 : 1;
+      return f(raw) * pump * Math.min(1, s / .01) * Math.min(1, (D - s) / .03);
+    }, 0, o.gain ?? .3);
+  },
+  // sustained chord (notes: ['D3','F3','A3']) from detuned saws through a low-pass; `beat` pumps it; `open` sweeps the filter
+  chord(m, t, o) {
+    const D = o.t1 - t, n = Math.round(D * SR), notes = (o.notes || ['D3', 'F3', 'A3']).map(noteHz), beat = o.beat ?? 0, c0 = o.cut0 ?? 700, c1 = o.cut1 ?? c0;
+    const ph = notes.flatMap(() => [0, 0, 0]); let s1 = 0, s2 = 0;
+    m.put(t, n, (i, s) => {
+      let v = 0; notes.forEach((fq, k) => [-.11, 0, .13].forEach((dt, j) => { const p = k * 3 + j; ph[p] = (ph[p] + (fq * (1 + dt / 100)) / SR) % 1; v += ph[p] * 2 - 1; }));
+      const fc = c0 + (c1 - c0) * (s / D), a = Math.exp(-2 * Math.PI * fc / SR); s1 = (1 - a) * v + a * s1; s2 = (1 - a) * s1 + a * s2;
+      const u = beat ? (s % beat) : s, pump = beat ? .25 + .75 * Math.min(1, u / .14) ** 1.4 : 1;
+      return s2 / (notes.length * 3) * pump * Math.min(1, s / (o.attack ?? .04)) * Math.min(1, (D - s) / (o.release ?? .25)) * 2.2;
+    }, o.pan ?? 0, o.gain ?? .12);
+  },
+  keys(m, t, o) {                                          // FM bell / electric-piano note for arps and melodies
+    const fq = noteHz(o.note ?? 'A4'), dur = o.dur ?? 1.2, n = Math.round(dur * SR), idx = o.bright ?? 2.2;
+    m.put(t, n, (i, s) => { const env = Math.min(1, s / .002) * Math.exp(-s / (dur / 4)); return Math.sin(2 * Math.PI * fq * s + idx * env * Math.sin(2 * Math.PI * fq * 2 * s)) * env + .2 * Math.sin(2 * Math.PI * fq * .5 * s) * env; }, o.pan ?? 0, o.gain ?? .1);
+  },
+  // cinematic hit: sub boom + noise burst + long dark tail (a reveal, the drop)
+  impact(m, t, o) {
+    const g = o.gain ?? .9, tail = o.tail ?? 3.5, n = Math.round(tail * SR), f = lp(1800), f2 = lp(260);
+    I.boom(m, t, { gain: g, decay: o.decay ?? 3, f0: o.f0 ?? 62, f1: o.f1 ?? 32 });
+    m.put(t, n, (i, s) => { const x = m.rnd(); return f(x) * Math.exp(-s / .05) * 1.4 + f2(x) * Math.exp(-s / (tail / 3)) * 2.2; }, 0, g * .5);
+  },
+  // reverse swell into a hit at `to` (noise + chord fading in, cut dead at the end)
+  reverse(m, t, o) {
+    const D = o.t1 - t, n = Math.round(D * SR), notes = (o.notes || ['D3', 'A3']).map(noteHz); let st = 0;
+    m.put(t, n, (i, s) => { const u = s / D, fc = 300 + 5000 * u * u, a = Math.exp(-2 * Math.PI * fc / SR); st = (1 - a) * m.rnd() + a * st; const tone = notes.reduce((v, fq) => v + Math.sin(2 * Math.PI * fq * s), 0) / notes.length; return (st * 1.6 + tone * .5) * Math.pow(u, 3) * Math.min(1, (D - s) / .004); }, 0, o.gain ?? .3);
+  },
+  glitch(m, t, o) {                                        // digital stutter for cuts: square blips that hop pitch
+    const dur = o.dur ?? .25, n = Math.round(dur * SR), steps = 7, seed = o.seed ?? 3;
+    m.put(t, n, (i, s) => { const k = Math.floor(s / dur * steps), fq = 300 + ((k * 7919 + seed * 31) % 13) * 140, on = (k % 2 === 0) ? 1 : .15; return Math.sign(Math.sin(2 * Math.PI * fq * s)) * on * Math.exp(-(s % (dur / steps)) / .02) * .5; }, o.pan ?? 0, o.gain ?? .07);
+  },
+  key(m, t, o) {                                           // one keyboard keystroke (typing)
+    const n = Math.round(.035 * SR), f = lp(4200), fq = o.freq ?? 1600;
+    m.put(t, n, (i, s) => (f(m.rnd()) * Math.exp(-s / .004) * 1.6 + Math.sin(2 * Math.PI * fq * s) * Math.exp(-s / .003) * .4), o.pan ?? 0, o.gain ?? .07);
+  },
 };
-const RANGE = new Set(['riser', 'drone', 'pad', 'scribble', 'slide', 'roomtone', 'silence']);   // kinds that span f..to
+const RANGE = new Set(['riser', 'drone', 'pad', 'scribble', 'slide', 'roomtone', 'silence', 'bass', 'chord', 'reverse']);   // kinds that span f..to
 
 /* ---------- themes: cue -> cue' (or null to drop) ---------- */
 const scale = (o, k, v, d) => (o[k] = (o[k] ?? d) * v);
@@ -81,11 +135,14 @@ const THEMES = {
     else if (c.kind === 'tick' || c.kind === 'dtick' || c.kind === 'blip') { scale(o, 'freq', 1.35, 2200); scale(o, 'gain', 1.25, .2); }
     else if (c.kind === 'pluck') { o.freq = noteHz(c.note ?? c.freq ?? 110) * 2; delete o.note; }
     else if (c.kind === 'drone' || c.kind === 'pad') scale(o, 'gain', .5, .1);
+    else if (c.kind === 'chord') { scale(o, 'cut0', 1.8, 700); scale(o, 'cut1', 1.8, o.cut0 ?? 700); }
+    else if (c.kind === 'hat') scale(o, 'gain', 1.3, .06);
+    else if (c.kind === 'impact') { scale(o, 'f0', 1.5, 62); scale(o, 'f1', 1.5, 32); scale(o, 'tail', .6, 3.5); }
     return o;
   } },
   minimal: { eq: 'highpass=f=30,highshelf=f=8000:g=-4', map: c => {
-    if (['riser', 'whoosh', 'pad', 'shaker', 'kick', 'blip', 'drone', 'scribble', 'swipe', 'slide'].includes(c.kind)) return null;
-    const o = { ...c }; if (['boom', 'stamp', 'thud'].includes(c.kind)) { scale(o, 'gain', .6, 1); scale(o, 'decay', .6, 2.6); } return o;
+    if (['riser', 'whoosh', 'pad', 'shaker', 'kick', 'blip', 'drone', 'scribble', 'swipe', 'slide', 'hat', 'clap', 'bass', 'chord', 'reverse', 'glitch'].includes(c.kind)) return null;
+    const o = { ...c }; if (['boom', 'stamp', 'thud', 'impact'].includes(c.kind)) { scale(o, 'gain', .6, 1); scale(o, 'decay', .6, 2.6); } return o;
   } },
 };
 

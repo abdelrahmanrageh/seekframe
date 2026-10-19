@@ -69,3 +69,21 @@ test('schema: accepts a good manifest, rejects a bad one', () => {
   const good = { schema: 1, title: 't', width: 1280, height: 720, fps: 30, duration: 100, scenes: [{ id: 'a', name: 'A', start: 0, end: 100 }], params: [{ id: 'x', type: 'number', default: 1, min: 0, max: 5 }], audio: [{ id: 's', label: 'S', generated: 'cues' }] };
   assert.ok(v(good), JSON.stringify(v.errors)); assert.ok(!v({ ...good, params: [{ id: 'x', type: 'number', default: 1 }] }), 'number params need min/max'); assert.ok(!v({ ...good, scenes: [{ id: 'A!', name: 'A', start: 0, end: 1 }] }));
 });
+
+test('timeline: timelineFrame maps a source frame back onto the edit', () => {
+  const tl = Timeline.build(manifest, { clips: [{ scene: 'b', frames: 100 }, { scene: 'a', frames: 50 }] });
+  assert.equal(Timeline.timelineFrame(tl, 150), 25);       // scene b (100..300) squeezed into 100 frames
+  assert.equal(Timeline.timelineFrame(tl, 50), 125);       // scene a (0..100) squeezed into 50 frames
+});
+
+test('sound: music instruments render finite audio, and minimal drops the groove', () => {
+  const cues = [{ kind: 'hat', f: 1 }, { kind: 'clap', f: 5 }, { kind: 'bass', f: 0, to: 30, note: 'D2', beat: .5 }, { kind: 'chord', f: 0, to: 45, notes: ['D3', 'F3', 'A3'], beat: .5, cut0: 400, cut1: 2000 },
+    { kind: 'keys', f: 10, note: 'A4' }, { kind: 'impact', f: 20 }, { kind: 'reverse', f: 30, to: 45 }, { kind: 'glitch', f: 40 }, { kind: 'key', f: 50 }];
+  for (const theme of Object.keys(THEMES)) {
+    const { m } = mix(cues, { fps: 30, seconds: 3, theme }); let pk = 0;
+    for (let i = 0; i < m.N; i++) { assert.ok(Number.isFinite(m.L[i]) && Number.isFinite(m.R[i])); pk = Math.max(pk, Math.abs(m.L[i])); }
+    assert.ok(pk > 0, theme + ' is not silent');
+  }
+  assert.equal(THEMES.minimal.map({ kind: 'chord', f: 0 }), null);
+  assert.ok(['hat', 'clap', 'bass', 'chord', 'keys', 'impact', 'reverse', 'glitch', 'key'].every(k => KINDS.includes(k)));
+});

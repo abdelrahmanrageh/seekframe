@@ -52,10 +52,12 @@ const X = (x: number, W?: number) => (rtl ? (W || layout().W) - x : x);         
 // "Cash on [delivery.]" -> word spans; [..] = highlighted keyword (its text sits in .in so wipe() can colour it separately)
 const words: SFApi['words'] = (parent, text, cls = '') => {
   const out: HTMLElement[] = [];
-  (String(text).match(/\[[^\]]+\]|\S+/g) || []).forEach((tk, i, a) => {
-    const hl = tk.startsWith('[');
+  const src = String(text), toks = [...src.matchAll(/\[[^\]]+\]|[^\s[]+/g)];
+  toks.forEach((m, i) => {
+    const tk = m[0], hl = tk.startsWith('[');
     out.push(el('span', 'w' + (hl ? ' hl' : '') + (cls ? ' ' + cls : ''), parent, hl ? `<span class="in">${esc(tk.slice(1, -1))}</span>` : esc(tk)));
-    if (i < a.length - 1) parent.appendChild(document.createTextNode(' '));
+    const next = toks[i + 1];                                          // "[films]?" keeps the ? next to the word
+    if (next && /\s/.test(src.slice(m.index! + tk.length, next.index))) parent.appendChild(document.createTextNode(' '));
   });
   return out;
 };
@@ -113,13 +115,14 @@ const cues = (): CueBuilder => {
 let currentValues: Record<string, ParamValue> = {};
 const define = (spec: FilmSpec): Manifest => {
   const m: Manifest = g.manifest = { schema: 1 as const, title: spec.title, width: spec.width, height: spec.height, fps: spec.fps || 30, duration: spec.duration, scenes: spec.scenes, params: [], audio: typeof spec.audio === 'function' ? [] : (spec.audio || []) };
-  if (spec.sizes) m.sizes = spec.sizes; if (spec.variants) m.variants = spec.variants; if (spec.soundtrack) m.soundtrack = spec.soundtrack; m.lang = { code: lang, rtl };
+  if (spec.sizes) m.sizes = spec.sizes; if (spec.variants) m.variants = spec.variants; if (spec.poster != null) m.poster = spec.poster; m.lang = { code: lang, rtl };
   const values = () => ({ ...currentValues });
   g.applyParams = (v: Record<string, ParamValue>) => {
     currentValues = { ...v };
     m.params = typeof spec.params === 'function' ? spec.params(values()) : (spec.params || []);
     if (typeof spec.audio === 'function') m.audio = spec.audio(values());
     if (spec.cues) m.cues = spec.cues(values());
+    if (spec.soundtrack) m.soundtrack = typeof spec.soundtrack === 'function' ? spec.soundtrack(values()) : spec.soundtrack;
     spec.build(values());
   };
   g.seek = (f: number) => spec.seek(f);

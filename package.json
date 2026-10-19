@@ -71,5 +71,9 @@
     "esbuild": "^0.28.2",
     "typescript": "^5.9.3"
   },
-  "main": "dist/cli.js"
+  "main": "dist/cli.js",
+  "allowScripts": {
+    "esbuild": true,
+    "ffmpeg-static": true
+  }
 }

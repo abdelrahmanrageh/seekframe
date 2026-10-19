@@ -4,7 +4,7 @@ import { api } from './api';
 import { $, el, esc, toast } from './dom';
 import { S, bus } from './state';
 import { LANGS, applyDirection, applyI18n, lang, setLang, t } from './i18n';
-import { apply, fit, mountFilm, replaceProject, saveNow, stripped, toggle } from './film';
+import { apply, fit, mountFilm, replaceProject, saveNow, seek, stripped, toggle } from './film';
 import * as History from './history';
 import { buildAudioEls } from './playback';
 import { initTimeline } from './timeline-ui';
@@ -27,11 +27,20 @@ function applyTheme(): void { let th = 'auto'; try { th = localStorage.getItem('
 function cycleTheme(): void { let th = 'auto'; try { th = localStorage.getItem('sf-theme') || 'auto'; localStorage.setItem('sf-theme', THEMES[(THEMES.indexOf(th) + 1) % 3]); } catch { /* ignore */ } applyTheme(); }
 
 /* ---------- boot ---------- */
+// ?film= wins, then the film opened last, then your own films, then the launch example, then whatever comes first
+function pickFilm(films: Array<{ id: string; root: string }>): string {
+  const ids = films.map(f => f.id); let last = ''; try { last = localStorage.getItem('sf-film') || ''; } catch { /* storage may be blocked */ }
+  const own = films.find(f => f.root === 'films');
+  const id = [qs.get('film') || '', last, own ? own.id : '', 'seekframe-launch'].find(x => x && ids.includes(x)) || ids[0];
+  try { localStorage.setItem('sf-film', id); } catch { /* ignore */ }
+  return id;
+}
+
 async function boot(): Promise<void> {
   applyDirection(); applyI18n(); applyTheme();
   $('#play').innerHTML = PLAY; $('#play').setAttribute('aria-label', t('play'));
   const films = await api.films(), ids = films.map(f => f.id);
-  S.filmId = ids.includes(qs.get('film') || '') ? qs.get('film')! : ids[0]; S.filmRoot = (films.find(f => f.id === S.filmId) || { root: 'films' }).root;
+  S.filmId = pickFilm(films); S.filmRoot = (films.find(f => f.id === S.filmId) || { root: 'films' }).root;
   S.version = (qs.get('v') || 'default').replace(/[^\w-]/g, '') || 'default';
   const fsel = $<HTMLSelectElement>('#filmSel'); films.forEach(f => { const o = el('option', '', esc(f.id) + (f.root === 'examples' ? '  · example' : ''), fsel); o.value = f.id; }); fsel.value = S.filmId;
   fsel.addEventListener('change', () => { location.search = `?film=${fsel.value}`; });
@@ -59,6 +68,8 @@ async function loadFilm(): Promise<void> {
   $('#loading').hidden = true; $('#frameBox').hidden = false; fit();
   History.reset(JSON.stringify(stripped()));
   apply({ panels: true });
+  const poster = S.manifest.poster != null ? Timeline.timelineFrame(S.tl, S.manifest.poster) : null;   // open on a frame that shows the film
+  if (poster != null) seek(poster);
   $('#saveAs').addEventListener('click', async () => {
     const n = (prompt(t('prompt.name'), '') || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, ''); if (!n) return;
     await saveNow(); await api.putProject(S.filmId, n, stripped()); location.search = `?film=${S.filmId}&v=${n}`;

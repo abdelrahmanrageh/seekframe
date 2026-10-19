@@ -47,6 +47,12 @@ export function sourceFrame(tl: BuiltTimeline, f: number): { src: number; clip: 
   return { src: c.in + lf * c.rate, clip: c, rate: c.rate };
 }
 
+/** source frame -> first edited-timeline frame that shows it (null if the edit cut it out) */
+export function timelineFrame(tl: BuiltTimeline, src: number): number | null {
+  for (const c of tl.clips) if (src >= c.in && src < c.out) return Math.round(c.t0 + (src - c.in) / c.rate);
+  return null;
+}
+
 /** atempo chain for any factor in [0.25, 4] (a single atempo only does 0.5-2 in older ffmpeg builds) */
 export function tempoChain(r: number): string {
   const parts: string[] = []; r = Math.max(0.25, Math.min(4, r));

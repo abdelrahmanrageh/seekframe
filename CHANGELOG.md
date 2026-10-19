@@ -8,7 +8,10 @@
 - **Brand**: raster logos are kept as-is when SVG tracing would be unreadable or huge; better palette role detection (paper/ink/accent/muted).
 - **Editor saves** store only what differs from the film's defaults.
 - **Distribution**: Dockerfile, devcontainer, reusable render Action, docs site on GitHub Pages.
-- New launch film in `examples/seekframe-launch`; feature-tour moved to `examples/`.
+- **New launch film** (`examples/seekframe-launch`): 3 hooks × 4 looks, agent ticker, MCP prompt, generate-and-check, editor, variants wall, halftone logo reveal built dot by dot, and a generated 120 BPM score. Feature-tour moved to `examples/`.
+- **Sound engine**: musical instruments (`hat`, `clap`, `bass`, `chord` with side-chain pump, `keys`, `impact`, `reverse`, `glitch`, `key`); `soundtrack` can depend on params.
+- **Contract**: `poster` frame (the editor opens there instead of a blank frame 0); `data-sf-ticker` skips the overflow check for scrolling text; the validator counts params that only change the sound.
+- **First run**: the editor opens your last film, then your own films, then the launch example; `allowScripts` approves the install scripts of `esbuild` and `ffmpeg-static` (npm 11 warns about, and will block, unreviewed ones).
 
 ## 0.1.0: first public release
 - Film contract (`docs/FILM_SPEC.md`), JSON schema, validator (determinism, params, cues, flashing), scaffolder, blank template.

@@ -24,8 +24,19 @@ return c.list;
 | `ring`, `blip` | gain, freq, pan | phone ring, single call blip |
 | `scribble`, `slide` | to, gain, p0, p1 | marker pen, sliding object (range) |
 | `silence` | to | gates everything in the range (range) |
+| `hat`, `clap` | gain, pan, `open` (hat) | drums for a groove |
+| `bass` | to, note, `beat` (s), cut | bass note over a range; `beat` re-triggers it so it pumps like a side-chained bass (range) |
+| `chord` | to, notes (`['D3','F3','A3']`), `beat`, cut0 → cut1, attack, release | detuned-saw chord with a filter sweep; `beat` pumps it (range) |
+| `keys` | note, dur, bright | FM bell / electric piano for arps and melodies |
+| `impact` | gain, tail | cinematic hit: sub boom + noise burst + long tail (a drop, a reveal) |
+| `reverse` | to, notes | reverse swell that cuts dead at `to`, into a hit (range) |
+| `glitch`, `key` | gain, pan / freq | digital stutter for cuts; one keyboard keystroke |
 
-**Themes** remap cues (`soundtrack: { theme: 'deep' | 'bright' | 'minimal' }`): *deep* is sub-led and sparse, *bright* has higher
+**Music.** Pick a tempo whose beat is a whole number of frames (120 BPM at 30 fps = 15 frames) and cut on beats: then the
+groove, the hits and the picture stay locked even when the editor retimes scenes. `examples/seekframe-launch` builds a full
+score this way (intro, reverse swell, drop, breakdown, second drop, silence, reveal) in about 80 lines of cues.
+
+**Themes** remap cues (`soundtrack: { theme: 'deep' | 'bright' | 'minimal' }`; with `SF.define` it may be a function of the param values, so each variant can sound different): *deep* is sub-led and sparse, *bright* has higher
 pitches and short booms, *minimal* keeps only clicks and soft hits. Add a theme in `THEMES` in `engine.js` (a function from cue to cue,
 or `null` to drop it). **Loudness:** mastered to `soundtrack.loudness` LUFS (default −16, true peak −1 dBTP; use −14 for loud
 social feeds, −23 for broadcast).

@@ -437,6 +437,11 @@
           "description": "Frame (edited timeline) used for variant thumbnails. Default: the middle of the film."
         }
       }
+    },
+    "poster": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Source frame the editor opens on and thumbnails use."
     }
   }
 }

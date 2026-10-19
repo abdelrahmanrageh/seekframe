@@ -67,7 +67,7 @@ async function review(film: FilmRef, o: ReviewOptions = {}): Promise<ReviewResul
             const key = c.scene + '|' + it.text;
             // overflow: text box leaves the frame
             const over = Math.max(-it.x, -it.y, it.x + it.w - info.W, it.y + it.h - info.H);
-            if (over > 6 && !issues.has('o' + key)) issues.set('o' + key, `text leaves the frame by ${Math.round(over)}px in scene "${c.scene}": “${it.text}”`);
+            if (over > 6 && !it.ticker && !issues.has('o' + key)) issues.set('o' + key, `text leaves the frame by ${Math.round(over)}px in scene "${c.scene}": “${it.text}”`);
             // contrast: mean background under the box vs text colour
             const col = parseColor(it.fill && !/rgba\(0, 0, 0, 0\)/.test(it.fill) ? it.fill : it.color); if (!col || col.a < .2 || /rgba\(0, 0, 0, 0\)/.test(it.fill)) continue;
             let r = 0, g = 0, b = 0, n = 0; const x0 = Math.max(0, Math.floor(it.x)), x1 = Math.min(bgPng.width - 1, Math.ceil(it.x + it.w)), y0 = Math.max(0, Math.floor(it.y)), y1 = Math.min(bgPng.height - 1, Math.ceil(it.y + it.h));
