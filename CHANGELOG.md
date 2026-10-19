@@ -11,6 +11,8 @@
 - **New launch film** (`examples/seekframe-launch`): 3 hooks × 4 looks, agent ticker, MCP prompt, generate-and-check, editor, variants wall, halftone logo reveal built dot by dot, and a sound-effects-only design (whooshes, hits, typing, clicks). Feature-tour moved to `examples/`.
 - **Sound engine**: realistic keyboard typing (`key`: click, thock and release, heavier space bar), `impact`, `reverse`, `glitch`, and optional music instruments (`hat`, `clap`, `bass`, `chord` with side-chain pump, `keys`); `soundtrack` can depend on params.
 - **Editor**: the Audio tab shows the sound style (params with `group: 'sound'`, the theme and loudness); Variants thumbnails render from one warm page per film and are pre-rendered after the film loads.
+- **Real logos and images** in the launch film (agent logos, a photo in the editor preview, your own logo and wordmark); the New film dialog's brand checkbox now works (it was disabled and ignored), is aligned, and shows a hint when there is no brand kit yet.
+- **Docs site** redesigned: logo, hero film, editor section with real screenshots, how it works, variants (`site/img/`).
 - `npm run site` builds and serves the docs site locally (the Pages workflow uses the same script).
 - **Contract**: `poster` frame (the editor opens there instead of a blank frame 0); `data-sf-ticker` skips the overflow check for scrolling text; the validator counts params that only change the sound.
 - **First run**: the editor opens your last film, then your own films, then the launch example; `allowScripts` approves the install scripts of `esbuild` and `ffmpeg-static` (npm 11 warns about, and will block, unreviewed ones).

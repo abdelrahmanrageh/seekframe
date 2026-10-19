@@ -8,9 +8,9 @@ import { build as buildBrand } from '../brand/build';
 
 // In a workspace (not a clone) the package lives in node_modules/seekframe: rewrite the template's clone-relative paths to go through it
 const viaPackage = (text: string): string => ROOT === PKG_ROOT ? text : text.replace(/\.\.\/\.\.\/dist\//g, '../../node_modules/seekframe/dist/');
-export interface ScaffoldOptions { name: string; width?: number | string; height?: number | string; fps?: number | string; brand?: string }
+export interface ScaffoldOptions { name: string; width?: number | string; height?: number | string; fps?: number | string; brand?: string; noBrand?: boolean }
 // returns {id, dir, brand}; throws on problems (so MCP/CLI can both use it)
-function scaffoldFilm({ name, width, height, fps, brand: brandArg }: ScaffoldOptions) {
+function scaffoldFilm({ name, width, height, fps, brand: brandArg, noBrand }: ScaffoldOptions) {
   name = slug(name);
   if (!name || name.startsWith('_')) throw new Error('give the film a name, e.g. "spring-sale"');
   ensureBrands();
@@ -19,7 +19,7 @@ function scaffoldFilm({ name, width, height, fps, brand: brandArg }: ScaffoldOpt
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   fs.cpSync(src, dst, { recursive: true });
   const brand = brandArg ? path.resolve(brandArg) : path.join(ROOT, 'brand'); let brandCopied = false;
-  if (fs.existsSync(path.join(brand, 'brand.json'))) { fs.rmSync(path.join(dst, 'brand'), { recursive: true, force: true }); fs.cpSync(brand, path.join(dst, 'brand'), { recursive: true }); brandCopied = true; }
+  if (!noBrand && fs.existsSync(path.join(brand, 'brand.json'))) { fs.rmSync(path.join(dst, 'brand'), { recursive: true, force: true }); fs.cpSync(brand, path.join(dst, 'brand'), { recursive: true }); brandCopied = true; }
   const f = path.join(dst, 'film.js'); let s = fs.readFileSync(f, 'utf8');
   s = s.replace("title: 'Blank film'", `title: '${name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}'`);
   if (width) s = s.replace('width: 1280', 'width: ' + +width);

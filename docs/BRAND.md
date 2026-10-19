@@ -22,3 +22,11 @@ Font `files` keys may be weight ranges (`"600 700"`).
 - **Fonts and licences:** `redistributable: false` (or `--no-redistribute`) puts the files in `.gitignore`; the CSS falls back to the bundled
   OFL fonts for everyone who clones without them. Never commit a font whose licence forbids redistribution.
 - `palette` warns when your accent has poor contrast on paper (a bright lime on white is ~1.3:1): use it as a *fill* behind dark text, not as text.
+
+## Real logos and photos (not only illustrations)
+Films are not limited to drawn shapes. Expose any picture as an `image` param (`{ id: 'logo', type: 'image', default: 'brand/assets/logo.png' }`):
+in the editor it shows an upload control, and uploaded files are stored with the film. Use it for your **logo, product shots, photos and partner or
+customer logos**; prefer SVG or a PNG with a transparent background, and `<img>` or CSS `background-image` in the film. `examples/seekframe-launch`
+shows four uses: your logo for the reveal (`logo`), a logo for each name in the agent ticker (`a-img-1` … `a-img-6`), a photo in the editor preview
+(`shot`), and the wordmark text (`end-word`). The film's agent chips ship with simple glyphs: other companies' logos are trademarks, so add the
+official marks yourself under their brand guidelines. `seekframe brand import-logo` keeps a raster logo as it is when tracing would make it worse.

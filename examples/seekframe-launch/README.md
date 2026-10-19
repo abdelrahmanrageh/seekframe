@@ -26,6 +26,9 @@ node bin/seekframe.js matrix seekframe-launch --axes "hook=*,look=*" --fps 30   
 7. **Sound**: a waveform that hits on the beat; the picture collapses to a line.
 8. **Logo**: an iris opens on paper and the halftone eye builds itself dot by dot (`logo-dots.js`, sampled from `assets/brand/seekframe-mark.png` by `tools/logo-dots.mjs`), then the wordmark.
 
+## Your own logos and images
+`logo` (the reveal), `end-word` (wordmark text), `a-img-1` … `a-img-6` (a logo for each agent chip) and `shot` (a photo in the editor preview) are image or text options: upload them in the editor, or set them in a saved version. The ticker ships with simple glyphs instead of other companies' logos.
+
 ## Sound
 Sound effects only, no music: generated from cues (`cues()` in `film.js`), each on the frame its picture event happens. Word pops and
 ticks, the clock ticking, real keyboard typing (click, thock and release, heavier space bar) for every typed line, whooshes that travel

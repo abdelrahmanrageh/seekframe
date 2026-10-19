@@ -3,31 +3,160 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Seekframe is an open-source framework for making brand films as code, with an editor and MP4 renderer.">
+  <meta name="description" content="Seekframe is an open-source framework for making brand films as code: your agent writes the film, you edit it in the browser, it renders to MP4.">
+  <meta property="og:title" content="Seekframe: brand films as code">
+  <meta property="og:description" content="Your agent writes the film. You edit it in the browser. Seekframe checks it and renders it to MP4.">
+  <meta property="og:image" content="examples/seekframe-launch/preview/poster.jpg">
   <title>Seekframe — brand films as code</title>
+  <link rel="icon" href="img/favicon.png">
   <style>
-    :root{color-scheme:dark;--bg:#0e1110;--panel:#151917;--ink:#f2f5f0;--muted:#a4afa7;--line:#2a312d;--lime:#a2ff41;--max:1120px;font-family:Inter,ui-sans-serif,system-ui,sans-serif}
-    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 70% 0,#1b281b,var(--bg) 52%);color:var(--ink);line-height:1.55}a{color:inherit}main{max-width:var(--max);margin:auto;padding:24px}header{display:flex;align-items:center;gap:18px;padding:12px 0 56px}header a{text-decoration:none}header .logo{font-weight:800;letter-spacing:.1em;color:var(--lime)}header nav{margin-left:auto;display:flex;gap:20px;color:var(--muted);font-size:14px}.hero{display:grid;grid-template-columns:1fr .85fr;align-items:center;gap:52px;padding:12px 0 72px}.eyebrow{color:var(--lime);font-size:13px;text-transform:uppercase;letter-spacing:.14em;font-weight:700}h1{font-size:clamp(44px,7vw,82px);line-height:.98;letter-spacing:-.055em;margin:16px 0 22px}h2{font-size:32px;line-height:1.1;letter-spacing:-.035em}.lead{font-size:19px;color:var(--muted);max-width:620px}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.button{display:inline-flex;padding:11px 16px;border:1px solid var(--line);border-radius:9px;text-decoration:none;font-weight:650}.button.primary{background:var(--lime);border-color:var(--lime);color:#17210e}.preview{border:1px solid #425044;border-radius:18px;background:#090b09;overflow:hidden;box-shadow:0 24px 90px #0008}.preview img,.preview video{display:block;width:100%;height:auto;aspect-ratio:16/9}.vars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0 56px}.vars figure{margin:0;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#090b09}.vars video{display:block;width:100%;aspect-ratio:16/9}.vars figcaption{padding:10px 14px;color:var(--muted);font-size:13px}.caption{padding:12px 16px;color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:28px 0 72px}.card{padding:22px;border:1px solid var(--line);border-radius:13px;background:linear-gradient(145deg,#191f1a,var(--panel))}.card h3{margin:8px 0}.card p{color:var(--muted);margin:0}.step{color:var(--lime);font-weight:800}section{padding:28px 0 12px}.code{white-space:pre-wrap;background:#090b09;border:1px solid var(--line);border-radius:12px;padding:20px;color:#dce8dc;font:14px/1.7 ui-monospace,monospace;overflow:auto}footer{border-top:1px solid var(--line);padding:24px 0 36px;color:var(--muted);font-size:13px}footer nav{display:flex;gap:18px;flex-wrap:wrap}@media(max-width:760px){.vars{grid-template-columns:1fr}main{padding:18px}.hero{grid-template-columns:1fr;gap:28px;padding-bottom:40px}header{padding-bottom:34px}header nav{gap:12px}.grid{grid-template-columns:1fr;margin-bottom:42px}h1{font-size:52px}}
+    :root{color-scheme:dark;--bg:#0b0d0a;--panel:#12150f;--ink:#f5f2e9;--muted:#a3a99a;--line:#262b20;--lime:#c9f23d;--cream:#faf3e3;--max:1160px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}
+    body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+    a{color:inherit}img,video{max-width:100%}
+    .glow{position:absolute;inset:0 0 auto 0;height:900px;pointer-events:none;background:radial-gradient(60% 55% at 50% 0,#27350e 0,transparent 70%),radial-gradient(40% 40% at 12% 18%,#1b2a08 0,transparent 70%),radial-gradient(40% 40% at 88% 22%,#13200a 0,transparent 70%);z-index:0}
+    .wrap{position:relative;z-index:1;max-width:var(--max);margin:auto;padding:0 24px}
+    nav.top{position:sticky;top:0;z-index:10;backdrop-filter:blur(14px);background:#0b0d0acc;border-bottom:1px solid #ffffff10}
+    nav.top .wrap{display:flex;align-items:center;gap:28px;height:64px}
+    .brand{display:flex;align-items:center;gap:11px;text-decoration:none;font-weight:800;letter-spacing:-.02em;font-size:19px}
+    .brand img{width:40px;height:27px;border-radius:5px;object-fit:cover;display:block}
+    nav.top .links{display:flex;gap:24px;margin:0 auto;color:var(--muted);font-size:15px}
+    nav.top .links a{text-decoration:none}nav.top .links a:hover{color:var(--ink)}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:999px;border:1px solid #ffffff22;background:#ffffff0d;text-decoration:none;font-weight:650;font-size:15px;transition:.15s}
+    .btn:hover{background:#ffffff1a}
+    .btn.primary{background:var(--lime);color:#14190a;border-color:var(--lime)}.btn.primary:hover{background:#d8ff52}
+    .hero{text-align:center;padding:84px 0 44px;position:relative}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border:1px solid #ffffff1c;border-radius:999px;background:#ffffff0a;color:var(--muted);font-size:13px;font-weight:600}
+    .pill b{color:var(--lime)}
+    h1{font-size:clamp(46px,8vw,96px);line-height:.96;letter-spacing:-.06em;margin:26px auto 22px;max-width:960px}
+    h1 em{font-style:normal;background:var(--lime);color:#14190a;border-radius:.16em;padding:0 .12em .04em}
+    .lead{font-size:clamp(17px,2vw,21px);color:var(--muted);max-width:660px;margin:0 auto}
+    .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:32px}
+    .win{margin:56px auto 0;max-width:1060px;border:1px solid #ffffff1c;border-radius:20px;background:var(--panel);overflow:hidden;box-shadow:0 40px 120px #000a,0 0 0 1px #00000040}
+    .win .bar{display:flex;align-items:center;gap:7px;padding:12px 16px;border-bottom:1px solid var(--line);color:var(--muted);font-size:13px;text-align:left}
+    .win .bar i{width:11px;height:11px;border-radius:50%;background:#ffffff26;display:block}.win .bar span{margin-left:10px}
+    .win video,.win img{display:block;width:100%;height:auto}
+    .win video{aspect-ratio:16/9;background:#000}
+    .cap{margin-top:14px;color:var(--muted);font-size:14px}
+    .works{display:flex;align-items:center;justify-content:center;gap:12px 14px;flex-wrap:wrap;padding:40px 0 8px;color:var(--muted);font-size:14px}
+    .works b{letter-spacing:.14em;text-transform:uppercase;font-size:12px;margin-right:8px}
+    .works span.t{display:inline-flex;color:var(--ink);font-weight:650;padding:7px 14px;border:1px solid #ffffff18;border-radius:999px;background:#ffffff08}
+    section.s{padding:104px 0 0}
+    .eyebrow{color:var(--lime);font-size:13px;text-transform:uppercase;letter-spacing:.16em;font-weight:800}
+    h2{font-size:clamp(34px,5vw,58px);line-height:1;letter-spacing:-.05em;margin:14px 0 16px;max-width:820px}
+    .center{text-align:center}.center h2,.center .lead{margin-left:auto;margin-right:auto}
+    .ed{display:grid;grid-template-columns:.8fr 1.4fr;gap:44px;align-items:center;margin-top:44px;padding:44px;border:1px solid #ffffff14;border-radius:28px;background:linear-gradient(160deg,#171d12,#10130d 60%)}
+    .ed h3{font-size:clamp(30px,4vw,46px);line-height:1;letter-spacing:-.045em;margin:12px 0 16px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0}
+    .tabs button{font:inherit;font-weight:650;font-size:14px;padding:9px 16px;border-radius:999px;border:1px solid #ffffff1c;background:#ffffff08;color:var(--muted);cursor:pointer}
+    .tabs button[aria-selected=true]{background:var(--cream);color:#14190a;border-color:var(--cream)}
+    .tabs button:focus-visible,.btn:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+    .ed .win{margin:0;border-radius:16px}
+    .ed ul{margin:0;padding:0;list-style:none;color:var(--muted);display:grid;gap:10px;font-size:16px}
+    .ed li:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--lime);margin-right:12px}
+    .tabinfo{min-height:78px;color:var(--ink);font-size:16px;margin:0 0 18px}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:44px}
+    .card{padding:28px;border:1px solid #ffffff14;border-radius:22px;background:linear-gradient(160deg,#171c12,var(--panel))}
+    .card .n{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#ffffff10;color:var(--lime);font-weight:800;font-size:14px}
+    .card h3{margin:44px 0 8px;font-size:23px;letter-spacing:-.03em}.card p{margin:0;color:var(--muted)}
+    .vars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:44px}
+    .vars figure{margin:0;border:1px solid #ffffff18;border-radius:18px;overflow:hidden;background:#000}
+    .vars video{display:block;width:100%;aspect-ratio:16/9}
+    .vars figcaption{padding:12px 16px;color:var(--muted);font-size:14px;background:var(--panel)}
+    .code{white-space:pre-wrap;background:#080a07;border:1px solid var(--line);border-radius:16px;padding:22px 24px;color:#dce8dc;font:15px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace;overflow:auto;max-width:720px;margin:30px auto 0;text-align:left}
+    .code b{color:var(--lime);font-weight:600}
+    footer{margin-top:120px;border-top:1px solid #ffffff14;padding:34px 0 48px;color:var(--muted);font-size:14px}
+    footer .wrap{display:flex;gap:24px 40px;flex-wrap:wrap;align-items:center}
+    footer .brand{font-size:17px;color:var(--ink)}footer nav{display:flex;gap:20px;flex-wrap:wrap;margin-left:auto}footer p{flex-basis:100%;margin:0}
+    @media(max-width:880px){nav.top .links{display:none}nav.top .btn.primary{margin-left:auto}.ed{grid-template-columns:1fr;padding:22px;gap:28px}.grid3,.vars{grid-template-columns:1fr}section.s{padding-top:72px}.hero{padding-top:56px}footer nav{margin-left:0}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
   </style>
 </head>
 <body>
-<main>
-  <header><a class="logo" href="#top">SEEKFRAME</a><nav><a href="#how">How it works</a><a href="https://github.com/abdelrahmanrageh/seekframe">GitHub</a><a href="https://github.com/abdelrahmanrageh/seekframe/tree/main/docs">Docs</a></nav></header>
-  <section class="hero" id="top">
-    <div><div class="eyebrow">Open-source motion-film framework</div><h1>Brand films,<br>frame by frame.</h1><p class="lead">Your LLM writes a film in HTML. You edit it in the browser. Seekframe checks it and renders it to MP4.</p><div class="actions"><a class="button primary" href="https://github.com/abdelrahmanrageh/seekframe">Explore the project</a><a class="button" href="https://github.com/abdelrahmanrageh/seekframe/blob/main/docs/GETTING_STARTED.md">Start making a film</a></div></div>
-    <div class="preview"><video src="examples/seekframe-launch/preview/launch.mp4" poster="examples/seekframe-launch/preview/poster.jpg" autoplay muted loop playsinline controls preload="metadata" aria-label="The Seekframe launch film, made with Seekframe"></video><div class="caption">The launch film, made with Seekframe: generated picture and sound effects. Unmute for the sound design.</div></div>
+<div class="glow" aria-hidden="true"></div>
+<nav class="top"><div class="wrap">
+  <a class="brand" href="#top"><img src="img/mark.png" alt="" width="40" height="27">seekframe</a>
+  <div class="links"><a href="#editor">Editor</a><a href="#how">How it works</a><a href="#variants">Variants</a><a href="#start">Quick start</a><a href="https://github.com/abdelrahmanrageh/seekframe/tree/main/docs">Docs</a></div>
+  <a class="btn primary" href="https://github.com/abdelrahmanrageh/seekframe">GitHub</a>
+</div></nav>
+
+<main class="wrap" id="top">
+  <section class="hero">
+    <span class="pill"><b>Open source</b> · MIT · works with your agent</span>
+    <h1>The motion designer you can <em>prompt</em>.</h1>
+    <p class="lead">Your agent writes the film as code. You edit it in the browser: text, colours, timing, sound, variants. Seekframe checks it and renders it to MP4.</p>
+    <div class="actions"><a class="btn primary" href="#start">Start making a film</a><a class="btn" href="https://github.com/abdelrahmanrageh/seekframe">View on GitHub</a></div>
+    <div class="win"><div class="bar"><i></i><i></i><i></i><span>The launch film, made with Seekframe</span></div>
+      <video src="examples/seekframe-launch/preview/launch.mp4" poster="examples/seekframe-launch/preview/poster.jpg" autoplay muted loop playsinline controls preload="metadata" aria-label="The Seekframe launch film, made with Seekframe"></video></div>
+    <p class="cap">Generated picture and sound effects, no music. Unmute for the sound design.</p>
+    <div class="works"><b>Works with</b><span class="t">Claude Code</span><span class="t">Codex</span><span class="t">Cursor</span><span class="t">opencode</span><span class="t">Gemini CLI</span><span class="t">Copilot</span><span class="t">Any MCP client</span></div>
   </section>
-  <section id="variants"><div class="eyebrow">Variants</div><h2>One film, every hook and look.</h2><p class="lead">The same code renders three stories and four colourways. Each look has its own sound style.</p><div class="vars">
-<figure><video src="examples/seekframe-launch/preview/clock-electric.mp4" autoplay muted loop playsinline controls preload="metadata" aria-label="Clock hook, electric look"></video><figcaption>Clock · electric</figcaption></figure>
-<figure><video src="examples/seekframe-launch/preview/scale-sunset.mp4" autoplay muted loop playsinline controls preload="metadata" aria-label="Scale hook, sunset look"></video><figcaption>Scale · sunset</figcaption></figure>
-<figure><video src="examples/seekframe-launch/preview/whatif-cream.mp4" autoplay muted loop playsinline controls preload="metadata" aria-label="What if hook, cream look"></video><figcaption>What if · cream</figcaption></figure>
-</div></section>
-  <section id="how"><div class="eyebrow">A practical workflow</div><h2>From brief to film, with a human in the loop.</h2><div class="grid"><article class="card"><div class="step">01 · WRITE</div><h3>Give your agent a brief</h3><p>Describe the audience, message, brand, and formats. The film contract keeps each scene editable.</p></article><article class="card"><div class="step">02 · REVIEW</div><h3>Inspect and refine</h3><p>Use the editor for wording, timing, sound, and variants. Validation catches common implementation mistakes.</p></article><article class="card"><div class="step">03 · RENDER</div><h3>Export the versions</h3><p>Render one film or a matrix of hooks, themes, sizes, and saved versions to MP4.</p></article></div></section>
-  <section><div class="eyebrow">Quick start</div><h2>Try it locally.</h2><pre class="code">git clone https://github.com/abdelrahmanrageh/seekframe
-cd seekframe
-npm install &amp;&amp; npx playwright install chromium
-npm run editor</pre><p class="lead">The npm packages are not published yet; for now, clone the repo. The editor includes a brand panel for colours, logos, fonts, a new-film wizard, and setup checks. The CLI and MCP server expose the same core operations to agents and CI.</p></section>
-  <footer><nav><a href="https://github.com/abdelrahmanrageh/seekframe">GitHub</a><a href="https://github.com/abdelrahmanrageh/seekframe/blob/main/README.md">README</a><a href="https://github.com/abdelrahmanrageh/seekframe/blob/main/docs/FILM_SPEC.md">Film contract</a><a href="https://github.com/abdelrahmanrageh/seekframe/blob/main/CONTRIBUTING.md">Contributing</a><a href="https://github.com/abdelrahmanrageh/seekframe/blob/main/LICENSE">MIT licence</a></nav><p>Seekframe is open source. Example brand assets remain subject to their owners’ rights.</p></footer>
+
+  <section class="s" id="editor">
+    <div class="center"><div class="eyebrow">The editor</div><h2>One focused workspace. Tune the smallest beat.</h2><p class="lead">Every film is editable the moment your agent writes it. No timeline rebuilding, no re-prompting for a typo.</p></div>
+    <div class="ed">
+      <div>
+        <div class="eyebrow">Edit like a doc</div>
+        <h3>See the whole film. Change anything.</h3>
+        <div class="tabs" role="tablist" aria-label="Editor views">
+          <button role="tab" aria-selected="true" data-i="0">Scenes</button><button role="tab" aria-selected="false" data-i="1">Variants</button><button role="tab" aria-selected="false" data-i="2">Audio</button><button role="tab" aria-selected="false" data-i="3">Style</button>
+        </div>
+        <p class="tabinfo" id="tabinfo" aria-live="polite"></p>
+        <ul><li>Undo and redo, saved versions, history</li><li>Brand panel: colours, logo, fonts</li><li>English and Arabic interface, right-to-left included</li><li>Render to MP4 at 24, 30 or 60 fps</li></ul>
+      </div>
+      <div class="win"><div class="bar"><i></i><i></i><i></i><span>seekframe editor</span></div>
+        <img id="edimg" src="img/editor-scenes.jpg" width="1600" height="1000" alt="The Seekframe editor showing the scene list and timeline" loading="lazy"></div>
+    </div>
+  </section>
+
+  <section class="s" id="how">
+    <div class="center"><div class="eyebrow">How it works</div><h2>The first cut is AI. The final cut is yours.</h2><p class="lead">A film is a pure function of the frame number, so an agent can write it, check it, and fix it without guessing.</p></div>
+    <div class="grid3">
+      <article class="card"><div class="n">1</div><h3>Give your agent a brief</h3><p>Describe the audience, message, brand and formats. The film contract keeps every scene, text and colour editable.</p></article>
+      <article class="card"><div class="n">2</div><h3>It checks its own work</h3><p>Validate, review and sync catch broken params, overflowing text, low contrast, flashing and sound that misses the picture.</p></article>
+      <article class="card"><div class="n">3</div><h3>You finish and export</h3><p>Edit in the browser, then render one film or a matrix of hooks, looks, languages and sizes to MP4.</p></article>
+    </div>
+  </section>
+
+  <section class="s" id="variants">
+    <div class="center"><div class="eyebrow">Variants</div><h2>One film, every hook and look.</h2><p class="lead">The same code renders three stories and four colourways, each with its own sound style. Your own logos and images drop in as options.</p></div>
+    <div class="vars">
+      <figure><video src="examples/seekframe-launch/preview/clock-electric.mp4" autoplay muted loop playsinline controls preload="metadata" aria-label="Clock hook, electric look"></video><figcaption>Clock · electric</figcaption></figure>
+      <figure><video src="examples/seekframe-launch/preview/scale-sunset.mp4" autoplay muted loop playsinline controls preload="metadata" aria-label="Scale hook, sunset look"></video><figcaption>Scale · sunset</figcaption></figure>
+      <figure><video src="examples/seekframe-launch/preview/whatif-cream.mp4" autoplay muted loop playsinline controls preload="metadata" aria-label="What if hook, cream look"></video><figcaption>What if · cream</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="s center" id="start">
+    <div class="eyebrow">Quick start</div><h2>Try it locally.</h2>
+    <p class="lead">The npm packages are not published yet; for now, clone the repo.</p>
+    <pre class="code"><b>git</b> clone https://github.com/abdelrahmanrageh/seekframe
+<b>cd</b> seekframe
+<b>npm</b> install &amp;&amp; npx playwright install chromium
+<b>npm</b> run editor</pre>
+    <div class="actions"><a class="btn primary" href="https://github.com/abdelrahmanrageh/seekframe/blob/main/docs/GETTING_STARTED.md">Read the guide</a><a class="btn" href="https://github.com/abdelrahmanrageh/seekframe/blob/main/docs/FILM_SPEC.md">Film contract</a></div>
+  </section>
 </main>
+
+<footer><div class="wrap">
+  <a class="brand" href="#top"><img src="img/mark.png" alt="" width="40" height="27">seekframe</a>
+  <nav><a href="https://github.com/abdelrahmanrageh/seekframe">GitHub</a><a href="https://github.com/abdelrahmanrageh/seekframe/blob/main/README.md">README</a><a href="https://github.com/abdelrahmanrageh/seekframe/blob/main/docs/FILM_SPEC.md">Film contract</a><a href="https://github.com/abdelrahmanrageh/seekframe/blob/main/CONTRIBUTING.md">Contributing</a><a href="https://github.com/abdelrahmanrageh/seekframe/blob/main/LICENSE">MIT licence</a></nav>
+  <p>Seekframe is open source. Other companies’ names belong to their owners and are used only to say what Seekframe works with.</p>
+</div></footer>
+
+<script>
+  var VIEWS = [
+    { img: 'img/editor-scenes.jpg', alt: 'The editor showing the scene list and timeline', info: 'Reorder, duplicate, delete, stretch and trim scenes. Edit every line of text the agent exposed. The sound follows your edit.' },
+    { img: 'img/editor-variants.jpg', alt: 'The editor showing thumbnails of variants', info: 'Each hook and look is a preset with a thumbnail. Pick one to apply it, or open a saved version.' },
+    { img: 'img/editor-audio.jpg', alt: 'The editor showing the Audio tab with sound style', info: 'Choose the sound style (deep, bright, minimal), set the volume, or add your own audio files.' },
+    { img: 'img/editor-style.jpg', alt: 'The editor showing the Style tab with colours and sizes', info: 'Colours, sizes and looks are typed options, so changing them never means touching code.' }
+  ];
+  (function () {
+    var tabs = document.querySelectorAll('.tabs button'), img = document.getElementById('edimg'), info = document.getElementById('tabinfo');
+    function show(i) { tabs.forEach(function (b, k) { b.setAttribute('aria-selected', String(k === i)); }); img.src = VIEWS[i].img; img.alt = VIEWS[i].alt; info.textContent = VIEWS[i].info; }
+    tabs.forEach(function (b, k) { b.addEventListener('click', function () { show(k); }); });
+    show(0);
+  })();
+</script>
 </body>
 </html>

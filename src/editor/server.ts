@@ -148,7 +148,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/workspace') return json(res, 200, { root: ROOT, isClone: ROOT === PKG_ROOT, version: require('../../package.json').version });
     if (p === '/api/films/new' && req.method === 'POST') {
       const o = await bodyJSON(req);
-      try { const r = scaffoldFilm({ name: o.name, width: o.width, height: o.height, fps: o.fps }); return json(res, 200, { id: r.id, brand: r.brand }); }
+      try { const r = scaffoldFilm({ name: o.name, width: o.width, height: o.height, fps: o.fps, noBrand: !!o.noBrand }); return json(res, 200, { id: r.id, brand: r.brand }); }
       catch (e: any) { return json(res, 400, { error: e.message }); }
     }
     if ((m = /^\/api\/projects\/([^/]+)$/.exec(p))) {
