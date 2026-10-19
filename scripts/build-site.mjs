@@ -12,7 +12,7 @@ for (const f of fs.readdirSync(path.join(root, PREVIEW))) if (/\.(mp4|jpg|png|we
 console.log('built dist-site/');
 if (process.argv.includes('--serve')) {
   const i = process.argv.indexOf('--port'), port = i > 0 ? +process.argv[i + 1] : 4174;
-  const types = { '.html': 'text/html; charset=utf-8', '.mp4': 'video/mp4', '.jpg': 'image/jpeg', '.png': 'image/png', '.webm': 'video/webm' };
+  const types = { '.html': 'text/html; charset=utf-8', '.mp4': 'video/mp4', '.jpg': 'image/jpeg', '.png': 'image/png', '.webm': 'video/webm', '.svg': 'image/svg+xml' };
   http.createServer((req, res) => {
     const p = path.join(out, decodeURIComponent(new URL(req.url, 'http://x').pathname)), f = p.endsWith(path.sep) ? path.join(p, 'index.html') : p;
     if (!f.startsWith(out) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end('not found'); }
