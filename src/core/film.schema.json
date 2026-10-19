@@ -111,6 +111,13 @@
             "type": "string",
             "pattern": "^--[A-Za-z0-9_-]+$",
             "description": "Editor sets this CSS custom property on <html> to the value (numbers get `unit` appended)."
+          },
+          "group": {
+            "type": "string",
+            "enum": [
+              "sound"
+            ],
+            "description": "'sound': show this option in the editor's Audio tab (e.g. the sound theme) instead of Style."
           }
         },
         "allOf": [

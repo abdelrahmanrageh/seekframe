@@ -54,7 +54,8 @@
     "build": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.browser.json",
     "prepare": "node scripts/build.mjs",
-    "pretest": "node scripts/build.mjs && node scripts/build-tests.mjs"
+    "pretest": "node scripts/build.mjs && node scripts/build-tests.mjs",
+    "site": "node scripts/build-site.mjs --serve"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",

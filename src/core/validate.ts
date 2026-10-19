@@ -127,8 +127,14 @@ async function validate(dirArg: string, opts: ValidateOptions = {}): Promise<Val
       for (const p of testable) for (const f of sample(p)) if (!(f in baseH)) baseH[f] = await shot(f);
       const noEffect: string[] = [];
       for (const p of testable) {
-        await page.evaluate(([id, v]) => Timeline.applyToFilm(window, { [id]: v }), [p.id, vals(p)]);
-        let changed = (await soundSig()) !== baseSound; if (!changed) for (const f of sample(p)) if (differs(await shot(f), baseH[f])) { changed = true; break; }
+        // a select is tried with each other option until one changes something (one option may look like the default)
+        const tries = p.type === 'select' ? (p.options || []).map(o => typeof o === 'object' ? o.value : o).filter(v => v !== p.default).slice(0, 4) : [vals(p)];
+        let changed = false;
+        for (const v of tries) {
+          await page.evaluate(([id, v]) => Timeline.applyToFilm(window, { [id]: v }), [p.id, v]);
+          changed = (await soundSig()) !== baseSound; if (!changed) for (const f of sample(p)) if (differs(await shot(f), baseH[f])) { changed = true; break; }
+          if (changed) break;
+        }
         if (!changed) noEffect.push(p.id);
       }
       await page.evaluate(() => Timeline.applyToFilm(window, {}));

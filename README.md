@@ -4,7 +4,7 @@
 
 ![The Seekframe launch film](examples/seekframe-launch/preview/launch.gif)
 
-*The launch film, made with Seekframe: 3 hooks × 4 looks, a halftone logo built dot by dot, and a generated 120 BPM score. [Watch it with sound](https://abdelrahmanrageh.github.io/seekframe/) · [how it's made](examples/seekframe-launch/).*
+*The launch film, made with Seekframe: 3 hooks × 4 looks, a halftone logo built dot by dot, and generated sound effects on every cut. [Watch it with sound](https://abdelrahmanrageh.github.io/seekframe/) · [how it's made](examples/seekframe-launch/).*
 
 | Doubt · mono | Counter · deep green | Cash on delivery · lime | Arabic · RTL |
 |---|---|---|---|

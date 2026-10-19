@@ -7,6 +7,8 @@ export type ParamValue = string | number | boolean;
 export interface Param {
   id: string; type: ParamType; default: ParamValue;
   label?: string; help?: string; scene?: string; cssVar?: string;
+  /** 'sound': shown in the editor's Audio tab (sound theme, music on/off) instead of Style */
+  group?: 'sound';
   multiline?: boolean; maxLength?: number;                       // text
   min?: number; max?: number; step?: number; unit?: string;      // number
   options?: Array<string | { value: string; label?: string }>;   // select

@@ -1,8 +1,8 @@
 // @ts-check
 /// <reference path="../../dist/types/browser/film-globals.d.ts" />
 /* Seekframe launch film. 1920x1080, 30 fps, 32 s, made with Seekframe itself.
-   Variants: hook (3 stories) x look (4 colourways) x sound (full score / hits only). Every text and colour is a param.
-   The score is generated from cues at 120 BPM (one beat = 15 frames), so every cut lands on a beat. */
+   Variants: hook (3 stories) x look (4 colourways) x sound style (deep / bright / minimal). Every text and colour is a param.
+   Sound design is effects only (no music): whooshes, hits, clicks, typing and the logo reveal, each cued on the frame it belongs to. */
 'use strict';
 const { E, rng, lerp, clamp, hash, esc } = SF;
 // el(tag, class, html, parent); SF.el takes (tag, cls, parent, html)
@@ -43,7 +43,7 @@ const inkOn = hex => lumOf(hex) > .38 ? '#0c0c0b' : '#ffffff';
 
 /* ---------- params ---------- */
 const DEF = {
-  hook: 'whatif', look: 'night', music: 'score', size: 100, logo: '',
+  hook: 'whatif', look: 'night', sound: 'auto', size: 100, logo: '',
   'w-1': 'What if your AI', 'w-2': 'could make [films]?',
   'c-1': 'Every frame', 'c-2': 'is a line of [code].', 'c-unit': 'frame',
   's-1': 'One prompt.', 's-p': 'make a launch film for my brand', 's-2': '[Hundreds] of films.',
@@ -66,7 +66,7 @@ function params(v) {
   const out = [
     { id: 'hook', type: 'select', label: 'Hook (story)', default: DEF.hook, options: HOOKS },
     { id: 'look', type: 'select', label: 'Look', default: DEF.look, options: LOOK_IDS.map(id => ({ value: id, label: LOOKS[id].label })) },
-    { id: 'music', type: 'select', label: 'Sound', default: DEF.music, options: [{ value: 'score', label: 'Full score: beat, bass, chords' }, { value: 'hits', label: 'Hits only (minimal)' }] },
+    { id: 'sound', type: 'select', label: 'Style', group: 'sound', default: DEF.sound, options: Object.entries(THEMES).map(([value, label]) => ({ value, label })) },
     { id: 'c-bg', type: 'color', label: 'Background', default: L.bg },
     { id: 'c-fg', type: 'color', label: 'Text', default: L.fg },
     { id: 'c-acc', type: 'color', label: 'Accent', default: L.acc },
@@ -89,101 +89,93 @@ function params(v) {
   return out;
 }
 
-/* ---------- sound: 120 BPM, D minor (Dm, Bb, F, C) ---------- */
-const PROG = [['D3', 'F3', 'A3'], ['A#2', 'D3', 'F3'], ['F2', 'A2', 'C3'], ['C3', 'E3', 'G3']];
-const BASS = ['D2', 'A#1', 'F2', 'C2'];
-const ARP = [['D4', 'F4', 'A4', 'D5'], ['A#3', 'D4', 'F4', 'A#4'], ['F4', 'A4', 'C5', 'F5'], ['C4', 'E4', 'G4', 'C5']];
+/* ---------- sound design: sound effects only (no music), each one on the frame it belongs to ---------- */
 const PROMPT_START = 40, PROMPT_END = 92;
+const THEMES = { auto: 'Matches the look', deep: 'Deep: sub hits, soft clicks', bright: 'Bright: crisp, punchy', minimal: 'Minimal: clicks and soft hits only' };
+// keystrokes for text typed between frames a and b: about 11 keys a second, a little uneven, spaces sound like a space bar
+function typing(c, at, text, a, b, o = {}) {
+  const chars = [...String(text)];
+  for (let f = a, k = 0; f < b; f += 2.2 + hash(at + f * 1.7) * 1.4, k++) {
+    const ch = chars[Math.min(chars.length - 1, Math.floor((f - a) / (b - a) * chars.length))];
+    c.key(at + f, { seed: at * 31 + k, space: ch === ' ', gain: (o.gain ?? .09) * (ch === ' ' ? 1.15 : 1), pan: (o.pan ?? 0) + (hash(k * 2.3) - .5) * .3 });
+  }
+}
 function cues(v) {
-  const c = SF.cues(), hook = v.hook || DEF.hook, sec = BEAT / 30;              // one beat in seconds
-  const bar = f => Math.floor(f / (BEAT * 4)) % 4;
-  // a groove from a to b: kick on the beat, offbeat hats, claps on 2 and 4, pumping bass and chords, optional arp
-  const groove = (a, b, o = {}) => {
-    for (let f = a; f < b; f += BEAT) {
-      const beatN = Math.round(f / BEAT) % 4;
-      if (o.kick !== false) c.kick(f, { gain: o.kickGain ?? .42 });
-      if (o.hat !== false) c.hat(f + BEAT / 2, { gain: .05, pan: beatN % 2 ? .25 : -.25 });
-      if (o.clap && beatN % 2 === 1) c.clap(f, { gain: .17 });
-      if (o.open && beatN === 0) c.hat(f, { open: true, gain: .05 });
-    }
-    for (let f = a; f < b; f += BEAT * 4) {
-      const k = bar(f), e = Math.min(b, f + BEAT * 4);
-      if (o.bass !== false) c.bass(f, e, { note: BASS[k], beat: sec, gain: .26 });
-      if (o.chord !== false) c.chord(f, e, { notes: PROG[k], beat: sec, gain: o.chordGain ?? .07, cut0: o.cut ?? 1100, cut1: o.cut ?? 1100 });
-      if (o.arp) for (let i = 0; i < 8 && f + i * BEAT / 2 < b; i++) c.keys(f + i * BEAT / 2, { note: ARP[k][[0, 1, 2, 3, 2, 1, 3, 2][i]], gain: .045, dur: .5, pan: (i % 2 ? .3 : -.3) });
-    }
-  };
+  const c = SF.cues(), hook = v.hook || DEF.hook;
 
-  /* hook: filtered intro, hook-specific hits, a reverse swell into the drop */
+  /* hook */
   const H = S0.hook;
-  c.drone(H, H + 118, { gain: .045, open0: 220, open1: 900 });
-  c.chord(H, H + 118, { notes: ['D3', 'A3', 'F4'], cut0: 300, cut1: 1000, gain: .05, attack: 1.2, release: .1 });
+  c.roomtone(H, H + 120, { gain: .0015 });
   if (hook === 'whatif') {
-    [4, 12, 20, 28, 44, 52].forEach((f, i) => { c.keys(H + f, { note: ['D4', 'F4', 'A4', 'C5', 'D5', 'F5'][i], gain: .08, dur: 1 }); c.tick(H + f, { gain: .06, freq: 2000 + i * 120 }); });
-    c.boom(H + 60, { gain: .5, decay: 1.4 }); c.dtick(H + 62, { gain: .2 }); c.whoosh(H + 64, { dur: .7, gain: .14, p0: -.2, p1: .2 });
+    [4, 12, 20, 28, 44, 52].forEach((f, i) => { c.swipe(H + f - 2, { dur: .18, gain: .05, p0: -.2, p1: .2 }); c.tick(H + f + 2, { gain: .07, freq: 1800 + i * 90 }); });
+    c.boom(H + 60, { gain: .55, decay: 1.4 }); c.stamp(H + 60, { gain: .2 }); c.dtick(H + 62, { gain: .2 });
+    c.whoosh(H + 62, { dur: .8, gain: .16, p0: -.1, p1: .1 });
   } else if (hook === 'clock') {
-    c.thud(H + 2, { gain: .3 });
-    for (let f = 8; f < 100; f += 7.5) c.tick(H + f, { gain: .07, freq: Math.round(f / 7.5) % 2 ? 1800 : 2500, pan: Math.sin(f / 120 * 4 * Math.PI) * .5 });
-    c.keys(H + 30, { note: 'A4', gain: .07 }); c.keys(H + 50, { note: 'D5', gain: .08 }); c.boom(H + 50, { gain: .35, decay: 1 });
-    c.whoosh(H + 94, { dur: .6, gain: .22 });
+    c.thud(H + 2, { gain: .3 }); c.whoosh(H, { dur: .35, gain: .1, p0: -.6, p1: -.3 });
+    for (let f = 8; f < 98; f += 7.5) c.tick(H + f, { gain: .075, freq: Math.round(f / 7.5) % 2 ? 1800 : 2500, pan: -.35 + Math.sin(f / 120 * 4 * Math.PI) * .2 });
+    c.swipe(H + 12, { dur: .25, gain: .05, p0: .2, p1: .5 }); c.swipe(H + 32, { dur: .25, gain: .05, p0: .2, p1: .5 });
+    c.stamp(H + 50, { gain: .26, pan: .4 }); c.dtick(H + 52, { gain: .18, pan: .4 });
+    c.riser(H + 84, H + 118, { gain: .2 }); c.whoosh(H + 98, { dur: .7, gain: .24, p0: -.4, p1: .2 });
   } else {
-    for (let f = 8; f < 38; f += 2) c.key(H + f, { gain: .05, pan: (hash(f) - .5) * .5 });
-    [48, 63, 78, 93].forEach((f, i) => { c.pluck(H + f, { note: ['D2', 'F2', 'A2', 'D3'][i], gain: .35 }); c.glitch(H + f, { gain: .05, seed: i }); c.stamp(H + f, { gain: .16 + i * .05 }); });
+    c.thud(H + 2, { gain: .2 }); typing(c, H, V('s-p'), 8, 38, { gain: .08 });
+    c.swipe(H + 42, { dur: .3, gain: .09, p0: .3, p1: 0 });
+    [48, 63, 78, 93].forEach((f, i) => { c.glitch(H + f, { gain: .045 + i * .01, seed: i }); c.stamp(H + f, { gain: .14 + i * .05 }); c.whoosh(H + f - 3, { dur: .3, gain: .05 + i * .02, p0: 0, p1: 0 }); });
     c.dtick(H + 72, { gain: .2 });
   }
-  c.reverse(H + 96, H + 120, { notes: ['D3', 'A3'], gain: .38 });
+  c.reverse(H + 100, H + 120, { gain: .35 });
 
-  /* agents: the drop */
+  /* agents: the wipe lands with a hit, chips tick past as the ticker slides */
   const A = S0.agents;
-  c.impact(A, { gain: .75, tail: 2.2 });
-  groove(A, A + 120, { clap: true, open: true });
-  for (let i = 0; i < 6; i++) c.dtick(A + 18 + i * 15, { gain: .11 });
+  c.impact(A, { gain: .8, tail: 2.2 });
+  c.slide(A + 4, A + 112, { gain: .05, p0: .7, p1: -.7, cut: 900 });
+  for (let i = 0; i < 6; i++) c.dtick(A + 18 + i * 15, { gain: .1, pan: .3 - i * .1 });
+  c.swipe(A + 110, { dur: .35, gain: .14, p0: 0, p1: 0 });
 
-  /* prompt: breakdown, typing, click */
+  /* prompt: switch, menu, box, real typing, attachment, cursor, click */
   const P = S0.prompt;
-  groove(P, P + 120, { kick: false, bass: false, chordGain: .05, cut: 520 });
-  c.blip(P + 14, { freq: 520, gain: .07 }); [20, 26, 32].forEach(f => c.tick(P + f, { gain: .07, freq: 2300 }));
+  c.roomtone(P, P + 120, { gain: .0015 });
+  c.blip(P + 14, { freq: 560, gain: .07 }); c.tick(P + 15, { gain: .12, freq: 2600 });
+  [20, 26, 32, 38].forEach((f, i) => c.tick(P + f, { gain: .06, freq: 2100 + i * 150, pan: -.3 + i * .2 }));
   c.whoosh(P + 22, { dur: .5, gain: .12, p0: 0, p1: 0 });
-  for (let f = PROMPT_START; f < PROMPT_END; f += 2) c.key(P + f, { gain: .055, pan: (hash(f * 1.3) - .5) * .5, freq: 1300 + Math.round(hash(f) * 900) });
-  c.thud(P + 62, { gain: .22 }); c.swipe(P + 88, { dur: .45, gain: .06, p0: .3, p1: .5 });
-  c.riser(P + 70, P + 104, { gain: .2 });
-  c.tick(P + 104, { gain: .2, freq: 1500 }); c.kick(P + 104, { gain: .45 }); c.whoosh(P + 108, { dur: .4, gain: .16, p0: .3, p1: -.3 });
+  typing(c, P, V('p-text'), PROMPT_START, PROMPT_END);
+  c.thud(P + 62, { gain: .2, pan: -.4 }); c.tick(P + 64, { gain: .08, pan: -.4 });
+  c.swipe(P + 84, { dur: .5, gain: .05, p0: .5, p1: .35 });
+  c.key(P + 104, { seed: 7, space: true, gain: .16, pan: .35 }); c.blip(P + 105, { freq: 700, gain: .06, pan: .35 });
+  c.whoosh(P + 106, { dur: .5, gain: .16, p0: .35, p1: -.2 });
 
-  /* generate: full groove with arp; cards land, checks stamp */
+  /* generate: the code types, frames fly in from where they start, the checks stamp */
   const G = S0.generate;
-  groove(G, G + 120, { clap: true, arp: true });
-  for (let i = 0; i < 9; i++) c.tick(G + 24 + i * 5, { gain: .06, freq: 1900 + i * 70, pan: ((i % 3) - 1) * .4 });
-  [60, 75, 90, 105].forEach((f, i) => { c.stamp(G + f, { gain: .24 }); c.keys(G + f, { note: ['A4', 'C5', 'D5', 'F5'][i], gain: .07 }); });
+  [0, 8].forEach(f => c.swipe(G + f, { dur: .2, gain: .05 }));
+  for (let i = 0; i < 7; i++) typing(c, G, 'SF.define', 6 + i * 6, 11 + i * 6, { gain: .05, pan: -.5 });
+  for (let i = 0; i < 9; i++) { const at = 8 + i * 5, p0 = clamp((hash(i * 3) - .5) * 2.4, -1, 1); c.whoosh(G + at, { dur: .4, gain: .06, p0, p1: .3 + (i % 3) * .2 }); c.tick(G + at + 13, { gain: .07, freq: 1900 + i * 70, pan: .3 + (i % 3) * .2 }); }
+  [60, 75, 90, 105].forEach((f, i) => { c.stamp(G + f, { gain: .26, pan: -.3 + i * .2 }); c.dtick(G + f + 1, { gain: .1, pan: -.3 + i * .2 }); });
 
   /* editor */
   const D = S0.editor;
-  groove(D, D + 120, { clap: true });
-  c.whoosh(D, { dur: .5, gain: .14 }); c.tick(D + 26, { gain: .1, freq: 2600 });
-  for (let f = 32; f < 58; f += 2) c.key(D + f, { gain: .05, pan: .25 });
-  [70, 84, 98].forEach((f, i) => c.blip(D + f, { freq: 440 + i * 110, gain: .07 }));
+  c.whoosh(D, { dur: .5, gain: .16, p0: 0, p1: 0 }); c.thud(D + 14, { gain: .14 });
+  for (let r = 0; r < 5; r++) c.slide(D + 4 + r * 3, D + 24 + r * 3, { gain: .025, p0: -.8, p1: .8, cut: 1200 });
+  c.tick(D + 26, { gain: .1, freq: 2600, pan: .4 });
+  typing(c, D, V('e-field'), 32, 58, { pan: .4 });
+  [70, 84, 98].forEach((f, i) => { c.blip(D + f, { freq: 500 + i * 120, gain: .07, pan: .35 }); c.tick(D + f, { gain: .08, pan: .35 }); });
 
-  /* variants: groove + a glitch for every tile */
+  /* variants: every tile glitches in, the chips slide past */
   const VV = S0.variants;
-  groove(VV, VV + 120, { clap: true, open: true, arp: true });
-  for (let i = 0; i < 9; i++) c.glitch(VV + 6 + i * 7, { gain: .045, seed: i, pan: ((i % 3) - 1) * .5 });
-  c.slide(VV + 40, VV + 118, { gain: .04, p0: .8, p1: -.8 });
+  for (let i = 0; i < 9; i++) { c.glitch(VV + 6 + i * 7, { gain: .045, seed: i, pan: ((i % 3) - 1) * .5 }); c.thud(VV + 8 + i * 7, { gain: .1, pan: ((i % 3) - 1) * .5 }); }
+  c.slide(VV + 30, VV + 118, { gain: .04, p0: .8, p1: -.8 });
 
-  /* sound: heavy hits on the beat, then the music stops and swells backwards into the reveal */
+  /* sound: the markers play what they say (boom, tick, whoosh, boom), then everything collapses into a reverse swell */
   const N = S0.sound;
-  groove(N, N + 60, { clap: true, kickGain: .5 });
-  [0, 15, 30, 45].forEach(f => c.boom(N + f, { gain: .35, decay: .7 }));
-  c.swipe(N + 56, { dur: .3, gain: .12, p0: -.5, p1: .5 });
-  c.reverse(N + 61, N + 75, { notes: ['D3', 'A3', 'F4'], gain: .42 });
+  c.boom(N, { gain: .6, decay: 1.1 }); c.tick(N + 15, { gain: .22, freq: 2400 }); c.whoosh(N + 28, { dur: .6, gain: .26, p0: -.6, p1: .6 }); c.boom(N + 45, { gain: .7, decay: 1.4 });
+  c.swipe(N + 56, { dur: .3, gain: .14, p0: .5, p1: 0 });
+  c.reverse(N + 61, N + 75, { gain: .45 });
 
-  /* logo: the hit, dots shimmering in, the wordmark */
+  /* logo: the iris opens with a hit, the dots shimmer in, the wordmark types itself */
   const L = S0.logo;
-  c.impact(L, { gain: 1, tail: 4 });
-  c.chord(L, L + 165, { notes: ['D3', 'A3', 'E4', 'F4'], cut0: 450, cut1: 2200, gain: .085, attack: .05, release: 1.6 });
-  c.bass(L, L + 120, { note: 'D2', gain: .2 });
-  for (let f = 6; f < 60; f += 1.5) c.tick(L + f, { gain: .018 + .02 * hash(f), freq: 3000 + Math.round(hash(f * 7) * 2500), pan: (hash(f * 3) - .5) * 1.4 });
-  c.keys(L + 22, { note: 'A4', gain: .06, dur: 2 }); c.keys(L + 30, { note: 'D5', gain: .06, dur: 2 });
-  'seekframe'.split('').forEach((_, i) => c.keys(L + 92 + i * 3, { note: ['D5', 'E5', 'F5', 'A5', 'D6', 'A5', 'F5', 'E5', 'D5'][i], gain: .035, dur: .6 }));
-  c.dtick(L + 118, { gain: .24 }); c.tick(L + 132, { gain: .08 }); c.boom(L + 118, { gain: .3, decay: 2 });
+  c.impact(L, { gain: 1, tail: 4 }); c.whoosh(L, { dur: .9, gain: .18, p0: 0, p1: 0 });
+  for (let f = 6; f < 64; f += 1.5) c.tick(L + f, { gain: .016 + .022 * hash(f), freq: 3200 + Math.round(hash(f * 7) * 2600), pan: (hash(f * 3) - .5) * 1.4 });
+  c.thud(L + 72, { gain: .1 }); c.whoosh(L + 72, { dur: .9, gain: .1, p0: 0, p1: 0 });
+  'seekframe'.split('').forEach((_, i) => c.key(L + 92 + i * 3, { seed: 100 + i, gain: .07 }));
+  c.boom(L + 116, { gain: .4, decay: 2.2 }); c.dtick(L + 118, { gain: .24 }); c.tick(L + 132, { gain: .08 }); c.tick(L + 142, { gain: .05 });
   return c.list;
 }
 
@@ -209,8 +201,8 @@ const pad3 = n => String(Math.max(0, Math.floor(n))).padStart(3, '0');
 SF.define({
   title: 'Seekframe launch', width: 1920, height: 1080, fps: 30, duration: 960, scenes: SCENES, poster: 82,
   params, cues,
-  soundtrack: v => ({ theme: v.music === 'hits' ? 'minimal' : lookOf(v).theme, loudness: -14 }),
-  audio: [{ id: 'score', label: 'Generated score', generated: 'cues', default: true }],
+  soundtrack: v => ({ theme: !v.sound || v.sound === 'auto' ? lookOf(v).theme : v.sound, loudness: -14 }),
+  audio: [{ id: 'sfx', label: 'Sound effects', generated: 'cues', default: true }],
   variants: {
     thumbFrame: 82,
     axes: [{ id: 'hook', label: 'Hook' }, { id: 'look', label: 'Look' }],

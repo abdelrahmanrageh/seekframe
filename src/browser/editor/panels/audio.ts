@@ -2,11 +2,20 @@ import { api } from '../api';
 import { $, el, esc, toast } from '../dom';
 import { S, bus } from '../state';
 import { changed } from '../film';
+import { control } from '../controls';
 import { allTracks, buildAudioEls, setTrackVolume } from '../playback';
 import { t } from '../i18n';
 
 export function build(): void {
-  const root = $('#p-audio'); root.innerHTML = ''; el('p', 'note', esc(t('audio.note')), root);
+  const root = $('#p-audio'); root.innerHTML = '';
+  // sound style: the film's sound options (params with group 'sound') and the theme they produce
+  const soundParams = (S.manifest.params || []).filter(p => p.group === 'sound');
+  if (soundParams.length || S.manifest.soundtrack) {
+    const box = el('section', 'sndstyle', `<h3>${esc(t('audio.style'))}</h3>`, root);
+    soundParams.forEach(p => box.appendChild(control(p)));
+    el('p', 'note', '', box).id = 'sndTheme'; themeLabel();
+  }
+  el('p', 'note', esc(t('audio.note')), root);
   const tracks = allTracks();
   tracks.forEach(tr => {
     const b = el('div', 'trk', `<div class="h"><label class="sw"><input type="checkbox" ${tr.enabled ? 'checked' : ''}><b>${esc(tr.label || tr.id)}</b></label>${tr.custom ? `<button class="btn sm" type="button" data-rm aria-label="${t('scene.del')}">✕</button>` : ''}</div>
@@ -34,4 +43,8 @@ export function build(): void {
     catch (e: any) { toast(e.message, 'err'); }
   });
 }
-export const initAudio = () => bus.on('panels', build);
+function themeLabel(): void {
+  const n = document.getElementById('sndTheme'), st = S.manifest.soundtrack || {}; if (!n) return;
+  n.textContent = `${t('audio.theme')}: ${st.theme || 'deep'} · ${t('audio.loud')} ${st.loudness ?? -16} LUFS`;
+}
+export const initAudio = () => { bus.on('panels', build); bus.on('project', themeLabel); };

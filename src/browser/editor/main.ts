@@ -13,7 +13,7 @@ import { initShortcuts } from './shortcuts';
 import { openCheck, openHistory, openNewFilm, openSetup, openShortcuts } from './dialogs';
 import { initScenes } from './panels/scenes';
 import { initStyle } from './panels/style';
-import { initVariants } from './panels/variants';
+import { initVariants, prefetchThumbs } from './panels/variants';
 import { initBrand } from './panels/brand';
 import { initAudio } from './panels/audio';
 import { initExport } from './panels/export';
@@ -70,6 +70,7 @@ async function loadFilm(): Promise<void> {
   apply({ panels: true });
   const poster = S.manifest.poster != null ? Timeline.timelineFrame(S.tl, S.manifest.poster) : null;   // open on a frame that shows the film
   if (poster != null) seek(poster);
+  setTimeout(prefetchThumbs, 1500);
   $('#saveAs').addEventListener('click', async () => {
     const n = (prompt(t('prompt.name'), '') || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, ''); if (!n) return;
     await saveNow(); await api.putProject(S.filmId, n, stripped()); location.search = `?film=${S.filmId}&v=${n}`;

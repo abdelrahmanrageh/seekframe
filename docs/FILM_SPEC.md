@@ -85,7 +85,7 @@ switches, variants.
 ```
 
 Common keys: `id` (unique, `[A-Za-z0-9_.-]`), `type`, `label`, `default`, `scene` (the scene whose card shows the control;
-omit for film-wide options on the **Style** tab), `help`, `cssVar`.
+omit for film-wide options on the **Style** tab), `help`, `cssVar`, `group: 'sound'` (shown in the **Audio** tab under *Sound style*, e.g. a select that drives `soundtrack.theme`).
 
 | type | extra keys | value |
 |---|---|---|
