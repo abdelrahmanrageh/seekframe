@@ -5,7 +5,7 @@ import { t } from '../i18n';
 
 export function build(): void {
   const root = $('#p-style'); root.innerHTML = '';
-  const ids = new Set(S.manifest.scenes.map(s => s.id)), globals = (S.manifest.params || []).filter(p => !p.scene || !ids.has(p.scene));
+  const ids = new Set(S.manifest.scenes.map(s => s.id)), globals = (S.manifest.params || []).filter(p => (!p.scene || !ids.has(p.scene)) && p.group !== 'sound');
   if (!globals.length) { el('div', 'empty', esc(t('style.none')), root); return; }
   el('p', 'note', esc(t('style.note')), root); globals.forEach(p => root.appendChild(control(p)));
 }

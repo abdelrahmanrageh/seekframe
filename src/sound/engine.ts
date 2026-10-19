@@ -111,16 +111,23 @@ const I = {
   },
   // reverse swell into a hit at `to` (noise + chord fading in, cut dead at the end)
   reverse(m, t, o) {
-    const D = o.t1 - t, n = Math.round(D * SR), notes = (o.notes || ['D3', 'A3']).map(noteHz); let st = 0;
-    m.put(t, n, (i, s) => { const u = s / D, fc = 300 + 5000 * u * u, a = Math.exp(-2 * Math.PI * fc / SR); st = (1 - a) * m.rnd() + a * st; const tone = notes.reduce((v, fq) => v + Math.sin(2 * Math.PI * fq * s), 0) / notes.length; return (st * 1.6 + tone * .5) * Math.pow(u, 3) * Math.min(1, (D - s) / .004); }, 0, o.gain ?? .3);
+    const D = o.t1 - t, n = Math.round(D * SR), notes = (o.notes || []).map(noteHz); let st = 0;     // no notes: a pure noise swell
+    m.put(t, n, (i, s) => { const u = s / D, fc = 300 + 5000 * u * u, a = Math.exp(-2 * Math.PI * fc / SR); st = (1 - a) * m.rnd() + a * st; const tone = notes.length ? notes.reduce((v, fq) => v + Math.sin(2 * Math.PI * fq * s), 0) / notes.length : 0; return (st * 1.6 + tone * .5) * Math.pow(u, 3) * Math.min(1, (D - s) / .004); }, 0, o.gain ?? .3);
   },
   glitch(m, t, o) {                                        // digital stutter for cuts: square blips that hop pitch
     const dur = o.dur ?? .25, n = Math.round(dur * SR), steps = 7, seed = o.seed ?? 3;
     m.put(t, n, (i, s) => { const k = Math.floor(s / dur * steps), fq = 300 + ((k * 7919 + seed * 31) % 13) * 140, on = (k % 2 === 0) ? 1 : .15; return Math.sign(Math.sin(2 * Math.PI * fq * s)) * on * Math.exp(-(s % (dur / steps)) / .02) * .5; }, o.pan ?? 0, o.gain ?? .07);
   },
-  key(m, t, o) {                                           // one keyboard keystroke (typing)
-    const n = Math.round(.035 * SR), f = lp(4200), fq = o.freq ?? 1600;
-    m.put(t, n, (i, s) => (f(m.rnd()) * Math.exp(-s / .004) * 1.6 + Math.sin(2 * Math.PI * fq * s) * Math.exp(-s / .003) * .4), o.pan ?? 0, o.gain ?? .07);
+  // one keystroke on a mechanical keyboard: a bright click, the "thock" of the keycap bottoming out, a quieter release.
+  // seed varies the key (pitch, loudness, release time); space: true is the heavier space bar.
+  key(m, t, o) {
+    const sd = o.seed ?? Math.round(t * 997), r = (Math.sin(sd * 12.9898) * 43758.5453) % 1, rr = Math.abs(r);
+    const body = (o.space ? 170 : 320 + (o.freq ? (o.freq - 1600) / 10 : 0)) * (.85 + .3 * rr), dec = o.space ? .016 : .007, g = (o.gain ?? .09) * (.8 + .4 * Math.abs((r * 7) % 1));
+    const stroke = (t0, k) => { const n = Math.round(.08 * SR), lo = lp(1400), lo2 = lp(5200);
+      m.put(t0, n, (i, s) => { const x = m.rnd(), click = (x - lo(x)) * Math.exp(-s / .0011) * 1.5, cap = lo2(x) * Math.exp(-s / .006) * 1.1, thock = (Math.sin(2 * Math.PI * body * s) + .4 * lo(x) * 3) * Math.exp(-s / dec) * (1 - Math.exp(-s / .0006)); return (click + cap) * k + thock * .8 * k; }, o.pan ?? 0, g); };
+    stroke(t, 1);
+    stroke(t + (o.space ? .1 : .055) + rr * .03, .3);
+    if (o.space) { const n = Math.round(.05 * SR), f = lp(2500); m.put(t + .004, n, (i, s) => f(m.rnd()) * Math.exp(-s / .012) * .5, o.pan ?? 0, g); }   // stabiliser rattle
   },
 };
 const RANGE = new Set(['riser', 'drone', 'pad', 'scribble', 'slide', 'roomtone', 'silence', 'bass', 'chord', 'reverse']);   // kinds that span f..to

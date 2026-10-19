@@ -12,7 +12,7 @@ import { chromium } from 'playwright';
 import * as Timeline from '../core/timeline';
 import { openFilm } from '../core/render';
 import { exportFilm } from '../core/export';
-import { ROOT, PKG_ROOT, slug, listFilms, findFilm, ensureBrands } from '../core/workspace';
+import { ROOT, PKG_ROOT, BROWSER_DIR, slug, listFilms, findFilm, ensureBrands } from '../core/workspace';
 import { renderScore } from '../sound/score';
 import { scaffoldFilm } from '../core/scaffold';
 import { doctor } from '../core/doctor';
@@ -70,15 +70,39 @@ async function pump(): Promise<void> {
 
 /* ---------- thumbnails (variants view) ---------- */
 let thumbBrowser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
+// one warm page per film, rendered at thumbnail scale; params are re-applied per thumbnail (no reload), one at a time
+const thumbPages = new Map<string, { sig: string; ready: Promise<any>; chain: Promise<unknown> }>();
+const filmSig = (film: FilmRef) => ['film.html', 'film.js'].map(n => { try { return fs.statSync(path.join(film.dir, n)).mtimeMs; } catch { return 0; } }).join('|');
+async function thumbPage(film: FilmRef, width: number) {
+  const sig = filmSig(film) + '|' + width, cur = thumbPages.get(film.id);
+  if (cur && cur.sig === sig) return cur;
+  if (cur) void cur.ready.then(p => p.close()).catch(() => null);
+  const ready = (async () => {
+    ensureBrands();
+    thumbBrowser = thumbBrowser || await chromium.launch({ args: ['--force-color-profile=srgb', '--font-render-hinting=none'] });
+    const file = 'file://' + path.join(film.dir, 'film.html');
+    const probe = await thumbBrowser.newPage(); await probe.goto(file); await probe.evaluate(() => window.ready);
+    const { width: W, height: H } = await probe.evaluate(() => ({ width: window.manifest.width, height: window.manifest.height })); await probe.close();
+    const page = await thumbBrowser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: width / W });
+    await page.goto(file); await page.evaluate(() => window.ready);
+    await page.addScriptTag({ path: path.join(BROWSER_DIR, 'timeline.js') });
+    return page;
+  })();
+  const entry = { sig, ready, chain: Promise.resolve() as Promise<unknown> }; thumbPages.set(film.id, entry); return entry;
+}
 async function thumb(film: FilmRef, project: ProjectInput, frame: number, width: number): Promise<string> {
-  const key = hash([film.id, project, frame, width]), f = path.join(CACHE, `thumb-${key}.png`);
+  const key = hash([film.id, filmSig(film), project, frame, width]), f = path.join(CACHE, `thumb-${key}.png`);
   if (fs.existsSync(f)) return f;
-  thumbBrowser = thumbBrowser || await chromium.launch({ args: ['--force-color-profile=srgb', '--font-render-hinting=none'] });
-  const { page, manifest } = await openFilm(film.dir, project, null, thumbBrowser);
-  const tl = Timeline.build(manifest, project), { src } = Timeline.sourceFrame(tl, Math.min(frame < 0 ? tl.total * 0.5 : frame, tl.total - 1));
-  await page.evaluate(x => window.seek(x), src);
-  const buf = await page.screenshot({ type: 'png' }); await page.close();
-  fs.writeFileSync(f, buf); return f;
+  const entry = await thumbPage(film, width);
+  const job = entry.chain.then(async () => {
+    const page = await entry.ready;
+    const manifest = await page.evaluate((p: any) => JSON.parse(JSON.stringify(Timeline.applyToFilm(window, p))), (project && project.params) || {});
+    const tl = Timeline.build(manifest, project), { src } = Timeline.sourceFrame(tl, Math.min(frame < 0 ? (manifest.poster ?? tl.total * 0.5) : frame, tl.total - 1));
+    await page.evaluate((x: number) => window.seek(x), src);
+    fs.writeFileSync(f, await page.screenshot({ type: 'png' })); return f;
+  });
+  entry.chain = job.catch(() => null);
+  return job;
 }
 
 /* ---------- version history: timestamped snapshots next to each saved version ---------- */

@@ -30,11 +30,11 @@ return c.list;
 | `keys` | note, dur, bright | FM bell / electric piano for arps and melodies |
 | `impact` | gain, tail | cinematic hit: sub boom + noise burst + long tail (a drop, a reveal) |
 | `reverse` | to, notes | reverse swell that cuts dead at `to`, into a hit (range) |
-| `glitch`, `key` | gain, pan / freq | digital stutter for cuts; one keyboard keystroke |
+| `glitch` | gain, pan, seed | digital stutter for cuts |
+| `key` | gain, pan, seed, `space` | one keystroke: click, keycap thock and release; `space: true` is the heavier space bar. One every 2-4 frames with a little jitter sounds like real typing |
 
-**Music.** Pick a tempo whose beat is a whole number of frames (120 BPM at 30 fps = 15 frames) and cut on beats: then the
-groove, the hits and the picture stay locked even when the editor retimes scenes. `examples/seekframe-launch` builds a full
-score this way (intro, reverse swell, drop, breakdown, second drop, silence, reveal) in about 80 lines of cues.
+**Sound effects or music.** `examples/seekframe-launch` uses effects only (whooshes, hits, clicks, typing, a reveal): put each one on the frame its picture event happens, and show the sound style in the editor's Audio tab with a param marked `group: 'sound'` that drives `soundtrack.theme`. For music, pick a tempo whose beat is a whole number of frames (120 BPM at 30 fps = 15 frames) and cut on beats: then the
+groove, the hits and the picture stay locked even when the editor retimes scenes.
 
 **Themes** remap cues (`soundtrack: { theme: 'deep' | 'bright' | 'minimal' }`; with `SF.define` it may be a function of the param values, so each variant can sound different): *deep* is sub-led and sparse, *bright* has higher
 pitches and short booms, *minimal* keeps only clicks and soft hits. Add a theme in `THEMES` in `engine.js` (a function from cue to cue,
