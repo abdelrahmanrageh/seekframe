@@ -35,7 +35,9 @@ export async function brandCmd(a: Args): Promise<void> {
     case 'import-logo': {
       const file = a._[2]; if (!file || !fs.existsSync(file)) { console.error('usage: seekframe brand import-logo <file> [--strokes]'); process.exit(2); }
       const r = importLogo(dir, file, { strokes: !!a.strokes, colors: +(a.colors as string) || undefined });
-      console.log(`${/\.svg$/i.test(file) ? 'copied' : 'traced'} → ${rel(path.join(dir, 'assets/logo.svg'))}`);
+      console.log(r.svg ? `${/\.svg$/i.test(file) ? 'copied' : 'traced'} → ${rel(path.join(dir, r.svg))}` : `kept as raster → ${rel(path.join(dir, r.raster || 'assets'))}`);
+      if (r.note) console.log('! ' + r.note);
+      if (r.roles) console.log('  suggested colours:', Object.entries(r.roles).map(([k, v]) => `${k} ${v}`).join(', '), '(brand palette ' + path.basename(file) + ' --write to use them)');
       if (r.strokes != null) console.log(`extracted ${r.strokes} stroke(s) → assets/logo-strokes.json (+ preview logo-strokes.svg)\n  Review the preview: remove stray strokes, reorder the array to change draw order, then use SF.strokeLogo() in your film.`);
       else if (a.strokes) console.log('--strokes needs a raster logo (png/jpg); an svg should be drawn with its own paths.');
       return;

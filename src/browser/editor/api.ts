@@ -2,7 +2,7 @@
 import type { BrandJson, Project } from '../../types';
 
 async function j<T>(url: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(url, init); const body = await r.json().catch(() => ({}));
+  const r = await fetch(url, { ...init, headers: { ...(init?.headers || {}), 'X-Seekframe': '1' } }); const body = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error((body as any).error || `${r.status} ${r.statusText}`);
   return body as T;
 }
@@ -13,8 +13,8 @@ export interface FilmEntry { id: string; root: string }
 export interface DoctorCheck { name: string; ok: boolean; detail: string; fix?: string }
 export interface DoctorReport { ok: boolean; checks: DoctorCheck[] }
 export interface ContrastRow { label: string; ratio: number; grade: string }
-export interface BrandPayload { brand: BrandJson; exists: boolean; contrast: ContrastRow[]; dir: string; assets: { svg: string | null; strokesPreview: string | null } }
-export interface LogoResult extends BrandPayload { strokes?: number; palette?: Array<{ hex: string; share: number }>; roles?: Record<string, string> }
+export interface BrandPayload { brand: BrandJson; exists: boolean; contrast: ContrastRow[]; dir: string; assets: { svg: string | null; raster: string | null; strokesPreview: string | null } }
+export interface LogoResult extends BrandPayload { note?: string; strokes?: number; palette?: Array<{ hex: string; share: number }>; roles?: Record<string, string> }
 export interface QueueJob { id: string; film: string; name: string; fps: number; size: string | null; state: 'queued' | 'rendering' | 'done' | 'error' | 'cancelled'; phase?: string; done: number; total: number; queuedAt: number; started?: number; ended?: number; file?: string; outName?: string; length?: number; error?: string }
 export interface Snapshot { id: string; at: number }
 

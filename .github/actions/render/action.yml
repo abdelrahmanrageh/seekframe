@@ -1,23 +1,32 @@
 name: Render Seekframe films
-description: Install Seekframe, validate films, and render a film or variant matrix.
+description: Validate films and render a film or a variant matrix to MP4, then upload the videos as an artifact.
+# Usage in a Seekframe workspace (a repo that has `seekframe` as a dependency, e.g. made with `npm create seekframe`):
+#   - uses: actions/checkout@v4
+#   - uses: abdelrahmanrageh/seekframe/.github/actions/render@main
+#     with: { film: my-film, versions: 'true', fps: '30' }
+# It also works inside a clone of the Seekframe repo itself.
 inputs:
   film:
-        description: Film id or comma-separated film ids.
+    description: Film id or comma-separated film ids.
     required: true
   axes:
-    description: Optional matrix axes, for example hook=*,theme=mono|lime.
+    description: Optional matrix axes, for example "hook=*,theme=mono|lime".
     required: false
     default: ''
   versions:
-    description: Render every saved version.
+    description: Render every saved version instead of an axes matrix ("true" or "false").
     required: false
     default: 'false'
   fps:
     description: Output frame rate.
     required: false
     default: '30'
+  working-directory:
+    description: Folder of the workspace (where package.json lives).
+    required: false
+    default: '.'
   artifact-name:
-    description: Name for the uploaded render artifact.
+    description: Name of the uploaded artifact.
     required: false
     default: seekframe-renders
 runs:
@@ -26,36 +35,30 @@ runs:
     - uses: actions/setup-node@v4
       with:
         node-version: 22
-        cache: npm
-    - run: npm ci
+    - name: Install dependencies and Chromium
       shell: bash
-    - run: npx playwright install --with-deps chromium
-      shell: bash
-    - run: npm run build
-      shell: bash
-    - name: Validate film
-      shell: bash
-      env:
-        FILM: ${{ inputs.film }}
+      working-directory: ${{ inputs.working-directory }}
       run: |
-        IFS=',' read -ra films <<< "$FILM"
-        for film in "${films[@]}"; do
-          node bin/seekframe.js validate "$film" --fast
-        done
-    - name: Render matrix
+        if [ -f package-lock.json ]; then npm ci; else npm install; fi
+        npx playwright install --with-deps chromium
+    - name: Validate and render
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       env:
         FILM: ${{ inputs.film }}
         AXES: ${{ inputs.axes }}
         VERSIONS: ${{ inputs.versions }}
         FPS: ${{ inputs.fps }}
       run: |
+        if [ -f bin/seekframe.js ]; then SF="node bin/seekframe.js"; else SF="npx --no-install seekframe"; fi
+        IFS=',' read -ra films <<< "$FILM"
+        for film in "${films[@]}"; do $SF validate "$film" --fast; done
         args=("$FILM" --fps "$FPS")
-        if [[ -n "$AXES" ]]; then args+=(--axes "$AXES"); fi
-        if [[ "$VERSIONS" == "true" ]]; then args+=(--versions); fi
-        node bin/seekframe.js matrix "${args[@]}"
+        if [ -n "$AXES" ]; then args+=(--axes "$AXES"); fi
+        if [ "$VERSIONS" = "true" ]; then args+=(--versions); fi
+        $SF matrix "${args[@]}"
     - uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact-name }}
-        path: output/*.mp4
+        path: ${{ inputs.working-directory }}/output/*.mp4
         if-no-files-found: error

@@ -22,13 +22,12 @@ and gives the human a real editor for the last 10 %: change the wording, try ano
 
 ## Quickstart
 ```bash
-npm create seekframe@latest my-films
-cd my-films
-npx seekframe doctor                               # install Chromium if prompted
-npx seekframe editor                               # setup, brand panel, new-film wizard
-npx seekframe new spring-sale --width 1920 --height 1080
+git clone https://github.com/abdelrahmanrageh/seekframe && cd seekframe
+npm install && npx playwright install chromium
+npm run editor                                     # setup, brand panel, new-film wizard
+node bin/seekframe.js new spring-sale --width 1920 --height 1080
 ```
-To work on the framework itself, clone this repo, then run `npm install`, `npx playwright install chromium`, `npm run typecheck`, and `npm run editor`. Make your own: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md). Use it with an LLM: [docs/LLM.md](docs/LLM.md) (Claude Code, Codex, Cursor, opencode, MCP).
+The npm packages (`seekframe`, `create-seekframe`) are **not published yet**, so `npm create seekframe` does not work today; the workspace flow it will use is already in the repo (`seekframe init`). The film-launch example is [examples/seekframe-launch](examples/seekframe-launch/). Make your own: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md). Use it with an LLM: [docs/LLM.md](docs/LLM.md) (Claude Code, Codex, Cursor, opencode, MCP).
 
 ## What an agent does
 ```
@@ -61,7 +60,7 @@ Seekframe's bet is different: films are plain HTML written by an **LLM** against
 If you are a developer who wants to write video in React, use those.
 
 ## Status and limits
-The editor includes undo/redo, saved-version history, variants, cue waveform, scene resizing, safe areas, responsive sizes, brand setup, and a render queue. Workspaces can be created with `npm create seekframe`; Docker, devcontainer, render Action, and Pages workflows are included. Sound uses synthesis and uploaded tracks; TTS adapters and caption export remain future work. See [ROADMAP.md](ROADMAP.md) for the current release checklist.
+The editor includes undo/redo, saved-version history, variants, cue waveform, scene resizing, safe areas, responsive sizes, brand setup, and a render queue. Workspaces can be created with `seekframe init` (and `npm create seekframe` once the packages are published); Docker, devcontainer, render Action, and Pages workflows are included. Sound uses synthesis and uploaded tracks; TTS adapters and caption export remain future work. See [ROADMAP.md](ROADMAP.md) for the current release checklist.
 
 ## Contributing, licence
 [CONTRIBUTING.md](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md) · [Security](SECURITY.md). Code: [MIT](LICENSE).

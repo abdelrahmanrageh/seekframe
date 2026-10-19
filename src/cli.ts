@@ -10,6 +10,7 @@ const HELP = `Seekframe — brand films as code.
   seekframe list                                      list films (films/ and examples/)
   seekframe new <name> [--width W --height H --fps N] [--brand dir]
                                                       scaffold films/<name> from templates/blank
+  seekframe copy <film> [new-name]                    copy a gallery film into films/ so you can edit it
   seekframe validate <film> [--fast] [--no-flash] [--stills dir]
                                                       contract + determinism + params + accessibility checks
   seekframe review <film> [--version v | --all] [--out dir]
@@ -48,6 +49,7 @@ export async function main(argv: string[]): Promise<void> {
     case 'editor': { const { start } = await import('./editor/server'); await start(+(a.port as string) || undefined); return; }
     case 'init': { const { initWorkspace } = await import('./core/init'); initWorkspace(String(a._[1] || '.')); return; }
     case 'doctor': { const { doctor, printDoctor } = await import('./core/doctor'); const r = await doctor(); printDoctor(r); process.exit(r.ok ? 0 : 1); }
+    case 'copy': { const f = need(a); const { copyFilm } = await import('./core/scaffold'); try { const r = copyFilm(f.dir, String(a._[2] || f.id + '-copy')); console.log(`Copied to films/${r.id}. Open it with: seekframe editor`); } catch (e: any) { console.error(e.message); process.exit(1); } return; }
     case 'new': { const { scaffold } = await import('./core/scaffold'); return scaffold(a); }
     case 'validate': {
       const f = need(a); const { validate } = await import('./core/validate');

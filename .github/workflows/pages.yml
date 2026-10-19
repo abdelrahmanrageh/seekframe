@@ -2,7 +2,7 @@ name: Publish docs site
 on:
   push:
     branches: [main]
-    paths: [site/**, docs/**, examples/**, .github/workflows/pages.yml]
+    paths: [site/**, examples/seekframe-launch/preview/**, .github/workflows/pages.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -24,8 +24,8 @@ jobs:
         run: |
           mkdir -p public
           cp site/index.html public/index.html
-          mkdir -p public/examples/client-tick/preview
-          cp examples/client-tick/preview/v1-doubt-mono.gif public/examples/client-tick/preview/
+          mkdir -p public/examples/seekframe-launch/preview
+          cp examples/seekframe-launch/preview/launch.gif public/examples/seekframe-launch/preview/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public

@@ -1,17 +1,32 @@
 {
   "name": "Seekframe",
-  "build": { "dockerfile": "../Dockerfile", "context": ".." },
-  "forwardPorts": [4173],
-  "containerEnv": { "SEEKFRAME_HOST": "0.0.0.0" },
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+  "forwardPorts": [
+    4173
+  ],
+  "containerEnv": {
+    "SEEKFRAME_HOST": "0.0.0.0",
+    "SEEKFRAME_ALLOWED_HOSTS": "*.app.github.dev,*.github.dev,*.githubpreview.dev"
+  },
   "portsAttributes": {
-    "4173": { "label": "Seekframe editor", "onAutoForward": "openBrowser" }
+    "4173": {
+      "label": "Seekframe editor",
+      "onAutoForward": "openBrowser"
+    }
   },
   "postCreateCommand": "npm run typecheck",
   "postStartCommand": "npm run editor",
   "customizations": {
     "vscode": {
-      "extensions": ["ms-vscode.vscode-typescript-next"],
-      "settings": { "typescript.tsdk": "node_modules/typescript/lib" }
+      "extensions": [
+        "ms-vscode.vscode-typescript-next"
+      ],
+      "settings": {
+        "typescript.tsdk": "node_modules/typescript/lib"
+      }
     }
   }
 }

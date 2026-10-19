@@ -1,7 +1,7 @@
 // The film controller: mounts the film page in the preview iframe, applies params, maps the edited timeline to source frames, plays.
 import * as Timeline from '../../core/timeline';
 import { api } from './api';
-import { $, $$, clamp, debounce, fmtTime } from './dom';
+import { $, $$, clamp, debounce, fmtTime, toast } from './dom';
 import { S, bus, filmBase, type FilmWindow } from './state';
 import * as History from './history';
 import { t } from './i18n';
@@ -16,7 +16,11 @@ export function stripped(): any {
   const byId = Object.fromEntries(S.manifest.scenes.map(s => [s.id, s]));
   const dflt = Object.fromEntries((S.manifest.params || []).map(x => [x.id, x.default]));
   Object.keys(p.params).forEach(k => { if (p.params[k] === dflt[k]) delete p.params[k]; });
-  p.clips.forEach((c: any) => { const s = byId[c.scene]; if (c.in === s.start) delete c.in; if (c.out === s.end) delete c.out; });
+  p.clips.forEach((c: any) => { const s = byId[c.scene]; if (c.in === s.start) delete c.in; if (c.out === s.end) delete c.out; delete c.id; });
+  const sc = S.manifest.scenes;                                          // untouched scene list: store nothing, so opening a version never rewrites its file
+  if (p.clips.length === sc.length && p.clips.every((c: any, i: number) => c.scene === sc[i].id && c.frames === sc[i].end - sc[i].start && c.in === undefined && c.out === undefined)) delete p.clips;
+  if (!Object.keys(p.audio.tracks).length && !p.audio.custom.length) delete p.audio;
+  if (!Object.keys(p.output).length) delete p.output;
   return p;
 }
 let saveTimer = 0;
@@ -27,7 +31,7 @@ export function saveSoon(): void {
 }
 export async function saveNow(): Promise<void> {
   clearTimeout(saveTimer);
-  try { await api.putProject(S.filmId, S.version, stripped()); setSaved(`${t('saved')} · ${S.version}`); } catch { setSaved(t('saveFailed')); }
+  try { await api.putProject(S.filmId, S.version, stripped()); setSaved(`${t('saved')} · ${S.version}`); } catch (e: any) { setSaved(t('saveFailed')); toast(e.message || t('saveFailed'), 'err'); }
 }
 const pushHistory = debounce(() => History.push(JSON.stringify(stripped())), 400);
 /** call after every user edit: schedules the save and an undo step */

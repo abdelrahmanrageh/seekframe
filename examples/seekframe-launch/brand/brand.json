@@ -1,0 +1,8 @@
+{
+  "name": "Seekframe",
+  "colors": { "accent": "#b2be6d", "ink": "#0d0d0c", "paper": "#faf3e3", "muted": "#5c5f43" },
+  "fonts": [],
+  "voice": { "tone": "calm, confident, short sentences", "tagline": "Brand films as code." },
+  "languages": ["en"],
+  "logo": { "raster": "assets/logo.jpg" }
+}

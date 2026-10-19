@@ -1,11 +1,22 @@
 {
   "name": "create-seekframe",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "npm create seekframe: set up a Seekframe workspace (brand films as code)",
-  "bin": { "create-seekframe": "index.js" },
-  "files": ["index.js", "README.md"],
+  "bin": {
+    "create-seekframe": "index.js"
+  },
+  "files": [
+    "index.js",
+    "README.md"
+  ],
   "license": "MIT",
   "author": "Abdelrahman Rageh",
-  "repository": { "type": "git", "url": "git+https://github.com/abdelrahmanrageh/seekframe.git", "directory": "packages/create-seekframe" },
-  "engines": { "node": ">=20" }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abdelrahmanrageh/seekframe.git",
+    "directory": "packages/create-seekframe"
+  },
+  "engines": {
+    "node": ">=20"
+  }
 }

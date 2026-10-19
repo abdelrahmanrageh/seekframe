@@ -14,3 +14,8 @@ examples/client-tick/brand/fonts/
 **/brand/brand.js
 dist/
 dist-test/
+
+# editor version history (local snapshots) and stray renders
+**/projects/.history/
+/*.wav
+/*.mp4
