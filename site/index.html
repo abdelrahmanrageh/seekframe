@@ -129,11 +129,10 @@
 
   <section class="s center" id="start">
     <div class="eyebrow">Quick start</div><h2>Try it locally.</h2>
-    <p class="lead">The npm packages are not published yet; for now, clone the repo.</p>
-    <pre class="code"><b>git</b> clone https://github.com/abdelrahmanrageh/seekframe
-<b>cd</b> seekframe
-<b>npm</b> install &amp;&amp; npx playwright install chromium
-<b>npm</b> run editor</pre>
+    <p class="lead">One command sets up a workspace with the editor, brand kit and agent instructions.</p>
+    <pre class="code"><b>npm</b> create seekframe@latest my-films
+<b>cd</b> my-films &amp;&amp; npx playwright install chromium
+<b>npx</b> seekframe editor</pre>
     <div class="actions"><a class="btn primary" href="https://github.com/abdelrahmanrageh/seekframe/blob/main/docs/GETTING_STARTED.md">Read the guide</a><a class="btn" href="https://github.com/abdelrahmanrageh/seekframe/blob/main/docs/FILM_SPEC.md">Film contract</a></div>
   </section>
 </main>

@@ -20,12 +20,12 @@ and gives the human a real editor for the last 10 %: change the wording, try ano
 
 ## Quickstart
 ```bash
-git clone https://github.com/abdelrahmanrageh/seekframe && cd seekframe
-npm install && npx playwright install chromium
-npm run editor                                     # setup, brand panel, new-film wizard
-node bin/seekframe.js new spring-sale --width 1920 --height 1080
+npm create seekframe@latest my-films
+cd my-films && npx playwright install chromium
+npx seekframe editor                               # setup, brand panel, new-film wizard
+npx seekframe new spring-sale --width 1920 --height 1080
 ```
-The npm packages (`seekframe`, `create-seekframe`) are **not published yet**, so `npm create seekframe` does not work today; the workspace flow it will use is already in the repo (`seekframe init`). The film-launch example is [examples/seekframe-launch](examples/seekframe-launch/). Make your own: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md). Use it with an LLM: [docs/LLM.md](docs/LLM.md) (Claude Code, Codex, Cursor, opencode, MCP).
+To work on Seekframe itself, clone the repo instead: `git clone https://github.com/abdelrahmanrageh/seekframe && cd seekframe && npm install && npm run editor`. The film-launch example is [examples/seekframe-launch](examples/seekframe-launch/). Make your own: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md). Use it with an LLM: [docs/LLM.md](docs/LLM.md) (Claude Code, Codex, Cursor, opencode, MCP).
 
 ## What an agent does
 ```

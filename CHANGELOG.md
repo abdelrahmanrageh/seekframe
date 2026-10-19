@@ -2,7 +2,7 @@
 
 ## 0.2.0
 - **TypeScript**: sources in `src/`, built with esbuild, type-checked with `tsc`; tests compile from TypeScript.
-- **Workspace mode**: `seekframe init`, `doctor`, `copy`; films find the runtime in the package; `create-seekframe` bootstrapper (not yet published).
+- **Workspace mode**: `seekframe init`, `doctor`, `copy`; films find the runtime in the package; `create-seekframe` bootstrapper (`npm create seekframe@latest`).
 - **Editor v1**: modular app, undo/redo, version history, render queue, cue waveform with snapping, EN/AR interface with RTL, keyboard shortcuts and tab accessibility, Brand panel, new-film wizard and setup checks.
 - **Security**: the local server only answers allowed Host names and rejects cross-origin or header-less writes; read-only films cannot be changed through the API; see SECURITY.md.
 - **Brand**: raster logos are kept as-is when SVG tracing would be unreadable or huge; better palette role detection (paper/ink/accent/muted).
