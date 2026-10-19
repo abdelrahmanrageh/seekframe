@@ -32,7 +32,7 @@ function render(root: HTMLElement): void {
       <div class="field"><label for="b-tone">${t('brand.tone')}</label><input id="b-tone" type="text" value="${esc(b.voice?.tone || '')}"></div></section>
     <section aria-labelledby="b-logo"><h3 id="b-logo">${t('brand.logo')}</h3><p class="note">${esc(t('brand.logoHelp'))}</p>
       <div id="drop" class="drop" role="group" aria-label="${t('brand.upload')}"><span>${t('brand.drop')}</span><button class="btn" type="button">${t('brand.upload')}</button><input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></div>
-      <div id="logo-out" class="logo-out" aria-live="polite">${data!.assets.svg ? `<figure><img src="${data!.assets.svg}?t=${Date.now()}" alt="Traced logo"><figcaption>SVG</figcaption></figure>` : ''}${data!.assets.strokesPreview ? `<figure><img src="${data!.assets.strokesPreview}?t=${Date.now()}" alt="Logo strokes"><figcaption>Strokes</figcaption></figure>` : ''}</div>
+      <div id="logo-out" class="logo-out" aria-live="polite">${data!.assets.raster ? `<figure><img src="${data!.assets.raster}?t=${Date.now()}" alt="Logo"><figcaption>Logo</figcaption></figure>` : ''}${data!.assets.svg ? `<figure><img src="${data!.assets.svg}?t=${Date.now()}" alt="Traced logo"><figcaption>SVG</figcaption></figure>` : ''}${data!.assets.strokesPreview ? `<figure><img src="${data!.assets.strokesPreview}?t=${Date.now()}" alt="Logo strokes"><figcaption>Strokes</figcaption></figure>` : ''}</div>
       <div id="sugg"></div></section>
     <section aria-labelledby="b-col"><h3 id="b-col">${t('brand.colors')}</h3>
       ${ROLES.map(r => `<div class="field"><label for="c-${r}">${ROLE_LABEL[r]}</label><div class="c2"><input type="color" id="c-${r}" value="${isHex(b.colors[r] || '') ? b.colors[r] : '#000000'}"><input type="text" id="h-${r}" value="${esc(b.colors[r] || '')}" spellcheck="false" aria-label="${ROLE_LABEL[r]} (hex)"></div></div>`).join('')}
@@ -56,7 +56,7 @@ function wire(root: HTMLElement): void {
   const drop = $('#drop', root), fi = $<HTMLInputElement>('input', drop);
   const take = async (f: File | undefined) => {
     if (!f) return; $('#logo-out', root).innerHTML = '<p class="note">…</p>';
-    try { suggestion = await api.brandLogo(f); data = suggestion; render(root); showSuggestion(root); toast(t('brand.stray')); } catch (e: any) { toast(e.message, 'err'); render(root); }
+    try { suggestion = await api.brandLogo(f); data = suggestion; render(root); showSuggestion(root); toast(suggestion.note || (suggestion.strokes != null ? t('brand.stray') : 'OK'), suggestion.note ? 'warn' : 'ok'); } catch (e: any) { toast(e.message, 'err'); render(root); }
   };
   $('button', drop).addEventListener('click', e => { e.stopPropagation(); fi.click(); }); drop.addEventListener('click', () => fi.click());
   fi.addEventListener('change', () => take(fi.files?.[0]));

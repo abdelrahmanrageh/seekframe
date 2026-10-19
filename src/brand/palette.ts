@@ -41,13 +41,21 @@ function palette(file, k = 5) {
   return cl.map(c => ({ hex: hex(c.rgb), share: +(c.n / total).toFixed(3), rgb: c.rgb.map(Math.round) }));
 }
 // pick roles: paper = lightest large cluster, ink = darkest, accent = most saturated (non-grey), muted = mid grey
-function roles(cols) {
-  const sat = c => { const m = Math.max(...c.rgb), n = Math.min(...c.rgb); return m ? (m - n) / m : 0; };
-  const L = c => lum(c.rgb);
-  const by = (f, d = 1) => [...cols].sort((a, b) => d * (f(b) - f(a)));
-  const accent = by(sat)[0], ink = by(L, -1)[0], paper = by(L)[0], greys = cols.filter(c => sat(c) < .25 && c !== ink && c !== paper);
-  // no grey in the logo: mix ink and paper (a neutral that reads on both)
-  const mix = (a, b, t) => hex(a.map((v, i) => v + (b[i] - v) * t));
-  return { accent: accent.hex, ink: ink.hex, paper: paper.hex, muted: greys[0] ? greys[0].hex : mix(ink.rgb, paper.rgb, .5) };
+/** Pick brand roles from palette clusters {hex, rgb, share}:
+ *  paper = the biggest light cluster, ink = the biggest dark one, accent = the most saturated colour (it must not be paper or ink),
+ *  muted = a grey from the logo that reads on paper (>= 4.5:1) and is clearly not paper itself, otherwise a mix of ink and paper tuned to ~4.6:1. */
+function roles(cols: Array<{ hex: string; rgb: number[]; share?: number }>) {
+  const sat = (c: { rgb: number[] }) => { const m = Math.max(...c.rgb), n = Math.min(...c.rgb); return m ? (m - n) / m : 0; };
+  const L = (c: { rgb: number[] }) => lum(c.rgb), share = (c: { share?: number }) => c.share ?? 0;
+  const bySharePick = (list: typeof cols, fallback: typeof cols[number]) => [...list].sort((a, b) => share(b) - share(a))[0] || fallback;
+  const lightest = [...cols].sort((a, b) => L(b) - L(a))[0], darkest = [...cols].sort((a, b) => L(a) - L(b))[0];
+  const paper = bySharePick(cols.filter(c => L(c) > .45 && sat(c) < .35), lightest), ink = bySharePick(cols.filter(c => L(c) < .2 && c !== paper), darkest);
+  const accent = [...cols.filter(c => c !== paper && c !== ink)].sort((a, b) => sat(b) - sat(a))[0] || [...cols].sort((a, b) => sat(b) - sat(a))[0];
+  const readable = (c: { rgb: number[] }) => contrast(c.rgb, paper.rgb) >= 4.5;
+  const greys = cols.filter(c => c !== paper && c !== ink && c !== accent && sat(c) < .3 && readable(c) && contrast(c.rgb, ink.rgb) >= 2);
+  let muted: string;
+  if (greys.length) muted = greys.sort((a, b) => contrast(a.rgb, paper.rgb) - contrast(b.rgb, paper.rgb))[0].hex;   // closest to 4.5:1: the softest readable grey
+  else { let lo = 0, hi = 1; for (let i = 0; i < 20; i++) { const mid = (lo + hi) / 2, m = paper.rgb.map((v, k) => v + (ink.rgb[k] - v) * mid); if (contrast(m, paper.rgb) >= 4.6) hi = mid; else lo = mid; } muted = hex(paper.rgb.map((v, k) => v + (ink.rgb[k] - v) * hi)); }
+  return { accent: accent.hex, ink: ink.hex, paper: paper.hex, muted };
 }
 export { palette, roles, contrast, hex, unhex, lum, loadImage };

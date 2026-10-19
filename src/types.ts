@@ -51,7 +51,7 @@ export interface BrandFont { family: string; role?: 'display' | 'text' | 'both';
 export interface BrandJson {
   name: string; nameLocal?: Record<string, string>;
   colors: Record<string, string>; fonts: BrandFont[];
-  logo?: { svg?: string; strokes?: string };
+  logo?: { svg?: string; strokes?: string; raster?: string };
   voice?: { tone?: string; tagline?: string }; languages?: string[];
 }
 export interface LogoStrokes { viewBox: [number, number, number, number]; background: string; strokes: Array<{ color: string; width: number; d: string; length: number }> }

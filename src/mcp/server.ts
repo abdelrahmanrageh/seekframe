@@ -1,4 +1,5 @@
 // Seekframe MCP server (stdio). Tools mirror the CLI so any MCP client (Claude, Codex, Cursor, opencode, …) can build films.
+import { importLogo } from '../brand/kit';
 import pkg from '../../package.json';
 import { scaffoldFilm } from '../core/scaffold';
 import { validate } from '../core/validate';
@@ -112,12 +113,10 @@ function build() {
       return text({ colors: cols, roles: r, contrast: { 'ink on paper': c(r.ink, r.paper), 'muted on paper': c(r.muted, r.paper), 'accent on ink': c(r.accent, r.ink), 'accent on paper': c(r.accent, r.paper), 'ink on accent': c(r.ink, r.accent) }, note: 'WCAG AA needs 4.5:1 for small text, 3:1 for large text.' });
     }));
 
-  s.tool('brand_import_logo', 'Trace a raster logo to SVG and (optionally) extract animatable centre-line strokes. Writes brand/assets/logo.svg, logo-strokes.json and a preview.',
+  s.tool('brand_import_logo', 'Import a logo into the brand kit: keeps the original raster, traces a clean SVG and extracts animatable centre-line strokes when the logo is simple enough (halftone/photographic logos stay raster-only, and the result says so). Also returns suggested brand colours.',
     { file: z.string(), strokes: z.boolean().default(true), colors: z.number().int().default(3), dir: z.string().default('brand') }, wrap(async ({ file, strokes, colors, dir }) => {
-      const out = path.join(path.resolve(ROOT, dir), 'assets'); fs.mkdirSync(out, { recursive: true });
-      fs.writeFileSync(path.join(out, 'logo.svg'), L.toSVG(file, { colors: 6 })); const res: any = { svg: path.relative(ROOT, path.join(out, 'logo.svg')) };
-      if (strokes) { const j = L.strokes(file, { colors }); fs.writeFileSync(path.join(out, 'logo-strokes.json'), JSON.stringify(j, null, 2)); fs.writeFileSync(path.join(out, 'logo-strokes.svg'), L.strokesSVG(j, { bg: true })); res.strokes = j.strokes.length; res.preview = path.relative(ROOT, path.join(out, 'logo-strokes.svg')); }
-      return text({ ...res, next: 'Open the preview, drop stray strokes from logo-strokes.json, then run `seekframe brand build`.' });
+      const r = importLogo(path.resolve(ROOT, dir), file, { strokes, colors });
+      return text({ ...r, next: r.roles ? 'Apply the suggested colours with brand_palette + `seekframe brand palette <logo> --write`, and review any strokes preview before animating.' : 'Run `seekframe brand build` if you edit the kit by hand.' });
     }));
 
   return s;

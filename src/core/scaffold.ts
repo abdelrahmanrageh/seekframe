@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, PKG_ROOT, slug, ensureBrands } from './workspace';
+import { build as buildBrand } from '../brand/build';
 
 
 
@@ -29,10 +30,20 @@ function scaffoldFilm({ name, width, height, fps, brand: brandArg }: ScaffoldOpt
   if (width || height) { const h = path.join(dst, 'film.html'); fs.writeFileSync(h, fs.readFileSync(h, 'utf8').replace('width:1280px;height:720px', `width:${+width! || 1280}px;height:${+height! || 720}px`)); }
   return { id: name, dir: dst, brand: brandCopied };
 }
+/** copy any film (typically a gallery example) into films/<name> so it can be edited */
+function copyFilm(srcDir: string, name: string): { id: string; dir: string } {
+  const id = slug(name); if (!id) throw new Error('give the copy a name');
+  const dst = path.join(ROOT, 'films', id); if (fs.existsSync(dst)) throw new Error(`films/${id} already exists`);
+  ensureBrands(); fs.mkdirSync(path.dirname(dst), { recursive: true });
+  fs.cpSync(srcDir, dst, { recursive: true, filter: p => !/[\\/](\.history|uploads)([\\/]|$)/.test(p) && !/brand[\\/]brand\.(css|js)$/.test(p) });
+  for (const f of ['film.html', 'film.js']) { const h = path.join(dst, f); if (fs.existsSync(h)) fs.writeFileSync(h, viaPackage(fs.readFileSync(h, 'utf8'))); }
+  try { buildBrand(path.join(dst, 'brand')); } catch { /* film has no brand kit */ }
+  return { id, dir: dst };
+}
 function scaffold(a) {
   try {
     const r = scaffoldFilm({ name: a._[1], width: a.width, height: a.height, fps: a.fps, brand: a.brand });
     console.log(`Created films/${r.id}${r.brand ? ' (brand kit copied from brand/)' : ''}\n  1. edit films/${r.id}/film.js\n  2. seekframe validate ${r.id}\n  3. seekframe editor   (then pick "${r.id}")`);
   } catch (e) { console.error(e.message); process.exit(1); }
 }
-export { scaffold, scaffoldFilm };
+export { scaffold, scaffoldFilm, copyFilm };

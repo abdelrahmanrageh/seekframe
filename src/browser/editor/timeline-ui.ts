@@ -114,7 +114,7 @@ export function initTimeline(): void {
   bus.on('tracks', () => void drawWave());
   bus.on('frame', (f: number, clipIndex: number) => {
     $('#head').style.left = (f / S.tl.total * 100) + '%';
-    $('#time').innerHTML = `${timeLabel(f)}<small>/ ${timeLabel(S.tl.total)} · ${t('timeline') === 'Timeline' ? 'frame' : '#'} ${Math.round(f)}</small>`;
+    $('#time').innerHTML = `${timeLabel(f)}<small>/ ${timeLabel(S.tl.total)} · ${t('frame')} ${Math.round(f)}</small>`;
     $$('.seg').forEach((e, i) => e.classList.toggle('cur', i === clipIndex));
     slider.setAttribute('aria-valuemax', String(S.tl.total - 1)); slider.setAttribute('aria-valuenow', String(Math.round(f))); slider.setAttribute('aria-valuetext', `${timeLabel(f)} of ${timeLabel(S.tl.total)}, ${sceneName(S.tl.clips[clipIndex].scene)}`);
   });

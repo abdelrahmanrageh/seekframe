@@ -26,6 +26,9 @@ const json = (res: http.ServerResponse, code: number, o: unknown) => { res.write
 const readBody = (req: http.IncomingMessage, max = 100e6): Promise<Buffer> => new Promise((ok, no) => { const ch: Buffer[] = []; let n = 0; req.on('data', c => { n += c.length; if (n > max) { no(new Error('too large')); req.destroy(); } else ch.push(c); }); req.on('end', () => ok(Buffer.concat(ch))); req.on('error', no); });
 const bodyJSON = async (req: http.IncomingMessage) => JSON.parse((await readBody(req)).toString() || '{}');
 const hash = (o: unknown) => crypto.createHash('sha1').update(JSON.stringify(o)).digest('hex').slice(0, 16);
+/** gallery films shipped inside an installed package are read-only (a clone's own examples are yours to edit) */
+const writable = (f: FilmRef): boolean => f.dir.startsWith(ROOT + path.sep) && !f.dir.split(path.sep).includes('node_modules');
+const READONLY = (f: FilmRef) => `“${f.id}” is a gallery film that ships with Seekframe and is read-only here. Copy it into your workspace first: seekframe copy ${f.id}`;
 const safeName = (s: string | null) => path.basename(s || '').replace(/[^\w.\-]+/g, '_');
 
 /* ---------- generated scores ---------- */
@@ -90,9 +93,29 @@ function snapshot(film: FilmRef, name: string, body: string): void {
 }
 
 /* ---------- brand ---------- */
-const brandPayload = () => { const dir = defaultBrandDir(), b = readBrand(dir); return { brand: b, exists: fs.existsSync(path.join(dir, 'brand.json')), contrast: contrastTable(b.colors), dir: path.relative(ROOT, dir) || 'brand', assets: { svg: b.logo?.svg && fs.existsSync(path.join(dir, b.logo.svg)) ? `/brand/${b.logo.svg}` : null, strokesPreview: b.logo?.strokes && fs.existsSync(path.join(dir, 'assets', 'logo-strokes.svg')) ? '/brand/assets/logo-strokes.svg' : null } }; };
+const brandPayload = () => { const dir = defaultBrandDir(), b = readBrand(dir); return { brand: b, exists: fs.existsSync(path.join(dir, 'brand.json')), contrast: contrastTable(b.colors), dir: path.relative(ROOT, dir) || 'brand', assets: { svg: b.logo?.svg && fs.existsSync(path.join(dir, b.logo.svg)) ? `/brand/${b.logo.svg}` : null, raster: b.logo?.raster && fs.existsSync(path.join(dir, b.logo.raster)) ? `/brand/${b.logo.raster}` : null, strokesPreview: b.logo?.strokes && fs.existsSync(path.join(dir, 'assets', 'logo-strokes.svg')) ? '/brand/assets/logo-strokes.svg' : null } }; };
+
+/* ---------- request guard (the server is local, but browsers will happily let ANY web page talk to it) ----------
+   1. Host allowlist: stops DNS-rebinding (a hostile page re-pointing its own domain at 127.0.0.1 to read your workspace).
+   2. State-changing requests must carry `X-Seekframe: 1` (a custom header forces a CORS preflight, which we never grant) and, if the browser
+      sends an Origin, it must be one of the allowed hosts. Together these stop cross-site forgery of writes, uploads and renders.
+   SEEKFRAME_ALLOWED_HOSTS adds hosts for containers/Codespaces, e.g. "*.app.github.dev". */
+const allowedHosts = (): string[] => ['localhost', '127.0.0.1', '[::1]', ...(process.env.SEEKFRAME_ALLOWED_HOSTS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean)];
+const hostOf = (h: string): string => { h = h.toLowerCase(); return h.startsWith('[') ? h.slice(0, h.indexOf(']') + 1) : h.replace(/:\d+$/, ''); };
+const hostAllowed = (host: string): boolean => allowedHosts().some(p => p.startsWith('*.') ? host.endsWith(p.slice(1)) : host === p);
+export function guard(req: http.IncomingMessage): string | null {
+  const host = hostOf(String(req.headers.host || ''));
+  if (!host || !hostAllowed(host)) return `host "${host}" is not allowed (set SEEKFRAME_ALLOWED_HOSTS to add it)`;
+  const origin = req.headers.origin;
+  if (origin && origin !== 'null') { let oh = ''; try { oh = new URL(String(origin)).hostname.toLowerCase(); } catch { return 'bad origin'; } if (!hostAllowed(oh)) return `origin "${origin}" is not allowed`; }
+  else if (origin === 'null') return 'opaque origin is not allowed';
+  const m = req.method || 'GET';
+  if (m !== 'GET' && m !== 'HEAD' && req.headers['x-seekframe'] !== '1') return 'missing X-Seekframe header';
+  return null;
+}
 
 const server = http.createServer(async (req, res) => {
+  const denied = guard(req); if (denied) return json(res, 403, { error: 'forbidden: ' + denied });
   const u = new URL(req.url || '/', 'http://x'); const p = decodeURIComponent(u.pathname); let m: RegExpExecArray | null;
   try {
     if (p === '/') { res.writeHead(302, { location: '/dist/editor/editor.html' + u.search }); return res.end(); }
@@ -112,6 +135,7 @@ const server = http.createServer(async (req, res) => {
       const f = findFilm(m[1]), n = slug(m[2]); if (!f || !n) return json(res, 404, { error: 'unknown film/project' });
       const file = path.join(f.dir, 'projects', n + '.json');
       if (req.method === 'GET') return fs.existsSync(file) ? json(res, 200, JSON.parse(fs.readFileSync(file, 'utf8'))) : json(res, 200, {});
+      if ((req.method === 'PUT' || req.method === 'DELETE') && !writable(f)) return json(res, 403, { error: READONLY(f) });
       if (req.method === 'PUT') { const body = JSON.stringify(JSON.parse((await readBody(req)).toString()), null, 2); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, body); snapshot(f, n, body); return json(res, 200, { ok: true }); }
       if (req.method === 'DELETE') { fs.rmSync(file, { force: true }); return json(res, 200, { ok: true }); }
     }
@@ -124,6 +148,7 @@ const server = http.createServer(async (req, res) => {
     if ((m = /^\/api\/upload\/([^/]+)$/.exec(p)) && req.method === 'POST') {
       const f = findFilm(m[1]), fn = safeName(u.searchParams.get('name'));
       if (!f || !UPLOAD_EXT.test(fn)) return json(res, 400, { error: 'unsupported file type' });
+      if (!writable(f)) return json(res, 403, { error: READONLY(f) });
       const dst = path.join(f.dir, 'uploads'); fs.mkdirSync(dst, { recursive: true });
       fs.writeFileSync(path.join(dst, fn), await readBody(req)); return json(res, 200, { path: 'uploads/' + fn });
     }
@@ -149,7 +174,7 @@ const server = http.createServer(async (req, res) => {
       } catch (e: any) { return json(res, 400, { error: String(e.message || e) }); } finally { fs.rmSync(tdir, { recursive: true, force: true }); }
     }
     if (p === '/api/brand/font' && req.method === 'DELETE') { removeFont(defaultBrandDir(), u.searchParams.get('family') || ''); return json(res, 200, brandPayload()); }
-    if (p === '/api/brand/apply' && req.method === 'POST') { const o = await bodyJSON(req), f = findFilm(o.film); if (!f) return json(res, 404, { error: 'unknown film' }); applyBrand(defaultBrandDir(), f.dir); return json(res, 200, { ok: true }); }
+    if (p === '/api/brand/apply' && req.method === 'POST') { const o = await bodyJSON(req), f = findFilm(o.film); if (!f) return json(res, 404, { error: 'unknown film' }); if (!writable(f)) return json(res, 403, { error: READONLY(f) }); applyBrand(defaultBrandDir(), f.dir); return json(res, 200, { ok: true }); }
 
     /* previews and audio */
     if (p === '/api/thumb' && req.method === 'POST') {                  // {film, project, frame, width} -> png url

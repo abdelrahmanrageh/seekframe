@@ -23,7 +23,7 @@ Implemented:
 - TypeScript migration with strict null checks, browser and Node builds, and generated author declarations.
 - `npm create seekframe` workspace bootstrap and workspace discovery outside the framework checkout.
 - Docker and devcontainer definitions, a reusable GitHub render Action, and a GitHub Pages workflow/static landing page.
-- `films/seekframe-launch` source film for the project launch story.
+- `examples/seekframe-launch` source film for the project launch story.
 
 Remaining: run the render Action in GitHub, inspect the launch film contact sheet and rendered video, and deploy Pages/publish npm packages when a release is approved. This repository does not publish or deploy automatically from the current branch.
 

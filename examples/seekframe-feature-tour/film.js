@@ -26,7 +26,7 @@ const PARAMS = [
   { id: 'mood', type: 'select', label: 'Colour world', scene: 'variants', default: 'acid', options: [{ value: 'acid', label: 'Acid paper' }, { value: 'electric', label: 'Electric blue' }, { value: 'ink', label: 'Night ink' }] },
   { id: 'accent', type: 'color', label: 'Flash colour', scene: 'identity', default: '#B8FF00', cssVar: '--accent' },
   { id: 'show-logo', type: 'boolean', label: 'Show brand image', scene: 'identity', default: true },
-  { id: 'logo', type: 'image', label: 'Brand image', scene: 'identity', default: 'brand/assets/logo.svg', help: 'Upload a local PNG or SVG to replace the sample mark.' },
+  { id: 'logo', type: 'image', label: 'Brand image', scene: 'identity', default: 'brand/assets/logo.jpg', help: 'Upload a local PNG or SVG to replace the sample mark.' },
   { id: 'shape', type: 'select', label: 'Shape language', scene: 'variants', default: 'orb', options: [{ value: 'orb', label: 'Glossy orb' }, { value: 'tile', label: 'Hard tile' }, { value: 'ribbon', label: 'Soft ribbon' }] },
   { id: 'feature-1', type: 'text', label: 'Beat one', scene: 'motion', default: 'Write the feeling' },
   { id: 'feature-2', type: 'text', label: 'Beat two', scene: 'motion', default: 'Move the message' },

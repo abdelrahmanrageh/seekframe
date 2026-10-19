@@ -162,3 +162,9 @@ html[dir="rtl"] #toasts{right:auto;left:16px}
 @media(max-width:1050px){#top .sp{display:none}#app{grid-template-columns:minmax(0,1fr) minmax(330px,42vw)}}
 @media(max-width:720px){html,body{height:auto;min-height:100%;overflow:auto}#top{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;padding:8px}#top .brand{margin-right:auto}#top select{flex:1;min-width:110px}#top .saved{display:none}#app{display:flex;flex-direction:column;height:auto;min-height:calc(100vh - 80px)}#left{height:58vh;min-height:340px}#side{height:70vh;min-height:460px;border-left:0;border-top:1px solid var(--line)}#tabs{overflow-x:auto}#tabs button{min-width:68px}#transport{padding:10px}#stageTools{top:8px;right:8px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* Time runs left to right even in right-to-left UIs (video-editor convention): keep the whole transport LTR so the playhead,
+   scene order, labels and scrubbing always agree, and isolate numbers so bidi text can't reorder them. */
+#transport, #scrub, #track, #time { direction: ltr; }
+#time, .rng, .seg .lbl { unicode-bidi: isolate; }
+[dir=rtl] .seg .lbl { text-align: left; }
