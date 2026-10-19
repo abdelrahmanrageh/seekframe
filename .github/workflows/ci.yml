@@ -13,9 +13,9 @@ jobs:
       - run: npm test
       - name: Validate and review the examples
         run: |
-          node bin/seekframe.js validate examples/akked-tick --fast
-          node bin/seekframe.js validate examples/akked-tick-ar --fast
-          node bin/seekframe.js review examples/akked-tick --out review
+          node bin/seekframe.js validate examples/seekframe-launch --fast
+          node bin/seekframe.js validate examples/seekframe-feature-tour --fast
+          node bin/seekframe.js review examples/seekframe-launch --out review
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: review-sheets, path: review/ }

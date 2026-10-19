@@ -16,7 +16,7 @@ import { renderScore } from '../src/sound/score';
 
 const ROOT = path.resolve(__dirname, '..');
 
-for (const rel of ['templates/blank', 'examples/akked-tick', 'examples/akked-tick-ar']) {
+for (const rel of ['templates/blank', 'examples/seekframe-launch', 'examples/seekframe-feature-tour']) {
   test(`validate ${rel}`, { timeout: 240000 }, async () => {
     const r = await validate(path.join(ROOT, rel), { fast: true, color: false, log: () => {} });
     assert.deepEqual(r.fail, [], r.fail.join('\n'));

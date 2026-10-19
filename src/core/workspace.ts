@@ -42,7 +42,7 @@ export function listFilms(): FilmRef[] {
   return out;
 }
 export const findFilm = (id: string): FilmRef | null => listFilms().find(f => f.id === slug(id)) || null;
-/** accepts an id ("akked-tick") or a path ("examples/akked-tick", "./films/x") */
+/** accepts an id ("seekframe-launch") or a path ("examples/seekframe-launch", "./films/x") */
 export function resolveFilm(arg?: string): FilmRef | null {
   if (!arg) return null;
   const byId = findFilm(arg); if (byId) return byId;

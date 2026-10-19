@@ -24,6 +24,6 @@ You are probably here to build or change a film. Follow this file; it works for 
 Setup once: `npm install && npx playwright install chromium`. Tests: `npm test`.
 
 ## Layout
-`films/` your films · `brand/` your brand kit · `output/` renders (git-ignored) · gallery and templates are inside `{{PKG}}/` (read `{{PKG}}/examples/akked-tick`).
+`films/` your films · `brand/` your brand kit · `output/` renders (git-ignored) · gallery and templates are inside `{{PKG}}/` (read `{{PKG}}/examples/seekframe-launch`).
 
 More: `{{DOCS}}/LLM.md` (setup per tool, MCP), `llm/prompts/` (copy-paste prompts), `{{DOCS}}/RTL.md`, `{{DOCS}}/SOUND.md`, `{{DOCS}}/VARIANTS.md`, `{{DOCS}}/ACCESSIBILITY.md`.

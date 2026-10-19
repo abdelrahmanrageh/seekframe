@@ -5,7 +5,7 @@ on:
       film:
         description: Film id or comma-separated ids
         required: true
-        default: akked-tick
+        default: seekframe-launch
       fps:
         description: Output frame rate
         required: true

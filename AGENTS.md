@@ -24,7 +24,7 @@ You are probably here to build or change a film. Follow this file; it works for 
 Setup once: `npm install && npx playwright install chromium`. Tests: `npm test`.
 
 ## Layout
-`films/` yours · `examples/` gallery (read `examples/akked-tick`: 3 hooks × 3 styles, EN + Arabic RTL, generated score) · `templates/blank` · `brand/` kit ·
+`films/` yours · `examples/` gallery (read `examples/seekframe-launch`: 3 hooks × 4 looks, image options, sound effects from cues) · `templates/blank` · `brand/` kit ·
 `src/{core,editor,browser,brand,sound,mcp}` the framework (TypeScript; `npm run build` → `dist/`) · `docs/` guides · `llm/prompts/` prompt library · `output/` renders.
 
 More: `docs/LLM.md` (setup per tool, MCP), `llm/prompts/` (copy-paste prompts), `docs/RTL.md`, `docs/SOUND.md`, `docs/VARIANTS.md`, `docs/ACCESSIBILITY.md`.

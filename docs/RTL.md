@@ -1,6 +1,6 @@
 # Right-to-left (Arabic, Hebrew, …)
 
-Everything below is what we learned building `akked-tick-ar`; the same film code serves both directions.
+Everything below is what we learned building an English and Arabic film from one code base: the same film code serves both directions.
 
 1. Set `<html lang="ar" dir="rtl">` (or `window.FILM_LANG = 'ar'` before the runtime loads). `SF.lang.rtl` becomes true.
 2. **Mirror horizontal layout** with `SF.X(x, W)`; use `SF.dirSign` (+1/−1) for "forward" motion; anchor text with `[rtl ? 'right' : 'left']`.
