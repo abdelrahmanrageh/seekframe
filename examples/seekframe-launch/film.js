@@ -55,7 +55,7 @@ const DEF = {
   'e-1': 'You take the last 10%.', 'e-2': '[Edit] it like a doc.', 'e-field': 'Spring sale',
   'v-1': 'One film.', 'v-2': '[Every] variant.', 'v-chips': 'English, عربي RTL, 16:9, 9:16, 1:1, 4 looks, 3 hooks, MP4 at 60 fps',
   'snd-1': 'Sound that lands', 'snd-2': 'on the [frame].',
-  'end-word': 'seekframe', 'end-tag': 'Brand films as code', 'end-url': 'github.com/abdelrahmanrageh/seekframe', 'end-note': 'Open source · MIT',
+  'end-word': 'seekframe', 'end-tag': 'Brand films as code', 'end-url': 'npm create seekframe@latest', 'end-note': 'Open source · MIT',
 };
 const V = id => SF.value(id, DEF[id]);
 const lookOf = v => LOOKS[v.look] || LOOKS[DEF.look];
