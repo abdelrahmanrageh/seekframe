@@ -43,7 +43,8 @@ const inkOn = hex => lumOf(hex) > .38 ? '#0c0c0b' : '#ffffff';
 
 /* ---------- params ---------- */
 const DEF = {
-  hook: 'whatif', look: 'night', sound: 'auto', size: 100, logo: '',
+  hook: 'whatif', look: 'night', sound: 'auto', size: 100, logo: '', shot: '',
+  'a-img-1': '', 'a-img-2': '', 'a-img-3': '', 'a-img-4': '', 'a-img-5': '', 'a-img-6': '',
   'w-1': 'What if your AI', 'w-2': 'could make [films]?',
   'c-1': 'Every frame', 'c-2': 'is a line of [code].', 'c-unit': 'frame',
   's-1': 'One prompt.', 's-p': 'make a launch film for my brand', 's-2': '[Hundreds] of films.',
@@ -54,7 +55,7 @@ const DEF = {
   'e-1': 'You take the last 10%.', 'e-2': '[Edit] it like a doc.', 'e-field': 'Spring sale',
   'v-1': 'One film.', 'v-2': '[Every] variant.', 'v-chips': 'English, عربي RTL, 16:9, 9:16, 1:1, 4 looks, 3 hooks, MP4 at 60 fps',
   'snd-1': 'Sound that lands', 'snd-2': 'on the [frame].',
-  'end-tag': 'Brand films as code', 'end-url': 'github.com/abdelrahmanrageh/seekframe', 'end-note': 'Open source · MIT',
+  'end-word': 'seekframe', 'end-tag': 'Brand films as code', 'end-url': 'github.com/abdelrahmanrageh/seekframe', 'end-note': 'Open source · MIT',
 };
 const V = id => SF.value(id, DEF[id]);
 const lookOf = v => LOOKS[v.look] || LOOKS[DEF.look];
@@ -78,12 +79,14 @@ function params(v) {
   if (hook === 'scale') out.push(T('s-1', 'Line 1', 'hook'), T('s-p', 'Prompt in the pill', 'hook'), T('s-2', 'Line 2 ([word] = highlighted)', 'hook'));
   out.push(
     T('a-label', 'Label', 'agents'), T('a-1', 'Before the logos', 'agents'), T('a-list', 'Agents (comma separated)', 'agents'), T('a-2', 'After the logos', 'agents'), T('a-sub', 'Second line', 'agents'),
+    ...[1, 2, 3, 4, 5, 6].map(i => ({ id: 'a-img-' + i, type: 'image', label: `Logo for agent ${i} (empty = simple glyph)`, scene: 'agents', default: '', help: 'Upload the real logo (SVG or PNG with a transparent background) to use it instead of the glyph.' })),
     T('p-tool', 'Tool name', 'prompt'), T('p-text', 'Prompt', 'prompt', { multiline: true }), T('p-file', 'Attachment', 'prompt'),
     T('g-1', 'Line 1', 'generate'), T('g-2', 'Line 2', 'generate'), T('g-steps', 'Steps (comma separated)', 'generate'),
     T('e-1', 'Line 1', 'editor'), T('e-2', 'Line 2', 'editor'), T('e-field', 'Text typed in the editor', 'editor'),
+    { id: 'shot', type: 'image', label: 'Your own image in the preview (empty = looks)', scene: 'editor', default: '', help: 'A product shot or photo shown in the editor preview; the headline is typed over it.' },
     T('v-1', 'Line 1', 'variants'), T('v-2', 'Line 2', 'variants'), T('v-chips', 'Chips (comma separated)', 'variants'),
     T('snd-1', 'Line 1', 'sound'), T('snd-2', 'Line 2', 'sound'),
-    T('end-tag', 'Tagline', 'logo'), T('end-url', 'URL', 'logo'), T('end-note', 'Note', 'logo'),
+    T('end-word', 'Wordmark', 'logo'), T('end-tag', 'Tagline', 'logo'), T('end-url', 'URL', 'logo'), T('end-note', 'Note', 'logo'),
     { id: 'logo', type: 'image', label: 'Logo (empty = animated Seekframe mark)', scene: 'logo', default: '' },
   );
   return out;
@@ -174,7 +177,7 @@ function cues(v) {
   c.impact(L, { gain: 1, tail: 4 }); c.whoosh(L, { dur: .9, gain: .18, p0: 0, p1: 0 });
   for (let f = 6; f < 64; f += 1.5) c.tick(L + f, { gain: .016 + .022 * hash(f), freq: 3200 + Math.round(hash(f * 7) * 2600), pan: (hash(f * 3) - .5) * 1.4 });
   c.thud(L + 72, { gain: .1 }); c.whoosh(L + 72, { dur: .9, gain: .1, p0: 0, p1: 0 });
-  'seekframe'.split('').forEach((_, i) => c.key(L + 92 + i * 3, { seed: 100 + i, gain: .07 }));
+  [...V('end-word')].forEach((_, i) => c.key(L + 92 + i * 3, { seed: 100 + i, gain: .07 }));
   c.boom(L + 116, { gain: .4, decay: 2.2 }); c.dtick(L + 118, { gain: .24 }); c.tick(L + 132, { gain: .08 }); c.tick(L + 142, { gain: .05 });
   return c.list;
 }
@@ -270,7 +273,7 @@ SF.define({
     const a = sec('agents'); a.style.background = 'var(--acc)'; a.style.color = 'var(--accInk)';
     el('div', 'lbl', esc(V('a-label')), a).style.cssText = 'position:absolute;left:120px;top:140px;font-size:34px;color:var(--accInk);opacity:.75';
     R.tr1 = el('div', 'track big', '', a); R.tr1.dataset.sfTicker = ''; R.tr1.style.top = (430 - Tpx * .4) + 'px'; R.tr1.style.fontSize = (Tpx * .86) + 'px';
-    R.tr1.innerHTML = `<span>${esc(V('a-1'))}</span> ${list(V('a-list')).map((n, i) => `<span class="chip">${ICONS[i % ICONS.length]}${esc(n)}</span>`).join(' ')} <span>${esc(V('a-2'))}</span>`;
+    R.tr1.innerHTML = `<span>${esc(V('a-1'))}</span> ${list(V('a-list')).map((n, i) => { const img = V('a-img-' + (i + 1)); return `<span class="chip">${img ? `<img class="alogo" alt="" src="${esc(img)}">` : ICONS[i % ICONS.length]}${esc(n)}</span>`; }).join(' ')} <span>${esc(V('a-2'))}</span>`;
     R.tr2 = el('div', 'track sub', '', a); R.tr2.dataset.sfTicker = ''; R.tr2.style.top = '700px'; R.tr2.style.fontSize = '58px'; R.tr2.textContent = (V('a-sub') + '   ·   ').repeat(4);
 
     /* 3 prompt: MCP toggle, the prompt box, an attachment, the send click */
@@ -308,7 +311,8 @@ SF.define({
     R.prev = el('div', 'prev', '<div class="s">preview · 16:9</div><div class="h"></div>', R.ed); R.prevH = R.prev.lastChild;
     R.panel = el('div', 'panel', `<div class="field"><label>Headline</label><div class="in"></div></div><div class="field"><label>Look</label><div class="sw">${LOOK_IDS.map(id => `<i style="background:${LOOKS[id].acc}"></i>`).join('')}</div></div><div class="field"><label>Length</label><div class="in">3.00 s</div></div>`, R.ed);
     R.fieldIn = R.panel.querySelector('.in'); R.sws = [...R.panel.querySelectorAll('.sw i')];
-    R.before = V(HOOK_LINE[hook]).replace(/[[\]]/g, '');
+    R.before = V(HOOK_LINE[hook]).replace(/[[\]]/g, ''); R.shot = String(V('shot') || '');
+    if (R.shot) { R.prev.style.backgroundImage = `linear-gradient(180deg, transparent 40%, rgba(0,0,0,.65)), url("${R.shot}")`; R.prev.style.backgroundSize = 'cover'; R.prev.style.backgroundPosition = 'center'; R.prev.style.color = '#fff'; }
     R.tracks = el('div', 'tracks', '', R.ed);
     const TC = ['var(--acc)', 'var(--glow)', '#ff7a59', '#6e8cff', 'color-mix(in srgb, var(--fg) 55%, transparent)'];
     R.bars = [];
@@ -342,7 +346,7 @@ SF.define({
     if (custom) { R.ulogo = el('img', 'ulogo', '', lo); R.ulogo.src = custom; R.ulogo.alt = 'Logo'; }
     else { R.cv = el('canvas', '', '', lo); R.cv.id = 'dots'; R.cv.width = 1920; R.cv.height = 1080; R.ctx = R.cv.getContext('2d'); }
     R.word = el('div', 'word', '', lo); R.word.style.top = '590px';
-    R.letters = 'seekframe'.split('').map(ch => el('span', 'w', ch, R.word));
+    R.letters = [...V('end-word')].map(ch => el('span', 'w', ch, R.word));
     R.tag = el('div', 'tagl', esc(V('end-tag')), lo); R.tag.style.top = '800px';
     R.url = el('div', 'url', esc(V('end-url')), lo); R.url.style.top = '876px';
     R.note = el('div', 'url', esc(V('end-note')), lo); R.note.style.top = '930px'; R.note.style.fontSize = '24px';
@@ -454,7 +458,7 @@ const SEEK = {
     R.fieldIn.style.borderColor = lf >= 26 && lf < 66 ? 'var(--acc)' : 'var(--line)';
     R.prevH.textContent = lf < 32 ? R.before : (typed || ' ');
     const marks = [0, 70, 84, 98], pick = lf < 70 ? 0 : lf < 84 ? 1 : lf < 98 ? 2 : 3, Lk = LOOKS[LOOK_IDS[pick]];
-    R.prev.style.background = lookBg(Lk, .4); R.prev.style.color = Lk.fg;
+    if (!R.shot) { R.prev.style.background = lookBg(Lk, .4); R.prev.style.color = Lk.fg; }
     R.sws.forEach((s, i) => { s.style.outlineColor = i === pick ? 'var(--fg)' : 'transparent'; tf(s, `scale(${i === pick && lf >= 70 ? lerp(1.2, 1, rng(lf, marks[pick], marks[pick] + 8)) : 1})`); });
     R.bars.forEach(o => { const gr = E.expo(rng(lf, 4 + o.row * 3 + o.k * 1.5, 22 + o.row * 3 + o.k * 1.5)); o.b.style.width = (o.w * gr) + 'px'; });
     R.head.style.left = lerp(0, 1600, rng(lf, 10, 116)) + 'px';
@@ -480,7 +484,7 @@ const SEEK = {
   },
   logo(lf, len) {
     const iris = E.expo(rng(lf, 0, 18)); R.logo.style.clipPath = `circle(${iris * 1250}px at 960px 470px)`;
-    const mv = E.io(rng(lf, 72, 100)), sc = lerp(1, .6, mv), cy = lerp(470, 320, mv);
+    const mv = E.io(rng(lf, 72, 100)), nl = R.letters.length, sc = lerp(1, .6, mv), cy = lerp(470, 320, mv);
     if (R.ctx && R.dots) {
       const ctx = R.ctx, D = R.D, cell = 10, w = D.cols * cell, hh = D.rows * cell;
       ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, 1920, 1080);
@@ -498,7 +502,7 @@ const SEEK = {
     } else if (R.ulogo) {
       const t = E.expo(rng(lf, 4, 30)); R.ulogo.style.cssText = `left:${960 - 380 * sc}px;top:${cy - 260 * sc}px;width:${760 * sc}px;height:${520 * sc}px;clip-path:circle(${t * 70}% at 50% 50%);opacity:${t}`;
     }
-    R.letters.forEach((l, i) => { const t = rng(lf, 92 + i * 3, 104 + i * 3), e = E.expo(t); op(l, t * 2); tf(l, `translateY(${(1 - e) * 60}px)`); l.style.filter = t < 1 ? `blur(${(1 - e) * 10}px)` : ''; });
+    R.letters.forEach((l, i) => { const t = rng(lf, 92 + i * 27 / nl, 104 + i * 27 / nl), e = E.expo(t); op(l, t * 2); tf(l, `translateY(${(1 - e) * 60}px)`); l.style.filter = t < 1 ? `blur(${(1 - e) * 10}px)` : ''; });
     const tg = E.expo(rng(lf, 116, 132)); op(R.tag, tg); R.tag.style.letterSpacing = lerp(.8, .42, tg) + 'em';
     op(R.url, rng(lf, 130, 142)); op(R.note, rng(lf, 140, 152) * .8);
   },

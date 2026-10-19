@@ -7,6 +7,7 @@ const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
 const PREVIEW = 'examples/seekframe-launch/preview';
 fs.rmSync(out, { recursive: true, force: true }); fs.mkdirSync(path.join(out, PREVIEW), { recursive: true });
 fs.copyFileSync(path.join(root, 'site/index.html'), path.join(out, 'index.html'));
+fs.cpSync(path.join(root, 'site/img'), path.join(out, 'img'), { recursive: true });
 for (const f of fs.readdirSync(path.join(root, PREVIEW))) if (/\.(mp4|jpg|png|webm)$/.test(f)) fs.copyFileSync(path.join(root, PREVIEW, f), path.join(out, PREVIEW, f));
 console.log('built dist-site/');
 if (process.argv.includes('--serve')) {

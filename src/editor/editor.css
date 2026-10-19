@@ -145,7 +145,7 @@ body{display:flex;flex-direction:column}
 .chip{display:inline-block;border-radius:999px;padding:2px 7px;background:var(--card)}.chip.good,.checks .ok{color:#85e6a2}.chip.mid,.checks .warn{color:var(--warn)}.chip.bad,.checks .bad{color:var(--err)}
 .swatches{display:flex;gap:6px;margin:10px 0}.swatch{width:30px;height:30px;border-radius:6px;border:1px solid var(--line)}
 .form{display:grid;gap:10px}.form label{display:grid;gap:4px;font-size:12px;color:var(--muted)}
-.form fieldset{border:1px solid var(--line);border-radius:8px;padding:10px}.form legend{padding:0 5px;color:var(--muted);font-size:12px}.form .radio{display:flex;align-items:center;margin:8px 0}
+.form label.check{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink);cursor:pointer}.form label.check input{width:18px;height:18px;margin:0;accent-color:var(--lime);flex:none}.form .nobrand{margin:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.form fieldset{border:1px solid var(--line);border-radius:8px;padding:10px}.form legend{padding:0 5px;color:var(--muted);font-size:12px}.form .radio{display:flex;align-items:center;margin:8px 0}
 .backdrop{position:fixed;z-index:20;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.65);padding:20px}
 .dialog{width:min(560px,100%);max-height:min(85vh,800px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
 .dialog.wide{width:min(820px,100%)}.dh{display:flex;align-items:center;gap:10px;margin-bottom:12px}.dh h2{font-size:18px;flex:1;margin:0}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}

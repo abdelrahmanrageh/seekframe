@@ -2,6 +2,7 @@ import { api } from './api';
 import { $, el, esc, toast, copyText } from './dom';
 import { t } from './i18n';
 import { S } from './state';
+import { setTab } from './tabs';
 import * as History from './history';
 import { checkCurrent, scanAll, type TextIssue } from './check';
 import { replaceProject, seek, changed } from './film';
@@ -34,14 +35,17 @@ export async function openNewFilm(): Promise<void> {
     <label>${t('wizard.name')}<input name="name" type="text" required pattern="[A-Za-z0-9 _-]+" placeholder="spring-sale" autocomplete="off"></label>
     <fieldset><legend>${t('wizard.format')}</legend>${FORMATS.map((f, i) => `<label class="radio"><input type="radio" name="fmt" value="${f.id}" ${i === 0 ? 'checked' : ''}> ${f.label}</label>`).join('')}</fieldset>
     <label>${t('export.fps')}<select name="fps"><option value="30" selected>30</option><option value="24">24</option><option value="60">60</option></select></label>
-    <label class="sw"><input type="checkbox" name="brand" ${brand?.exists ? 'checked' : 'disabled'}> ${t('wizard.brand')}${brand?.exists ? ` (${esc(brand.brand.name)})` : ''}</label>
+    ${brand?.exists
+      ? `<label class="check"><input type="checkbox" name="brand" checked><span>${t('wizard.brand')} (${esc(brand.brand.name)})</span></label>`
+      : `<p class="note nobrand">${t('wizard.nobrand')} <button class="btn sm" type="button" data-brand>${t('wizard.setbrand')}</button></p>`}
     <div class="err" id="wizerr" role="alert"></div>
     <div class="actions"><button class="btn" type="button" data-cancel>${t('wizard.cancel')}</button><button class="btn primary" type="submit">${t('wizard.create')}</button></div>`);
   const m = modal(t('wizard.title'), form);
   form.querySelector('[data-cancel]')!.addEventListener('click', m.close);
+  form.querySelector('[data-brand]')?.addEventListener('click', () => { m.close(); setTab('brand'); });
   form.addEventListener('submit', async e => {
     e.preventDefault(); const d = new FormData(form), f = FORMATS.find(x => x.id === d.get('fmt'))!, name = String(d.get('name') || '').trim().replace(/\s+/g, '-');
-    try { const r = await api.newFilm({ name, width: f.w, height: f.h, fps: +String(d.get('fps')) }); location.search = `?film=${r.id}`; }
+    try { const r = await api.newFilm({ name, width: f.w, height: f.h, fps: +String(d.get('fps')), noBrand: !!brand?.exists && !d.get('brand') }); location.search = `?film=${r.id}`; }
     catch (err: any) { $('#wizerr', form).textContent = err.message; }
   });
 }
