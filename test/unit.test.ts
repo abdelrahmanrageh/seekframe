@@ -8,6 +8,7 @@ import { parseParams } from '../src/core/matrix';
 import Ajv from 'ajv';
 import * as schema from '../src/core/film.schema.json';
 import * as K from '../src/core/craft-checks';
+import * as KM from '../src/core/kit-math';
 
 
 
@@ -165,4 +166,29 @@ test('sound: a sample cue plays a recorded file, trimmed, panned and rate-change
     assert.equal(mix([{ kind: 'sample', f: 0, src: 'beep.wav' }], { fps: 30, seconds: 1, dir, theme: 'minimal' }).m.L.every(v => v === 0), true, 'minimal drops samples');
     assert.equal(mix([{ kind: 'sample', f: 0, src: 'beep.wav', min: true }], { fps: 30, seconds: 1, dir, theme: 'minimal' }).m.L.every(v => v === 0), false, 'min: true keeps them');
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+/* ----- motion kit (pure math) ----- */
+test('kit: tokens scale with fps and stay whole frames', () => {
+  assert.deepEqual(KM.tokens(30), { fast: 8, base: 14, slow: 22, stagger: 5, rise: 26, overshoot: 1.7 });
+  const t60 = KM.tokens(60); assert.equal(t60.base, 28); assert.equal(t60.fast, 16); assert.equal(KM.tokens(24).base, 11);
+});
+test('kit: poses combine (translate adds, scale and opacity multiply) and an entrance + exit composes', () => {
+  const c = KM.combine(KM.pose({ y: 20, s: .9, o: .5, blur: 4 }), KM.pose({ y: 10, s: .5, o: .5, blur: 8, clip: 'circle(1%)' }));
+  assert.deepEqual([c.y, c.s, c.o, c.blur, c.clip], [30, .45, .25, 8, 'circle(1%)']);
+  const css = KM.css('translate(5px,5px)', KM.pose({ x: 3, o: 2 })); assert.match(css.transform, /^translate\(5px,5px\) translate\(3\.00px,0\.00px\)/); assert.equal(css.opacity, '1'); assert.equal(css.filter, '');
+});
+test('kit: easings start at 0, end at 1 and back overshoots', () => {
+  for (const e of [KM.EASE.expoOut, KM.EASE.inQuad, KM.EASE.backOut, KM.EASE.inOut, KM.EASE.out]) { assert.ok(Math.abs(e(0)) < 1e-9); assert.ok(Math.abs(e(1) - 1) < 1e-9); }
+  assert.ok(KM.EASE.backOut(.6) > 1, 'overshoot');
+});
+test('kit: keystrokes land on the frame each character appears (same as typed()) and spaces are heavier', () => {
+  const ks = KM.keyFrames(['a', 'b', ' ', 'c'], 40, 80); assert.deepEqual(ks.map(k => k.f), [50, 60, 70, 80]); assert.deepEqual(ks.map(k => k.space), [false, false, true, false]);
+});
+test('kit: counter ticks start fast and slow down, inside the roll', () => {
+  const t = KM.tickFrames(70, 100, 12); assert.ok(t[0] >= 70 && t[t.length - 1] <= 100); const gaps = t.slice(1).map((f, i) => f - t[i]);
+  assert.ok(gaps[0] <= gaps[gaps.length - 1], 'ticks slow towards the end: ' + gaps.join());
+});
+test('kit: pan follows screen position and is softened at the edges', () => {
+  assert.equal(KM.panOf(960, 1920), 0); assert.ok(KM.panOf(0, 1920) < -.6 && KM.panOf(0, 1920) >= -1); assert.ok(KM.panOf(1920, 1920) > .6); assert.equal(KM.panOf(10, 0), 0);
 });

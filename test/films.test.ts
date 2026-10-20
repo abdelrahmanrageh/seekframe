@@ -10,6 +10,7 @@ import { scaffoldFilm } from '../src/core/scaffold';
 import { exportFilm } from '../src/core/export';
 import { renderScore } from '../src/sound/score';
 import { craft } from '../src/core/craft';
+import { sync } from '../src/sound/sync';
 
 
 
@@ -18,7 +19,7 @@ import { craft } from '../src/core/craft';
 const ROOT = path.resolve(__dirname, '..');
 
 // the launch film is validated and reviewed by the CI workflow instead (it is heavy: 960 frames of blur and gradients)
-for (const rel of ['templates/blank', 'examples/seekframe-feature-tour']) {
+for (const rel of ['templates/blank', 'examples/seekframe-feature-tour', 'examples/seekframe-kit-demo']) {
   test(`validate ${rel}`, { timeout: 240000 }, async () => {
     const r = await validate(path.join(ROOT, rel), { fast: true, color: false, log: () => {} });
     assert.deepEqual(r.fail, [], r.fail.join('\n'));
@@ -53,4 +54,11 @@ test('craft review: the blank template reports every measured category', { timeo
   const ids = r.versions.default.categories.map(c => c.check);
   for (const id of ['readability', 'occupancy', 'hierarchy', 'pacing', 'motion', 'entrance', 'transition', 'silence', 'loudness']) assert.ok(ids.includes(id as any), id);
   assert.ok(r.score >= 0 && r.score <= 100);
+});
+
+test('motion kit demo: sound and picture agree (no sync warnings) and the craft score is high', { timeout: 300000 }, async () => {
+  const film = { id: 'seekframe-kit-demo', root: 'examples', dir: path.join(ROOT, 'examples/seekframe-kit-demo') };
+  const sr = await sync(film, { version: 'default' }); assert.deepEqual(sr.versions.default.issues, [], 'kit films are in sync by construction');
+  const r = await craft(film, { out: path.join(os.tmpdir(), 'ci-craft-out'), version: 'default', log: () => {} });
+  assert.ok(r.score >= 85, 'craft score ' + r.score);
 });

@@ -1,6 +1,6 @@
 # Plan: make every Seekframe film look and sound professional, whatever LLM writes it
 
-Status: **Phase 1 built** (craft checks, score, fix list, CLI `critique`, MCP `critique_film`; see [CRAFT.md](CRAFT.md)). Phases 2 to 4 are plans. Owner: Seekframe core.
+Status: **Phase 1 built** (craft checks, score, fix list, CLI `critique`, MCP `critique_film`; see [CRAFT.md](CRAFT.md)). **Phase 2 built** (motion kit, `SF.ui`, `SF.canvas`, [MOTION.md](MOTION.md); table rows, QR scanner and text-on-curve components and a launch-film rebuild are still open). Phases 3 and 4 are plans. Owner: Seekframe core.
 
 ## 1. Why this plan
 A user generated an AI-chat product film with another LLM. The story and copy were right; the film was not

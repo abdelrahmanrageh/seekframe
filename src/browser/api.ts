@@ -1,5 +1,8 @@
 // The public API of the Seekframe runtime (window.SF). Film authors get these types through
 // dist/types/browser/film-globals.d.ts (referenced by `seekframe new` films with // @ts-check).
+import type { Timeline } from './kit';
+import type { UI, Canvas, CanvasOpts } from './components';
+import type { Tokens } from '../core/kit-math';
 import type { AudioTrack, Cue, LogoStrokes, Manifest, Param, ParamValue, Scene, SizeOption, Variants } from '../types';
 
 export type Ease = (t: number) => number;
@@ -16,6 +19,8 @@ export interface FilmSpec {
   audio?: AudioTrack[] | ((values: Record<string, ParamValue>) => AudioTrack[]);
   /** sound events on the same frames you animate on */
   cues?: (values: Record<string, ParamValue>) => Cue[];
+  /** after `build`: declare the animation once with the motion kit (`T.rise`, `T.type`, …); its sounds are added to the cues and `T.draw(f)` runs on every seek */
+  timeline?: (T: Timeline, values: Record<string, ParamValue>) => void;
   /** sound theme and loudness; may be a function of the current values (each variant can sound different) */
   soundtrack?: { theme?: string; loudness?: number } | ((values: Record<string, ParamValue>) => { theme?: string; loudness?: number });
   variants?: Variants; sizes?: SizeOption[];
@@ -24,7 +29,7 @@ export interface FilmSpec {
   /** (re)build the DOM for these param values */
   build(values: Record<string, ParamValue>): void;
   /** draw frame f (film fps units, may be fractional). MUST be a pure function of f. */
-  seek(f: number): void;
+  seek?(f: number): void;
 }
 
 export interface SFApi {
@@ -44,5 +49,8 @@ export interface SFApi {
   dash(path: SVGPathElement, v: number): void;
   strokeLogo(parent: Element | null, data: LogoStrokes, o?: { width?: number; colors?: Record<number, string> }): { svg: SVGSVGElement; paths: SVGPathElement[] };
   fontsReady(): Promise<void>; brandParams(opts?: Partial<Param>): Param[];
+  /** the motion + sound kit: see docs/MOTION.md */ timeline(o?: { fps?: number }): Timeline; motion: Tokens;
+  /** ready-made pieces (pill, card, chips, browser, phone, composer, counter, ticker, logo, blobs) */ ui: UI;
+  /** one canvas for every aspect ratio: a design size per aspect, scaled and centred */ canvas(parent: Element, o: CanvasOpts): Canvas;
   cues(): CueBuilder; define(spec: FilmSpec): Manifest; value<T extends ParamValue>(id: string, dflt: T): T;
 }
