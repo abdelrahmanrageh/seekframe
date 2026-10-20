@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- **ffmpeg is optional**: `ffmpeg-static` moved to `optionalDependencies` (still installed by default). `npm install --omit=optional` skips the download and uses your own ffmpeg; `SEEKFRAME_FFMPEG` points at a specific binary. `doctor` and the error messages say which one is used. README and SECURITY.md explain what is downloaded and why scanners flag it.
+
 ## 0.3.0
 **Upgrading from 0.2.x:** nothing breaks (films, saved versions and CLI flags are unchanged; everything new is optional). Existing workspaces keep 0.2.x until you run `npm install seekframe@latest` in them.
 

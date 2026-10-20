@@ -3,7 +3,7 @@
 ```bash
 npm create seekframe@latest my-films
 cd my-films && npx playwright install chromium
-npx seekframe doctor      # checks Node, Chromium and ffmpeg
+npx seekframe doctor      # checks Node, Chromium and ffmpeg (no ffmpeg? install it, or see README: "What gets installed")
 npx seekframe editor
 ```
 
