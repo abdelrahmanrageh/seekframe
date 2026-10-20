@@ -3,7 +3,7 @@
 Status: plan, nothing built yet. Owner: Seekframe core.
 
 ## 1. Why this plan
-A user generated the client AI-chat film with another LLM. The story and copy were right; the film was not
+A user generated an AI-chat product film with another LLM. The story and copy were right; the film was not
 professional. What the frames and the audio show (40 s, 1920x1080, 60 fps):
 
 | Problem | What we saw |
@@ -78,13 +78,13 @@ T.reveal(logo, 900, { style: 'iris' });        // mask reveal; cue: silence befo
 - **Components** built on the kit, used by the templates and by agents: blob background, pill, card, browser frame,
   phone frame, chat composer, table rows, counter, chip chain, ticker, text on a curve, QR scanner, logo reveal (dots,
   mask, strokes), camera (push, pan, focus on an element).
-- **Responsive canvas**: the 9:16 / 16:9 / 1:1 scaling we built for the client film (UI on one canvas, headlines move
+- **Responsive canvas**: the 9:16 / 16:9 / 1:1 scaling we built for that film (UI on one canvas, headlines move
   to a column) becomes a runtime helper, so every film gets all sizes.
 
 ### Pillar C. References that carry timing, not just pictures
 - **Gallery with craft notes**: for each example film, a beat sheet (scene, frame, what moves, which cue), a contact
-  sheet, the sound map and the score from Pillar A. Start with `seekframe-launch` and a generic version of the client
-  platform film (no client content).
+  sheet, the sound map and the score from Pillar A. Start with `seekframe-launch` and a generic AI-chat product film
+  (no client or platform content).
 - **Before/after pairs**: the user's film above next to a fixed version, with the fix list that got there.
 - **`docs/MOTION.md`**: the pattern library (entrances, morphs, camera moves, transitions, counters, typing, reveals)
   with short GIFs and the kit call for each.
@@ -112,7 +112,7 @@ so a human can see why a film is weak and fix it by hand.
 
 | Phase | Scope | Done when |
 |---|---|---|
-| 1. Measure | Pillar A: craft checks, score, fix list, MCP `critique`, editor Quality panel (read-only) | The user's film scores low with the problems in section 1 listed; our launch and client films score >= 85 |
+| 1. Measure | Pillar A: craft checks, score, fix list, MCP `critique`, editor Quality panel (read-only) | The user's film scores low with the problems in section 1 listed; our launch film and a generic AI-chat film score >= 85 |
 | 2. Kit | Pillar B: `SF.timeline`, motion tokens, sound mapping, 10 components, responsive canvas | The launch film rebuilt on the kit has the same look in less code and passes sync with zero warnings |
 | 3. References | Pillar C: craft notes, before/after, MOTION.md, 4 templates, `analyze` | Each template scores >= 85 out of the box |
 | 4. Instructions and loop | Pillar D and E: craft contract, prompt library, `make` loop | Benchmark (below) passes |
@@ -142,7 +142,7 @@ references, then instructions). Points to settle before building, and the risks 
 - **Measure from the DOM first, pixels second.** Films are HTML, so readability, occupancy, hierarchy and safe-area
   checks can read element boxes and computed styles exactly. Segmenting "content vs background" from pixels is
   fragile. Use pixels only for motion presence and background dominance, and audio only for the sound checks.
-- **Calibrate thresholds on more than one film.** Today they come from one failure (the client film, n = 1).
+- **Calibrate thresholds on more than one film.** Today they come from one failure (one real-world failure, n = 1).
   Before Phase 1 is "done", run the checks on every gallery film plus 5 to 10 deliberately different styles (minimal
   typographic, 9:16, 1:1, long-form, no-sound) and tune so good films pass without opt-outs.
 - **Sync check is partly circular.** For kit films cues come from the same timeline, so "sync" passes by construction.
@@ -160,7 +160,7 @@ references, then instructions). Points to settle before building, and the risks 
 | **Scope and sequencing** | Four phases, about 10 components, `analyze`, `make` and an editor panel is a lot; Phase 2 and 3 are the big spend | Ship Phase 1 alone (it is useful even if nothing else lands); cut components to what the templates need; defer `analyze` and `make` until Phases 1 to 3 prove out |
 | **Benchmark is weak as written** | 3 briefs x 4 agents, 12 films and one blind rating is noisy; model versions drift; Gemini and open models add cost and setup | Fix model versions and seeds in the report; at least 3 raters; compare against the same briefs run with the old instructions; accept "no regression and a clear gain" rather than a precise number |
 | **Reference analysis and copyright** | `analyze reference.mp4` implies third-party videos | Keep only the numbers it writes; follow the existing rule: never commit third-party videos or stills, only the written analysis |
-| **Client content in a public repo** | The plan names the client film and a "generic version" for the gallery | Confirm the client is fine with being named; strip names from this document if not; no client copy, logos or footage in `examples/` |
+| **Client or platform names in a public repo** | Examples or docs could carry a client's name, copy, logos or footage | Never name a client or platform in docs, examples, tests or commit messages; gallery films are generic; no client copy, logos or footage in `examples/` |
 | **Render cost in CI** | `review --craft` needs rendered frames and audio; the launch film already timed out in unit tests on CI | Sample frames (as planned), reuse the review render, run craft checks in the workflow like launch validation, not in unit tests |
 | **Fix hints that mislead** | A wrong hint sends the agent in circles ("make it 24 px" when the fix is to crop) | Hints state the measurement and the target, not only the remedy; test hints on the fixture films |
 
