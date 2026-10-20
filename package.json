@@ -1,6 +1,6 @@
 {
   "name": "seekframe",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Brand films as code. Your LLM writes the film, you edit it in the browser, it renders to MP4.",
   "keywords": [
     "video",
