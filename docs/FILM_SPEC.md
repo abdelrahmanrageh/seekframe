@@ -59,6 +59,7 @@ Machine-readable schema: [`src/core/film.schema.json`](../src/core/film.schema.j
 {
   schema: 1, title: 'Spring sale', width: 1920, height: 1080, fps: 30, duration: 600,   // duration in frames
   scenes:  [{ id: 'intro', name: 'Intro', start: 0, end: 120 }, ...],  // contiguous; start inclusive, end exclusive
+                                                                          // optional per scene: allow: ['motion: reason'] (craft opt-out, see CRAFT.md)
   params:  [...],                                                      // §5
   audio:   [...],                                                      // §6
   cues:    [...],                                                      // §7  events for the generated score

@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- **Craft review**: `seekframe critique <film>` (also `review --craft`, MCP `critique_film`) scores how good a film is, not just whether it is correct: readability, occupancy, hierarchy, pacing, motion, entrances, transitions, sound coverage, sync and loudness, with a ranked fix list. Opt-outs need a reason and cost points. See docs/CRAFT.md.
+
 ## 0.2.0
 - **TypeScript**: sources in `src/`, built with esbuild, type-checked with `tsc`; tests compile from TypeScript.
 - **Workspace mode**: `seekframe init`, `doctor`, `copy`; films find the runtime in the package; `create-seekframe` bootstrapper (`npm create seekframe@latest`).

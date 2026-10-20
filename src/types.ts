@@ -13,7 +13,9 @@ export interface Param {
   min?: number; max?: number; step?: number; unit?: string;      // number
   options?: Array<string | { value: string; label?: string }>;   // select
 }
-export interface Scene { id: string; name: string; start: number; end: number }
+export interface Scene { id: string; name: string; start: number; end: number;
+  /** craft-check opt-outs, each "check: reason" (e.g. "motion: logo end card holds"); every one costs score points */
+  allow?: string[] }
 export interface AudioTrack { id: string; label: string; src?: string; generated?: 'cues'; sync?: 'timeline' | 'free'; group?: string; default?: boolean; volume?: number }
 export interface Cue { kind: string; f: number; to?: number; [option: string]: unknown }
 export interface VariantPreset { id: string; label?: string; params: Record<string, ParamValue> }

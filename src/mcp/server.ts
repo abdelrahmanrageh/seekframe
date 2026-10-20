@@ -4,6 +4,7 @@ import pkg from '../../package.json';
 import { scaffoldFilm } from '../core/scaffold';
 import { validate } from '../core/validate';
 import { review } from '../core/review';
+import { craft } from '../core/craft';
 import { sync } from '../sound/sync';
 import os from 'node:os';
 import fs from 'node:fs';
@@ -65,6 +66,12 @@ function build() {
       const content: any[] = [{ type: 'text', text: JSON.stringify({ failures: r.fail, warnings: r.warn, versions: Object.fromEntries(Object.entries(r.report.versions).map(([v, x]) => [v, { issues: x.issues, maxFlashesPerSecond: x.maxFlashesPerSecond }])) }, null, 2) }];
       for (const v of Object.values(r.report.versions)) if (v.sheet) { const f = path.join(out, path.basename(v.sheet)); if (fs.existsSync(f)) content.push(image(f, 'image/jpeg')); }
       return { content };
+    }));
+
+  s.tool('critique_film', 'Measure how GOOD the film is, not just whether it is correct: text size, how much of the frame the content fills, one dominant element per scene, motion and entrances, transitions, pacing, sound coverage, sync and loudness. Returns a 0-100 score and a ranked fix list in plain words. Fix the list from the top, run it again, and repeat until the score passes (80 or more). Takes about a minute.',
+    { film: z.string(), version: z.string().optional(), sound: z.boolean().optional().describe('false skips the sound checks') }, wrap(async ({ film: id, version, sound }) => {
+      const lines: string[] = []; const r = await craft(film(id), { version, sound: sound !== false, out: path.join(os.tmpdir(), 'seekframe-craft-' + Date.now()), log: m => lines.push(m) });
+      return text({ score: r.score, passes: r.score >= 80, versions: Object.fromEntries(Object.entries(r.versions).map(([v, x]) => [v, { score: x.score, categories: x.categories, fixes: x.fixes.map(f => f.message), opt_outs: x.allowances, notMeasured: x.notMeasured, problems: x.problems }])), next: r.score >= 80 ? 'Passing. Still run review_film and look at the contact sheets.' : 'Work through `fixes` from the top, then call critique_film again.' });
     }));
 
   s.tool('render_stills', 'Render specific frames (edited timeline, at the film fps) as images to inspect them.',

@@ -1,6 +1,6 @@
 # Plan: make every Seekframe film look and sound professional, whatever LLM writes it
 
-Status: plan, nothing built yet. Owner: Seekframe core.
+Status: **Phase 1 built** (craft checks, score, fix list, CLI `critique`, MCP `critique_film`; see [CRAFT.md](CRAFT.md)). Phases 2 to 4 are plans. Owner: Seekframe core.
 
 ## 1. Why this plan
 A user generated an AI-chat product film with another LLM. The story and copy were right; the film was not

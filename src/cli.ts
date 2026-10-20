@@ -16,7 +16,8 @@ const HELP = `Seekframe — brand films as code.
   seekframe import <file.tgz> [name] [--force]        unpack a shared film into films/ to keep editing and export it
   seekframe validate <film> [--fast] [--no-flash] [--stills dir]
                                                       contract + determinism + params + accessibility checks
-  seekframe review <film> [--version v | --all] [--out dir]
+  seekframe review <film> [--version v | --all] [--out dir] [--craft [--min-score N] [--no-sound]]
+  seekframe critique <film> [--version v] [--min-score N] [--no-sound]   craft score + fix list only (what review --craft adds)
                                                       stills, contact sheets, text-overflow and contrast report
   seekframe render <film> [--version v] [--params k=v,...] [--fps 60] [--size WxH] [--out file.mp4]
   seekframe matrix <film[,film2]> [--axes hook=*,theme=a|b] [--versions] [--fps 30] [--size WxH]
@@ -61,7 +62,10 @@ export async function main(argv: string[]): Promise<void> {
       const r = await validate(f.dir, { fast: !!a.fast, stills: a.stills as string, flash: !a['no-flash'] });
       process.exit(r.fail.length ? 1 : 0);
     }
-    case 'review': { const f = need(a); const { review } = await import('./core/review'); const r = await review(f, { version: a.version as string, all: !!a.all, out: a.out as string, log: console.log }); process.exit(r.fail ? 1 : 0); }
+    case 'review': { const f = need(a); const { review } = await import('./core/review'); const r = await review(f, { version: a.version as string, all: !!a.all, out: a.out as string, log: console.log }); let bad = r.fail > 0;
+      if (a.craft) { const { craft } = await import('./core/craft'); const c = await craft(f, { version: a.version as string, out: a.out as string, sound: !a['no-sound'], log: console.log }); if (a['min-score'] != null && c.score < Number(a['min-score'])) { console.error(`Craft score ${c.score} is below --min-score ${a['min-score']}`); bad = true; } }
+      process.exit(bad ? 1 : 0); }
+    case 'critique': { const f = need(a); const { craft } = await import('./core/craft'); const c = await craft(f, { version: a.version as string, out: a.out as string, sound: !a['no-sound'], log: console.log }); if (a['min-score'] != null && c.score < Number(a['min-score'])) { console.error(`Craft score ${c.score} is below --min-score ${a['min-score']}`); process.exit(1); } return; }
     case 'render': { const { renderCmd } = await import('./core/matrix'); return renderCmd(need(a), a); }
     case 'matrix': { const { matrixCmd } = await import('./core/matrix'); return matrixCmd(a); }
     case 'sound': { const { soundCmd } = await import('./sound/score'); return soundCmd(need(a), a); }

@@ -7,7 +7,7 @@ You are probably here to build or change a film. Follow this file; it works for 
 1. **Read `docs/FILM_SPEC.md` completely** (MCP: `read_docs`). It is the contract. Then skim `templates/blank/film.js` and `docs/RUNTIME.md`.
 2. Scaffold: `seekframe new <name> --width W --height H` (MCP: `create_film`). Brand kit in `brand/` is copied in. (In a clone run `npm link` once to get the `seekframe` command, or use `node bin/seekframe.js …`.)
 3. Write `films/<name>/film.js` with `SF.define({...})`: scenes, **params for everything a person might change**, **cues for sound**, `build`, `seek`.
-4. Loop until clean: `seekframe validate <name>` → `seekframe review <name>` → **open and look at the contact-sheet images** → `seekframe sync <name>`.
+4. Loop until clean: `seekframe validate <name>` → `seekframe review <name>` → **open and look at the contact-sheet images** → `seekframe sync <name>` → `seekframe critique <name>` (MCP `critique_film`): fix its list from the top until the score is 80 or more ([docs/CRAFT.md](docs/CRAFT.md)).
 5. Variants: presets + saved versions (`set_params`), `seekframe matrix <name> --versions`. Export: `seekframe render <name> --fps 60`.
 
 ## Hard rules
@@ -20,7 +20,7 @@ You are probably here to build or change a film. Follow this file; it works for 
 - Don't hand-edit `films/*/projects/*.json` (use the editor or `set_params`); don't overwrite files in `output/` you didn't create.
 
 ## Commands (CLI `seekframe`; same as MCP tools)
-`editor` · `list` · `new` · `validate` · `review` · `render` · `matrix` · `sound` · `sync` · `brand init|palette|import-logo|add-font|build` · `mcp`.
+`editor` · `list` · `new` · `validate` · `review` · `critique` · `render` · `matrix` · `sound` · `sync` · `brand init|palette|import-logo|add-font|build` · `mcp`.
 Setup once: `npm install && npx playwright install chromium`. Tests: `npm test`.
 
 ## Layout
