@@ -28,9 +28,9 @@ export function pack(filmDir: string, id: string, out?: string): string {
     for (const f of fs.readdirSync(dst)) if (/\.(html|js)$/.test(f)) { const p = path.join(dst, f); fs.writeFileSync(p, canonical(fs.readFileSync(p, 'utf8'))); }
     const version = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, 'package.json'), 'utf8')).version;
     fs.writeFileSync(path.join(dst, 'SHARED.md'), `# ${id}\n\nA Seekframe film (made with Seekframe ${version}). To open it:\n\n` +
-      '```bash\ngit clone https://github.com/abdelrahmanrageh/seekframe && cd seekframe\nnpm install && npx playwright install chromium\n' +
-      `node bin/seekframe.js import /path/to/${id}.seekframe.tgz\nnpm run editor\n\`\`\`\n\nThen pick "${id}" in the editor, change what you like, and export from the Export tab ` +
-      `(or \`node bin/seekframe.js render ${id} --fps 30\`). Saved versions are in projects/, uploaded images in uploads/.\n`);
+      '```bash\nnpm create seekframe@latest my-films\ncd my-films\n' +
+      `npx seekframe import /path/to/${id}.seekframe.tgz\nnpx seekframe editor\n\`\`\`\n\nThen pick "${id}" in the editor, change what you like, and export from the Export tab ` +
+      `(or \`npx seekframe render ${id} --fps 30\`). Saved versions are in projects/, uploaded images in uploads/.\n`);
     const file = path.resolve(out || path.join(ROOT, 'output', `${id}.seekframe.tgz`));
     fs.mkdirSync(path.dirname(file), { recursive: true });
     tar(['-czf', file, '-C', stage, id]);
