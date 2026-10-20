@@ -52,6 +52,23 @@ export function initExport(): void {
     try { await api.render({ film: S.filmId, name: S.version, project: stripped(), fps: +$<HTMLSelectElement>('#fps').value, size: S.project.output.size || null }); known.clear(); void refresh(); }
     catch (e: any) { toast(e.message, 'err'); }
   });
+  const pack = $<HTMLAnchorElement>('#packBtn'), fileIn = $<HTMLInputElement>('#importFile');
+  bus.on('project', () => { pack.href = api.packUrl(S.filmId); pack.download = `${S.filmId}.seekframe.tgz`; });
+  pack.addEventListener('click', () => { pause(); void saveNow(); });      // autosave first, so the file has the latest edits
+  $('#importBtn').addEventListener('click', () => fileIn.click());
+  fileIn.addEventListener('change', async () => {
+    const f = fileIn.files?.[0]; fileIn.value = ''; if (!f) return;
+    let name: string | undefined, force = false;
+    for (;;) {
+      try { const r = await api.importProject(f, { name, force }); toast(t('export.imported', { id: r.id }), 'ok'); location.search = `?film=${r.id}`; return; }
+      catch (e: any) {
+        const m = /films\/([\w-]+) already exists/.exec(e.message);
+        if (!m) { toast(e.message, 'err'); return; }
+        const ans = window.prompt(t('export.exists', { id: m[1] }), m[1]); if (ans === null) return;
+        name = ans.trim() || m[1]; force = name === m[1];
+      }
+    }
+  });
   void refresh();
 }
 export { Timeline };
