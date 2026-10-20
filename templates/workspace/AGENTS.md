@@ -7,7 +7,7 @@ You are probably here to build or change a film. Follow this file; it works for 
 1. **Read `{{DOCS}}/FILM_SPEC.md` completely** (MCP: `read_docs`). It is the contract. Then skim `{{PKG}}/templates/blank/film.js` and `{{DOCS}}/RUNTIME.md`.
 2. Scaffold: `seekframe new <name> --width W --height H` (MCP: `create_film`). Brand kit in `brand/` is copied in. (Run it as `npx seekframe …` in this folder.)
 3. Write `films/<name>/film.js` with `SF.define({...})`: scenes, **params for everything a person might change**, **cues for sound**, `build`, `seek`.
-4. Loop until clean: `seekframe validate <name>` → `seekframe review <name>` → **open and look at the contact-sheet images** → `seekframe sync <name>`.
+4. Loop until clean: `seekframe validate <name>` → `seekframe review <name>` → **open and look at the contact-sheet images** → `seekframe sync <name>` → `seekframe critique <name>`: fix its list from the top until the score is 80 or more.
 5. Variants: presets + saved versions (`set_params`), `seekframe matrix <name> --versions`. Export: `seekframe render <name> --fps 60`.
 
 ## Hard rules

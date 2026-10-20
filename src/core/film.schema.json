@@ -69,6 +69,11 @@
             "type": "integer",
             "minimum": 1,
             "description": "Exclusive."
+          },
+          "allow": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Craft-check opt-outs, each 'check: reason'. Each one costs score points."
           }
         }
       }

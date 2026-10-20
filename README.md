@@ -34,6 +34,7 @@ seekframe new spring-sale --width 1920 --height 1080
    … the agent writes films/spring-sale/film.js (scenes, params, cues) …
 seekframe validate spring-sale                    contract · determinism · every param changes the picture · cues · flashing
 seekframe review spring-sale                      contact sheets · overflow · contrast · flashing, for every saved version
+seekframe critique spring-sale                    craft score and a ranked fix list (text size, framing, motion, cuts, sound)
 seekframe sync spring-sale                        sound cues vs what happens on screen
 seekframe matrix spring-sale --versions --fps 30  render every variant
 ```

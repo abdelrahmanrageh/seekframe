@@ -26,7 +26,7 @@ Seekframe works with any coding agent that can read files and run shell commands
 In a workspace created by `seekframe init` use `npx seekframe mcp`; in a clone use the absolute path of `bin/seekframe.js` (`npm run mcp-path` prints it). The MCP server only touches this workspace (`films/`, `brand/`, `output/`).
 
 ## MCP tools
-`read_docs` · `list_films` · `get_film` · `create_film` · `validate_film` · `review_film` (returns contact-sheet images) · `render_stills` (images) ·
+`read_docs` · `list_films` · `get_film` · `create_film` · `validate_film` · `review_film` (returns contact-sheet images) · `critique_film` (craft score and fix list) · `render_stills` (images) ·
 `set_params` (save a version) · `render_film` · `check_sound_sync` · `generate_score` · `brand_palette` · `brand_import_logo`.
 
 ## Prompt library (`llm/prompts/`)

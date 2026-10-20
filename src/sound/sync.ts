@@ -31,7 +31,7 @@ async function sync(film: FilmRef, o: { version?: string; log?: (line: string) =
   ensureBrands();
   const log = o.log || (() => {}), pd = path.join(film.dir, 'projects');
   const versions = o.version ? [o.version] : (fs.existsSync(pd) && fs.readdirSync(pd).some(f => f.endsWith('.json')) ? fs.readdirSync(pd).filter(f => f.endsWith('.json')).map(f => f.slice(0, -5)) : ['default']);
-  const browser = await chromium.launch({ args: ['--force-color-profile=srgb', '--font-render-hinting=none'] }); let fail = 0, warn = 0;
+  const browser = await chromium.launch({ args: ['--force-color-profile=srgb', '--font-render-hinting=none'] }); let fail = 0, warn = 0; const found: Record<string, { cues: number; events: number; issues: string[] }> = {};
   log(`Checking sound ↔ picture for ${film.id} (${versions.length} version${versions.length > 1 ? 's' : ''})`);
   for (const v of versions) {
     const pf = path.join(pd, v + '.json'), project = fs.existsSync(pf) ? JSON.parse(fs.readFileSync(pf, 'utf8')) : {};
@@ -61,13 +61,13 @@ async function sync(film: FilmRef, o: { version?: string; log?: (line: string) =
     const times = cues.filter(c => HIT.has(c.kind) || c.kind === 'silence').map(c => c.f), events: number[] = [];
     for (let k = 1; k < series.length - 1; k++) if (series[k] > .18 && series[k] >= series[k - 1] && series[k] >= series[k + 1]) events.push(k * step);
     for (const f of events) if (!times.some(t => Math.abs(t - f) <= 6) && !cues.some(c => Math.abs(c.f - f) <= 6)) issues.push(`picture without sound: big change at frame ${f} (${(f / manifest.fps).toFixed(2)} s) has no cue within ±6 frames`);
-    const uniq = [...new Set(issues)];
+    const uniq = [...new Set(issues)]; found[v] = { cues: cues.length, events: events.length, issues: uniq };
     for (const i of uniq) { warn++; log(`  \x1b[33m!\x1b[0m [${v}] ${i}`); }
     const loud = Number.isFinite(lufs) && Math.abs(lufs + 16) > 1.5 ? ` (loudness ${lufs} LUFS)` : '';
     log(`  ${uniq.length ? '' : '\x1b[32m✔\x1b[0m '}[${v}] ${cues.length} cues, ${events.length} big picture events, ${uniq.length} mismatch(es)${loud}`);
   }
   await browser.close();
   log(`\n${fail ? '\x1b[31mFAILED\x1b[0m' : '\x1b[32mdone\x1b[0m'} — ${fail} failure(s), ${warn} warning(s)`);
-  return { fail, warn };
+  return { fail, warn, versions: found };
 }
 export { sync };
