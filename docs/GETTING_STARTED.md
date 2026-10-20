@@ -20,4 +20,7 @@ This creates a workspace (films/, brand/, agent files) that uses the `seekframe`
    Then ask your agent (see [LLM.md](LLM.md)): *"Read docs/FILM_SPEC.md and build films/spring-sale as a 20 s product reveal for Acme using the brand kit; expose all text and colours as params; run validate and review and fix everything."*
 4. **Check and export**: `seekframe validate spring-sale` · `seekframe review spring-sale` · `seekframe render spring-sale --fps 60`.
 
+**Share a film:** `seekframe pack <film>` writes `output/<film>.seekframe.tgz` (the film, its brand kit and fonts, saved versions and uploads).
+The other person runs `seekframe import <file>` and opens it in the editor to keep editing and export it.
+
 Folders: `films/` (yours) · `examples/` (gallery) · `templates/blank` · `brand/` (your kit) · `output/` (renders, git-ignored).

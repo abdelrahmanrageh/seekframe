@@ -46,6 +46,7 @@ seekframe matrix spring-sale --versions --fps 30  render every variant
 | `validate`, `review`, `sync` | the checks above |
 | `render`, `matrix` | export MP4 (24/30/60 fps), one version or a whole matrix; audio re-timed to your edit |
 | `sound` | render a film's generated score to wav |
+| `pack`, `import` | share a film as one `.seekframe.tgz` (brand, versions, uploads) and open someone else's |
 | `brand` | `init` · `palette` · `import-logo` · `add-font` · `build` |
 | `mcp` | MCP server (13 tools) |
 

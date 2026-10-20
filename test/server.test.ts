@@ -40,3 +40,16 @@ test('palette roles: paper is light, ink is dark, muted is readable on paper', (
   assert.ok(P.contrast(P.unhex(r.muted), P.unhex(r.paper)) >= 4.5, 'muted text is readable');
   assert.notEqual(r.muted, r.paper);
 });
+
+test('share: pack a film and import it under a new name', async () => {
+  const { pack, importPack } = await import('../src/core/share');
+  const os = await import('node:os'), fs = await import('node:fs'), path = await import('node:path');
+  const { ROOT } = await import('../src/core/workspace');
+  const out = path.join(os.tmpdir(), `sf-share-${process.pid}.seekframe.tgz`);
+  const file = pack(path.join(ROOT, 'templates/blank'), 'share-test', out);
+  try {
+    const r = importPack(file, 'share-test-copy');
+    try { assert.ok(fs.existsSync(path.join(r.dir, 'film.html'))); assert.ok(!fs.existsSync(path.join(r.dir, 'SHARED.md'))); assert.throws(() => importPack(file, 'share-test-copy')); }
+    finally { fs.rmSync(r.dir, { recursive: true, force: true }); }
+  } finally { fs.rmSync(file, { force: true }); }
+});
