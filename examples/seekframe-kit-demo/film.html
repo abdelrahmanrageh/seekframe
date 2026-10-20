@@ -2,25 +2,46 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Seekframe motion kit demo</title>
+<title>Lumen: motion kit demo</title>
 <link rel="stylesheet" href="brand/brand.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg)}
-:root{ --bg:var(--brand-ink); --fg:#fff; --acc:var(--brand-accent); --accInk:var(--brand-ink); --u:1px; --title-size:190; }
+:root{ --bg:var(--brand-paper); --fg:var(--brand-ink); --acc:var(--brand-accent); --accInk:var(--brand-ink); --mut:var(--brand-muted); --u:1px; }
 body{font-family:var(--font-display);color:var(--fg);-webkit-font-smoothing:antialiased}
 #stage{position:absolute;inset:0;overflow:hidden}
 .sc{position:absolute;inset:0;display:none}
-.col{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:72px;text-align:center}
-h1{font-size:calc(var(--title-size)*1px);line-height:1.02;letter-spacing:-.04em;font-weight:800}
-h2{font-size:64px;font-weight:600;opacity:.85}
-.w{display:inline-block}.hl{border-radius:.16em;padding:0 .12em}
-.big2{font-size:104px;font-weight:800;letter-spacing:-.03em;line-height:1.05}
-.row{display:flex;gap:56px;align-items:center;justify-content:center;flex-wrap:wrap}
-body .sf-pill{font-size:52px}body .sf-card{width:900px;text-align:start}body .sf-card h3{font-size:64px}body .sf-card p{font-size:44px}
-body .sf-composer .in{font-size:60px;min-height:240px}body .sf-send{width:110px;height:110px;font-size:60px}
-body .sf-counter .v{font-size:240px}body .sf-counter .l{font-size:48px}
-body .sf-logo .word{font-size:260px}body .sf-logo .tag{font-size:44px}body .sf-bar{font-size:30px}
+.col{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:56px;text-align:center}
+.lbl{font-size:44px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.huge{font-size:430px;font-weight:800;letter-spacing:-.06em;line-height:.9;font-variant-numeric:tabular-nums}
+.huge small{font-size:.32em;letter-spacing:-.02em;margin-inline-start:.08em}
+.line{font-size:88px;font-weight:800;letter-spacing:-.04em;line-height:1.02}
+.line em{font-style:normal;background:var(--acc);border-radius:.14em;padding:0 .14em}
+.split{display:flex;align-items:center;justify-content:center;gap:120px;width:100%;padding:0 120px}
+.split .txt{text-align:start;display:flex;flex-direction:column;gap:32px;max-width:900px}
+.split .txt .line{font-size:150px}
+.split .txt p{font-size:56px;font-weight:500;line-height:1.2;color:color-mix(in srgb,var(--fg) 75%,transparent)}
+.msgs{display:flex;flex-direction:column;gap:26px;padding:34px 30px;height:100%}
+.hd{display:flex;align-items:center;gap:16px;font-size:34px;font-weight:700;padding:30px 34px;border-bottom:2px solid color-mix(in srgb,var(--fg) 10%,transparent)}
+.hd i{width:18px;height:18px;border-radius:50%;background:#2fbf71}
+.bub{max-width:82%;padding:22px 30px;border-radius:36px;font-size:36px;line-height:1.25;font-weight:500;text-align:start}
+.me{align-self:flex-end;background:var(--acc);color:var(--accInk);border-end-end-radius:10px}
+.ai{align-self:flex-start;background:color-mix(in srgb,var(--fg) 9%,transparent);border-end-start-radius:10px}
+.dots{align-self:flex-start;letter-spacing:.2em}
+.phone-wrap{position:relative;flex:none}
+.cardrow{display:flex;gap:48px;align-items:stretch;justify-content:center}
+.stat{width:520px;padding:56px 44px;border-radius:44px;background:color-mix(in srgb,var(--fg) 7%,transparent);display:flex;flex-direction:column;gap:12px;text-align:start}
+.stat .v{font-size:210px;font-weight:800;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+.stat .l{font-size:48px;font-weight:600;color:color-mix(in srgb,var(--fg) 72%,transparent)}
+body .sf-phone{border-color:var(--fg);background:var(--bg);border-radius:84px}
+body .sf-phone .sf-screen{border-radius:60px;background:var(--bg)}
+body .sf-composer{margin:0 24px 24px;padding:20px 22px;gap:16px;align-items:center;background:color-mix(in srgb,var(--fg) 7%,transparent);border-color:transparent}
+body .sf-composer .in{text-align:start;font-size:34px;min-height:0;padding:8px 6px;line-height:1.25}
+body .sf-send{width:84px;height:84px;font-size:46px}
+body .sf-pill{font-size:44px}
+body .sf-logo .word{font-size:420px}body .sf-logo .tag{font-size:56px;letter-spacing:.02em;text-transform:none;opacity:1;font-weight:600}
+.panel{position:absolute;inset:0;background:var(--acc)}
+.shape{position:absolute;border-radius:50%}
 </style>
 </head>
 <body>

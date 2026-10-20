@@ -17,6 +17,8 @@ export const DEFAULTS = {
   silenceMax: 1.5,           // seconds without sound
   cuesPerSecond: 1,
   loudnessTolerance: 1.5,    // LU around the film's loudness target
+  bedGapDb: 10,              // the loudest moments stand >= 10 dB above the quietest tenth (else a constant bed or hiss dominates)
+  burstsPerSecond: 16,       // noise-type cues (swipes, ticks, keys…) in any one second
   truePeakMax: -.5,          // dBTP; the mastering ceiling is -1 and the limiter overshoots by up to ~0.5
 };
 export type Thresholds = typeof DEFAULTS;
@@ -152,7 +154,8 @@ export function checkTransitions(series: PictureSeries, scenes: SceneProbe[], T:
 }
 
 /* ----- sound ----- */
-export interface SoundStats { seconds: number; silences: Array<[number, number]>; lufs: number; truePeak: number; target: number; cueCount: number; pauses: Array<[number, number]>; hasCues: boolean }
+export interface SoundStats { seconds: number; silences: Array<[number, number]>; lufs: number; truePeak: number; target: number; cueCount: number; pauses: Array<[number, number]>; hasCues: boolean;
+  /** 100 ms RMS of the mix in dB (-120 = silence) */ rmsDb?: number[]; /** most noise-type cues in any one second, and where */ burst?: { n: number; at: number } }
 export function checkSilence(a: SoundStats, scenes: SceneProbe[], fps: number, T: Thresholds = DEFAULTS): CheckResult {
   const r: CheckResult = { check: 'silence', units: Math.max(1, Math.round(a.seconds / T.silenceMax)), bad: 0, findings: [] };
   if (!a.hasCues) { r.bad = r.units; r.findings.push({ check: 'silence', message: 'The film declares no sound cues; add cues on the frames you animate on (SF.cues()).' }); return r; }
@@ -165,11 +168,16 @@ export function checkSilence(a: SoundStats, scenes: SceneProbe[], fps: number, T
   return r;
 }
 export function checkLoudness(a: SoundStats, T: Thresholds = DEFAULTS): CheckResult {
-  const r: CheckResult = { check: 'loudness', units: 2, bad: 0, findings: [] };
-  if (!Number.isFinite(a.lufs)) { r.bad = 2; r.findings.push({ check: 'loudness', message: 'The mix is silent or could not be measured.' }); return r; }
+  const r: CheckResult = { check: 'loudness', units: 2 + (a.rmsDb ? 1 : 0) + (a.burst ? 1 : 0), bad: 0, findings: [] };
+  if (!Number.isFinite(a.lufs)) { r.bad = r.units; r.findings.push({ check: 'loudness', message: 'The mix is silent or could not be measured.' }); return r; }
   const d = a.lufs - a.target;
   if (Math.abs(d) > T.loudnessTolerance) { r.bad++; r.findings.push({ check: 'loudness', message: `Mix is ${a.lufs.toFixed(1)} LUFS, ${Math.abs(d).toFixed(1)} LU ${d < 0 ? 'under' : 'over'} the ${a.target} LUFS target; ${d < 0 ? 'the score is too sparse or peaky to reach it: add sustained beds and lift quiet cues' : 'lower the loudest hits'}.` }); }
   if (a.truePeak > T.truePeakMax) { r.bad++; r.findings.push({ check: 'loudness', message: `True peak is ${a.truePeak.toFixed(1)} dBTP; keep it under -1 dBTP (the limiter should leave headroom).` }); }
+  if (a.rmsDb && a.rmsDb.length > 20) {
+    const live = a.rmsDb.filter(x => x > -90).sort((p, q) => p - q), p10 = live[Math.floor(live.length * .1)], p90 = live[Math.floor(live.length * .9)];
+    if (live.length > 20 && p90 - p10 < T.bedGapDb) { r.bad++; r.findings.push({ check: 'loudness', message: `A constant sound sits only ${(p90 - p10).toFixed(1)} dB under the loudest moments (aim for ${T.bedGapDb} dB or more): a noise bed or hiss is dominating. Remove the bed, or lower its gain a lot; events should stand out of near-silence.` }); }
+  }
+  if (a.burst && a.burst.n > T.burstsPerSecond) { r.bad++; r.findings.push({ check: 'loudness', at: a.burst.at, message: `${a.burst.n} short noisy sounds (swipes, ticks, keys) inside one second at ${fmt(a.burst.at)}; that is a machine-gun, not a rhythm. Thin them out: one swipe per group, slower typing, fewer ticks.` }); }
   return r;
 }
 

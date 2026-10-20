@@ -30,13 +30,17 @@ export const css = (base: string, p: Pose): { transform: string; opacity: string
 });
 
 /* ---------- where each primitive's sounds land (frames, film fps) ---------- */
-/** a keystroke per grapheme at the frame it appears; spaces use the heavier key. Matches `typed()`: grapheme i shows once progress * n >= i + 1. */
-export function keyFrames(text: string[], a: number, b: number): Array<{ f: number; space: boolean }> {
-  const n = text.length; return text.map((ch, i) => ({ f: Math.ceil(a + (b - a) * (i + 1) / n), space: /^\s+$/.test(ch) }));
+const hash = (n: number) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+/** a keystroke per grapheme at the frame it appears (+/- 1 frame of human jitter); spaces use the heavier key.
+    Matches `typed()`: grapheme i shows once progress * n >= i + 1. Typing faster than ~11 keys a second is thinned, because a machine-gun of clicks is noise, not typing. */
+export function keyFrames(text: string[], a: number, b: number, fps = 30): Array<{ f: number; space: boolean }> {
+  const n = text.length, rate = n / Math.max(.1, (b - a) / fps), stride = Math.max(1, Math.ceil(rate / 11)), out: Array<{ f: number; space: boolean }> = [];
+  text.forEach((ch, i) => { if (stride > 1 && i % stride !== stride - 1 && i !== n - 1) return; const f = Math.ceil(a + (b - a) * (i + 1) / n); out.push({ f: Math.min(b, Math.max(a, f + Math.round((hash(i) - .5) * 2))), space: /^\s+$/.test(ch) }); });
+  return out;
 }
-/** a counter's ticks bunch up at the start and slow towards the end, like the number itself (eased) */
+/** a counter's ticks are close together at the start and slow towards the end, like an eased number roll */
 export function tickFrames(a: number, b: number, n: number): number[] {
-  const out: number[] = []; for (let k = 0; k < n; k++) out.push(Math.round(a + (b - a) * (1 - Math.pow(1 - (k + .5) / n, 1 / 2.2)))); return [...new Set(out)];
+  const out: number[] = []; for (let k = 0; k < n; k++) out.push(Math.round(a + (b - a) * Math.pow((k + .5) / n, 1.35))); return [...new Set(out)];
 }
 /** pan -1..1 from a horizontal position, softened so a sound at the edge is still in the mix */
 export const panOf = (cx: number, W: number, width = .7) => (W > 0 ? clamp((cx / W - .5) * 2 * width, -1, 1) : 0);

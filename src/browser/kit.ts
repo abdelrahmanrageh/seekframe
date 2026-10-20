@@ -55,14 +55,15 @@ function rectOf(el: HTMLElement): DOMRect {
 
 export function createTimeline(ctx: KitContext): Timeline {
   const tk = tokens(ctx.fps), cues: Cue[] = [], fx: Array<(f: number) => void> = [];
-  const state = new Map<HTMLElement, { base: string; acts: Array<{ a: number; b: number; fn: (p: number, f: number) => Pose }> }>();
+  type Slot = 'enter' | 'exit' | 'fx';   // a later entrance replaces an earlier one (and cancels an earlier exit); fx (move, press) accumulate
+  const state = new Map<HTMLElement, { base: string; acts: Array<{ a: number; b: number; slot: Slot; fn: (p: number, f: number) => Pose }> }>();
   const cams = new Map<HTMLElement, Array<{ a: number; b: number; to: { s: number; cx: number; cy: number } | null; ease: Ease }>>();
   const sign = ctx.rtl ? -1 : 1, unit = () => { const { W, H } = ctx.size(); return Math.min(W, H) / 1080; };
   const panAt = (el: HTMLElement) => { const r = rectOf(el), { W } = ctx.size(); return r.width ? panOf(r.left + r.width / 2, W) : 0; };
   const add = (kind: string, f: number, o: Record<string, unknown> = {}) => { cues.push({ kind, f: Math.max(0, Math.round(f)), ...o } as Cue); };
-  const act = (el: HTMLElement, a: number, b: number, fn: (p: number, f: number) => Pose) => {
+  const act = (el: HTMLElement, a: number, b: number, fn: (p: number, f: number) => Pose, slot: Slot = 'fx') => {
     let s = state.get(el); if (!s) { s = { base: el.style.transform || '', acts: [] }; state.set(el, s); }
-    s.acts.push({ a, b, fn });
+    s.acts.push({ a, b, slot, fn });
   };
   const each = (els: Els, at: number, step: number, fn: (el: HTMLElement, a: number, i: number) => void) => asArr(els).forEach((el, i) => fn(el, at + i * step, i));
 
@@ -71,36 +72,34 @@ export function createTimeline(ctx: KitContext): Timeline {
     rise(els, at, o = {}) {
       const dur = o.dur ?? tk.base, ease = o.ease ?? EASE.expoOut, step = o.stagger ?? tk.stagger, from = o.from ?? 'below', dist = (o.dist ?? tk.rise) * unit(), blur = o.blur ?? 8, snd = over(o.sound);
       const dx = from === 'start' ? -sign * dist : from === 'end' ? sign * dist : 0, dy = from === 'below' ? dist : from === 'above' ? -dist : 0;
-      each(els, at, step, (el, a) => {
-        act(el, a, a + dur, p => { const e = ease(p); return pose({ x: dx * (1 - e), y: dy * (1 - e), o: Math.min(1, p * 2.2), blur: (1 - e) * blur }); });
-        if (snd) { const pan = panAt(el); add('swipe', a, { dur: .22, gain: .06, p0: pan - .1, p1: pan + .1, ...snd }); }
-      }); return T;
+      each(els, at, step, (el, a) => act(el, a, a + dur, p => { const e = ease(p); return pose({ x: dx * (1 - e), y: dy * (1 - e), o: Math.min(1, p * 2.2), blur: (1 - e) * blur }); }, 'enter'));
+      if (snd) { const list = asArr(els), p0 = panAt(list[0]), p1 = panAt(list[list.length - 1]); add('swipe', at, { dur: Math.min(.5, .22 + (list.length - 1) * step / ctx.fps), gain: .06, p0: p0 - .1, p1: p1 + .1, ...snd }); }   // one swipe for the whole group, panning across it
+      return T;
     },
     exit(els, at, o = {}) {
       const dur = o.dur ?? tk.base, ease = o.ease ?? EASE.inQuad, step = o.stagger ?? 0, to = o.to ?? 'fade', dist = tk.rise * unit(), snd = over(o.sound);
-      each(els, at, step, (el, a) => {
-        act(el, a, a + dur, p => { const e = ease(p); return pose({ y: to === 'above' ? -dist * e : to === 'below' ? dist * e : 0, s: to === 'zoom' ? 1 + e * .18 : 1, blur: to === 'zoom' ? e * 12 : 0, o: 1 - e }); });
-        if (snd) add('whoosh', a, { dur: .35, gain: .08, p0: -.2, p1: .2, ...snd });
-      }); return T;
+      each(els, at, step, (el, a) => act(el, a, a + dur, p => { const e = ease(p); return pose({ y: to === 'above' ? -dist * e : to === 'below' ? dist * e : 0, s: to === 'zoom' ? 1 + e * .18 : 1, blur: to === 'zoom' ? e * 12 : 0, o: 1 - e }); }, 'exit'));
+      if (snd) add('whoosh', at, { dur: .35, gain: .08, p0: -.2, p1: .2, ...snd });   // one whoosh per call
+      return T;
     },
     pop(els, at, o = {}) {
       const dur = o.dur ?? tk.base, ease = o.ease ?? EASE.backOut, step = o.stagger ?? tk.stagger, from = o.from ?? .6, snd = over(o.sound);
       each(els, at, step, (el, a, i) => {
-        act(el, a, a + dur, p => pose({ s: from + (1 - from) * ease(p), o: Math.min(1, p * 3) }));
-        if (snd) { const pan = panAt(el); add('tick', a, { gain: .07, freq: 1800 + i * 90, pan, ...snd }); add('thud', a, { gain: .08, pan, ...snd }); }
+        act(el, a, a + dur, p => pose({ s: from + (1 - from) * ease(p), o: Math.min(1, p * 3) }), 'enter');
+        if (snd) { const pan = panAt(el); add('tick', a, { gain: .05, freq: 1800 + i * 90, pan, ...snd }); if (i === 0) add('thud', a, { gain: .08, pan, ...snd }); }   // a tick per item, one soft thud for the group
       }); return T;
     },
     type(el, text, a, b, o = {}) {
       const gs = [...new Intl.Segmenter(ctx.lang, { granularity: 'grapheme' }).segment(text)].map(x => x.segment), n = gs.length, half = Math.max(1, Math.round(ctx.fps / 2));
       fx.push(f => { const k = Math.floor(rng(f, a, b) * n); el.textContent = gs.slice(0, k).join('') + (o.caret && f >= a && (f >= b ? Math.floor((f - b) / half) % 2 === 0 : true) ? '▏' : ''); });
       const snd = over(o.keys === undefined ? true : o.keys), kp = snd ? panAt(el) * .5 : 0;
-      if (snd) keyFrames(gs, a, b).forEach(({ f, space }, i) => add('key', f, { gain: .06, pan: kp, seed: i, ...(space ? { space: true } : {}), ...snd }));
+      if (snd) keyFrames(gs, a, b, ctx.fps).forEach(({ f, space }, i) => add('key', f, { gain: .05, pan: kp, seed: i, ...(space ? { space: true } : {}), ...snd }));
       return T;
     },
     count(el, from, to, a, b, o = {}) {
       const ease = o.ease ?? EASE.out, fmt = o.format ?? ((n: number) => (o.decimals ? n.toFixed(o.decimals) : String(Math.round(n)))), snd = over(o.sound);
       fx.push(f => { el.textContent = fmt(from + (to - from) * ease(rng(f, a, b))); });
-      if (snd) { const pan = panAt(el), n = Math.min(24, Math.max(6, Math.round((b - a) / 2))); tickFrames(a, b, n).forEach((f, i) => add('tick', f, { gain: .04 + .05 * (i / n), freq: 1500 + i * 60, pan, ...snd })); }
+      if (snd) { const pan = panAt(el), n = Math.min(10, Math.max(5, Math.round((b - a) / 6))); tickFrames(a, b, n).forEach((f, i) => add('tick', f, { gain: .04 + .05 * (i / n), freq: 1500 + i * 60, pan, ...snd })); }
       return T;
     },
     press(el, at, o = {}) {
@@ -125,8 +124,8 @@ export function createTimeline(ctx: KitContext): Timeline {
     morph(from, to, a, b, o = {}) {
       const ease = o.ease ?? EASE.inOut, r0 = rectOf(from), r1 = rectOf(to), dx = r1.left + r1.width / 2 - (r0.left + r0.width / 2), dy = r1.top + r1.height / 2 - (r0.top + r0.height / 2);
       const kx = r0.width ? r1.width / r0.width : 1, ky = r0.height ? r1.height / r0.height : 1, snd = over(o.sound);
-      act(from, a, b, p => { const e = ease(p); return pose({ x: dx * e, y: dy * e, sx: 1 + (kx - 1) * e, sy: 1 + (ky - 1) * e, o: 1 - rng(p, .35, .85) }); });
-      act(to, a, b, p => { const e = ease(p); return pose({ x: -dx * (1 - e), y: -dy * (1 - e), sx: 1 + (1 / kx - 1) * (1 - e), sy: 1 + (1 / ky - 1) * (1 - e), o: rng(p, .15, .65) }); });
+      act(from, a, b, p => { const e = ease(p); return pose({ x: dx * e, y: dy * e, sx: 1 + (kx - 1) * e, sy: 1 + (ky - 1) * e, o: 1 - rng(p, .35, .85) }); }, 'exit');
+      act(to, a, b, p => { const e = ease(p); return pose({ x: -dx * (1 - e), y: -dy * (1 - e), sx: 1 + (1 / kx - 1) * (1 - e), sy: 1 + (1 / ky - 1) * (1 - e), o: rng(p, .15, .65) }); }, 'enter');
       if (snd) add('swipe', a, { dur: Math.max(.2, (b - a) / ctx.fps), gain: .08, p0: panAt(from), p1: panAt(to), ...snd }); return T;
     },
     reveal(el, at, o = {}) {
@@ -137,7 +136,7 @@ export function createTimeline(ctx: KitContext): Timeline {
         if (style === 'wipe') return pose({ clip: rtl ? `inset(0 0 0 ${((1 - e) * 100).toFixed(2)}%)` : `inset(0 ${((1 - e) * 100).toFixed(2)}% 0 0)`, o: 1 });
         if (style === 'rise') return pose({ y: (1 - e) * 40 * unit(), o: Math.min(1, p * 2.5), blur: (1 - e) * 10 });
         return pose({ o: e });
-      });
+      }, 'enter');
       if (snd) { if (o.lead) cues.push({ kind: 'silence', f: Math.max(0, at - o.lead), to: at } as Cue); add('impact', at, { gain: .9, tail: 3, ...snd }); }
       return T;
     },
@@ -153,7 +152,13 @@ export function createTimeline(ctx: KitContext): Timeline {
     on(fn) { fx.push(fn); return T; },
     cue(kind, f, o = {}) { add(kind, f, o); return T; },
     draw(f) {
-      for (const [el, s] of state) { let p = IDENTITY; for (const x of s.acts) p = combine(p, x.fn(rng(f, x.a, x.b), f)); const c = css(s.base, p); el.style.transform = c.transform; el.style.opacity = c.opacity; el.style.filter = c.filter; el.style.clipPath = c.clipPath; }
+      for (const [el, s] of state) {
+        const latest = (l: typeof s.acts) => l.filter(x => f >= x.a).reduce<typeof l[number] | undefined>((m, x) => (!m || x.a >= m.a ? x : m), undefined);
+        const enters = s.acts.filter(x => x.slot === 'enter'), E = latest(enters) || enters[0], X = latest(s.acts.filter(x => x.slot === 'exit'));
+        let p = IDENTITY; if (E) p = combine(p, E.fn(rng(f, E.a, E.b), f));
+        if (X && !(E && f >= E.a && E.a > X.a)) p = combine(p, X.fn(rng(f, X.a, X.b), f));
+        for (const x of s.acts) if (x.slot === 'fx') p = combine(p, x.fn(rng(f, x.a, x.b), f));
+        const c = css(s.base, p); el.style.transform = c.transform; el.style.opacity = c.opacity; el.style.filter = c.filter; el.style.clipPath = c.clipPath; }
       for (const [stage, steps] of cams) {
         const { W, H } = ctx.size(); let cur = { s: 1, cx: W / 2, cy: H / 2 };
         for (const st of [...steps].sort((p, q) => p.a - q.a)) {

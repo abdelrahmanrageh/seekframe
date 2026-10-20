@@ -2,7 +2,7 @@
 // Measures what the existing checks do not: is the film GOOD, not just correct. Renders the film headless, measures text sizes,
 // how much of the frame the content fills, how the picture moves over time and what the generated score does, then returns a 0-100
 // score and a ranked fix list in plain words. Scoring and thresholds live in craft-checks.ts.
-import type { FilmRef, Manifest } from '../types';
+import type { Cue, FilmRef, Manifest } from '../types';
 import { ensureBrands, BROWSER_DIR, ROOT } from './workspace';
 import { ffmpegPath } from './ffmpeg';
 import { probeText, probeBoxes, type ProbeResult, type BoxesResult } from './probe';
@@ -37,6 +37,15 @@ function changed(a: Sample, b: Sample): number {
   return n / len;
 }
 
+const NOISY = new Set(['swipe', 'whoosh', 'tick', 'key', 'hat', 'shaker', 'glitch', 'blip', 'scribble']);
+function mixStats(wav: string, cues: Cue[], fps: number): { rmsDb: number[]; burst: { n: number; at: number } } {
+  const raw = spawnSync(ffmpegPath(), ['-v', 'error', '-i', wav, '-f', 'f32le', '-ac', '1', '-ar', '16000', '-'], { maxBuffer: 1 << 29 }).stdout;
+  const x = new Float32Array(raw.buffer, raw.byteOffset, Math.floor(raw.length / 4)), seg = 1600, rmsDb: number[] = [];
+  for (let i = 0; i + seg <= x.length; i += seg) { let s = 0; for (let k = i; k < i + seg; k++) s += x[k] * x[k]; rmsDb.push(10 * Math.log10(s / seg + 1e-12)); }
+  const t = cues.filter(c => NOISY.has(c.kind)).map(c => c.f / fps).sort((a, b) => a - b); let n = 0, at = 0;
+  for (let i = 0, j = 0; i < t.length; i++) { while (t[i] - t[j] >= 1) j++; if (i - j + 1 > n) { n = i - j + 1; at = t[j]; } }
+  return { rmsDb, burst: { n, at } };
+}
 function soundStats(wav: string, manifest: Manifest, seconds: number): C.SoundStats {
   const out = spawnSync(ffmpegPath(), ['-hide_banner', '-i', wav, '-af', 'silencedetect=noise=-50dB:d=0.5,ebur128=peak=true', '-f', 'null', '-']).stderr.toString();
   const silences: Array<[number, number]> = []; let open: number | null = null;
@@ -44,7 +53,8 @@ function soundStats(wav: string, manifest: Manifest, seconds: number): C.SoundSt
   if (open !== null) silences.push([open, seconds]);
   const sum = out.slice(out.lastIndexOf('Summary')), lufs = +(/\n\s*I:\s+(-?[\d.]+) LUFS/.exec(sum) || [])[1], tp = +(/Peak:\s+(-?[\d.]+) dBFS/.exec(sum) || [])[1];
   const cues = manifest.cues || [], fps = manifest.fps;
-  return { seconds, silences, lufs, truePeak: Number.isFinite(tp) ? tp : -99, target: (manifest.soundtrack && manifest.soundtrack.loudness) ?? -16, hasCues: cues.length > 0,
+  const mix = mixStats(wav, manifest.cues || [], manifest.fps);
+  return { ...mix, seconds, silences, lufs, truePeak: Number.isFinite(tp) ? tp : -99, target: (manifest.soundtrack && manifest.soundtrack.loudness) ?? -16, hasCues: cues.length > 0,
     cueCount: cues.filter(c => c.kind !== 'silence').length, pauses: cues.filter(c => c.kind === 'silence').map(c => [c.f / fps, (c.to ?? c.f + 1) / fps] as [number, number]) };
 }
 

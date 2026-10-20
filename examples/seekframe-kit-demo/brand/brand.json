@@ -1,6 +1,6 @@
 {
-  "name": "Blank",
-  "colors": { "accent": "#5B8CFF", "ink": "#0F1226", "paper": "#FFFFFF", "muted": "#8A90A8" },
+  "name": "Lumen",
+  "colors": { "accent": "#FF5B2E", "ink": "#14110D", "paper": "#F3EEE4", "muted": "#8A8174" },
   "fonts": [],
-  "voice": { "tone": "calm, confident, short sentences" }
+  "voice": { "tone": "warm, quick, plain words" }
 }
