@@ -183,7 +183,8 @@ test('kit: easings start at 0, end at 1 and back overshoots', () => {
   assert.ok(KM.EASE.backOut(.6) > 1, 'overshoot');
 });
 test('kit: keystrokes land on the frame each character appears (same as typed()) and spaces are heavier', () => {
-  const ks = KM.keyFrames(['a', 'b', ' ', 'c'], 40, 80); assert.deepEqual(ks.map(k => k.f), [50, 60, 70, 80]); assert.deepEqual(ks.map(k => k.space), [false, false, true, false]);
+  const ks = KM.keyFrames(['a', 'b', ' ', 'c'], 40, 80); assert.equal(ks.length, 4); ks.forEach((k, i) => assert.ok(Math.abs(k.f - (50 + i * 10)) <= 1, `key ${i} at ${k.f}`)); assert.deepEqual(ks.map(k => k.space), [false, false, true, false]);
+  const fast = KM.keyFrames([...'x'.repeat(40)], 0, 60); assert.ok(fast.length <= 24 && fast.length >= 12, 'thinned from 40 keys in 2 s to ' + fast.length);
 });
 test('kit: counter ticks start fast and slow down, inside the roll', () => {
   const t = KM.tickFrames(70, 100, 12); assert.ok(t[0] >= 70 && t[t.length - 1] <= 100); const gaps = t.slice(1).map((f, i) => f - t[i]);

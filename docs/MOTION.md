@@ -21,8 +21,8 @@ SF.define({
 ```
 No `seek` is needed: the runtime calls `T.draw(f)` for you (you may still add one for your own drawing, or use `T.on(f => …)`).
 Everything is a pure function of the frame number, so scrubbing, retiming scenes in the editor and variants all keep working;
-the sounds of every primitive are added to the film's cues, so `critique` and `sync` see them. Run `examples/seekframe-kit-demo`
-to see all of it (97/100 on `critique`, zero sync warnings), and read its 90 lines next to this page.
+the sounds of every primitive are added to the film's cues, so `critique` and `sync` see them. Open `examples/seekframe-kit-demo`
+("Lumen", a made-up support chat, 18 s, 16:9 / 9:16 / 1:1; 95/100 on `critique`, zero sync warnings) and read it next to this page.
 
 ## Primitives
 
@@ -50,6 +50,11 @@ also `SF.motion` for 30 fps. Enter with expo-out, exit with in-quad, pop with ba
 
 **Planning from the layout.** Pans and `fly`/`morph` targets are read from where the elements are when the timeline is declared (they may sit in a hidden scene).
 Keep elements laid out by CSS and let the kit move them; do not position them with `transform` yourself (the kit appends to a `transform` set before the call).
+
+## Sound that stays clean
+The kit adds one sound per group (one swipe for a whole staggered row, one thud for a row of chips), thins typing to human speed (at most about 11 keys a second,
+with a frame of jitter) and keeps ticks sparse. Do not put a noise bed under a film: `roomtone` and `drone` are noise, and the loudness step lifts them to the
+foreground; use `pad` at a very low gain if you want a bed, or none. `critique` flags a constant bed (under 10 dB between loud and quiet moments) and machine-gun sound bursts.
 
 ## Ready-made pieces: `SF.ui`
 They only build elements (CSS variables `--acc --accInk --fg --bg`, so the brand applies); you animate them with the kit.

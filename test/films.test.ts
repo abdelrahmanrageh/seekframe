@@ -11,6 +11,7 @@ import { exportFilm } from '../src/core/export';
 import { renderScore } from '../src/sound/score';
 import { craft } from '../src/core/craft';
 import { sync } from '../src/sound/sync';
+import { openFilm } from '../src/core/render';
 
 
 
@@ -58,6 +59,7 @@ test('craft review: the blank template reports every measured category', { timeo
 
 test('motion kit demo: sound and picture agree (no sync warnings) and the craft score is high', { timeout: 300000 }, async () => {
   const film = { id: 'seekframe-kit-demo', root: 'examples', dir: path.join(ROOT, 'examples/seekframe-kit-demo') };
+  const again = await openFilm(film.dir, {}); try { const n1 = (await again.page.evaluate(() => window.manifest.cues!.length)), n2 = await again.page.evaluate(() => { window.applyParams({}); return window.manifest.cues!.length; }); assert.equal(n2, n1, 'applying params again must not duplicate the kit\'s cues'); } finally { await again.browser.close(); }
   const sr = await sync(film, { version: 'default' }); assert.deepEqual(sr.versions.default.issues, [], 'kit films are in sync by construction');
   const r = await craft(film, { out: path.join(os.tmpdir(), 'ci-craft-out'), version: 'default', log: () => {} });
   assert.ok(r.score >= 85, 'craft score ' + r.score);

@@ -126,7 +126,7 @@ const define = (spec: FilmSpec): Manifest => {
     currentValues = { ...v };
     m.params = typeof spec.params === 'function' ? spec.params(values()) : (spec.params || []);
     if (typeof spec.audio === 'function') m.audio = spec.audio(values());
-    if (spec.cues) m.cues = spec.cues(values());
+    m.cues = spec.cues ? spec.cues(values()) : [];            // rebuilt on every application of params (the kit's cues are appended below)
     if (spec.soundtrack) m.soundtrack = typeof spec.soundtrack === 'function' ? spec.soundtrack(values()) : spec.soundtrack;
     currentTimeline = null; spec.build(values());
     if (spec.timeline) { currentTimeline = timeline({ fps: m.fps }); spec.timeline(currentTimeline, values()); m.cues = [...(m.cues || []), ...currentTimeline.cues()]; }
