@@ -73,8 +73,8 @@ let thumbBrowser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
 // one warm page per film, rendered at thumbnail scale; params are re-applied per thumbnail (no reload), one at a time
 const thumbPages = new Map<string, { sig: string; ready: Promise<any>; chain: Promise<unknown> }>();
 const filmSig = (film: FilmRef) => ['film.html', 'film.js'].map(n => { try { return fs.statSync(path.join(film.dir, n)).mtimeMs; } catch { return 0; } }).join('|');
-async function thumbPage(film: FilmRef, width: number) {
-  const sig = filmSig(film) + '|' + width, cur = thumbPages.get(film.id);
+async function thumbPage(film: FilmRef, width: number, size: string | null = null) {
+  const key = film.id + '|' + (size || ''), sig = filmSig(film) + '|' + width, cur = thumbPages.get(key);
   if (cur && cur.sig === sig) return cur;
   if (cur) void cur.ready.then(p => p.close()).catch(() => null);
   const ready = (async () => {
@@ -82,18 +82,20 @@ async function thumbPage(film: FilmRef, width: number) {
     thumbBrowser = thumbBrowser || await chromium.launch({ args: ['--force-color-profile=srgb', '--font-render-hinting=none'] });
     const file = 'file://' + path.join(film.dir, 'film.html');
     const probe = await thumbBrowser.newPage(); await probe.goto(file); await probe.evaluate(() => window.ready);
-    const { width: W, height: H } = await probe.evaluate(() => ({ width: window.manifest.width, height: window.manifest.height })); await probe.close();
+    const m = await probe.evaluate(() => ({ width: window.manifest.width, height: window.manifest.height })); await probe.close();
+    const [W, H] = size ? size.split('x').map(Number) : [m.width, m.height];
     const page = await thumbBrowser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: width / W });
     await page.goto(file); await page.evaluate(() => window.ready);
     await page.addScriptTag({ path: path.join(BROWSER_DIR, 'timeline.js') });
     return page;
   })();
-  const entry = { sig, ready, chain: Promise.resolve() as Promise<unknown> }; thumbPages.set(film.id, entry); return entry;
+  const entry = { sig, ready, chain: Promise.resolve() as Promise<unknown> }; thumbPages.set(key, entry); return entry;
 }
 async function thumb(film: FilmRef, project: ProjectInput, frame: number, width: number): Promise<string> {
   const key = hash([film.id, filmSig(film), project, frame, width]), f = path.join(CACHE, `thumb-${key}.png`);
   if (fs.existsSync(f)) return f;
-  const entry = await thumbPage(film, width);
+  const size = (project as any) && (project as any).output && (project as any).output.size || null;
+  const entry = await thumbPage(film, width, size);
   const job = entry.chain.then(async () => {
     const page = await entry.ready;
     const manifest = await page.evaluate((p: any) => JSON.parse(JSON.stringify(Timeline.applyToFilm(window, p))), (project && project.params) || {});

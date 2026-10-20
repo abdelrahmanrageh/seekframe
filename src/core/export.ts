@@ -38,7 +38,8 @@ export interface ExportOptions {
 /* Renders one project to an MP4.
    opts: { film:{id,dir}, project, fps, size, out, onProgress({phase,done,total}), procs[] (for cancelling), scoreFor(manifest,tl) } */
 async function exportFilm(o: ExportOptions): Promise<{ out: string; frames: number; seconds: number }> {
-  const { film, project, fps = 30, size = null, out, onProgress = () => {}, procs = [] } = o;
+  const { film, project, fps = 30, out, onProgress = () => {}, procs = [] } = o;
+  const size = o.size || ((project as any).output && (project as any).output.size) || null;   // a saved version may carry its own size (e.g. 16:9)
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'seekframe-'));
   try {
     onProgress({ phase: 'preparing', done: 0, total: 0 });
