@@ -33,6 +33,7 @@ async function openFilm(filmDir: string, project?: ProjectInput | null, size?: s
   await page.goto('file://' + file); await page.evaluate(() => window.ready);
   await page.addScriptTag({ path: path.join(BROWSER_DIR, 'timeline.js') });
   const manifest = await page.evaluate(p => JSON.parse(JSON.stringify(Timeline.applyToFilm(window, p))), (project && project.params) || {});
+  manifest.dir = path.resolve(filmDir);                  // server-side only: where the film's own files (recorded sounds) live
   return { browser: b, page, manifest, errs };
 }
 

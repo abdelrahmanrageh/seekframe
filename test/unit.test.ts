@@ -147,3 +147,22 @@ test('craft: the score is the weighted mean and the fix list is ranked by value'
   assert.equal(r.categories.find(c => c.check === 'entrance')!.score, null);
   assert.equal(r.score, Math.round((12 * 75 + 14 * 98) / 26));
 });
+
+test('sound: a sample cue plays a recorded file, trimmed, panned and rate-changed', async () => {
+  const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+  const { PNG: _p } = await import('pngjs'); void _p;
+  // a 0.2 s 1 kHz sine wav
+  const N = 9600, buf = Buffer.alloc(44 + N * 2); buf.write('RIFF', 0); buf.writeUInt32LE(36 + N * 2, 4); buf.write('WAVEfmt ', 8); buf.writeUInt32LE(16, 16); buf.writeUInt16LE(1, 20); buf.writeUInt16LE(1, 22); buf.writeUInt32LE(48000, 24); buf.writeUInt32LE(96000, 28); buf.writeUInt16LE(2, 32); buf.writeUInt16LE(16, 34); buf.write('data', 36); buf.writeUInt32LE(N * 2, 40);
+  for (let i = 0; i < N; i++) buf.writeInt16LE(Math.round(Math.sin(2 * Math.PI * 1000 * i / 48000) * 20000), 44 + i * 2);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sf-sample-')); fs.writeFileSync(path.join(dir, 'beep.wav'), buf);
+  try {
+    const peak = (a: Float32Array) => a.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+    const { m } = mix([{ kind: 'sample', f: 30, src: 'beep.wav', gain: .5, pan: -1, dur: .1 }], { fps: 30, seconds: 3, dir, theme: 'deep' });
+    assert.ok(peak(m.L) > .3 && peak(m.L) < .5, 'gain applied to the file');
+    assert.ok(peak(m.R) < .01, 'hard left pan silences the right channel');
+    let last = 0; for (let i = 0; i < m.N; i++) if (Math.abs(m.L[i]) > 1e-4) last = i;
+    assert.ok(last / 48000 < 1 + .1 + .01 && last / 48000 > 1 + .08, 'trimmed to 0.1 s starting at 1.0 s');
+    assert.equal(mix([{ kind: 'sample', f: 0, src: 'beep.wav' }], { fps: 30, seconds: 1, dir, theme: 'minimal' }).m.L.every(v => v === 0), true, 'minimal drops samples');
+    assert.equal(mix([{ kind: 'sample', f: 0, src: 'beep.wav', min: true }], { fps: 30, seconds: 1, dir, theme: 'minimal' }).m.L.every(v => v === 0), false, 'min: true keeps them');
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});

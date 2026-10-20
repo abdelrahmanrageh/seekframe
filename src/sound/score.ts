@@ -7,9 +7,9 @@ import { renderToFile, THEMES } from './engine';
 
 
 
-async function renderScore({ manifest, theme = 'deep', out, rtl = false }) {
+async function renderScore({ manifest, theme = 'deep', out, rtl = false }: { manifest: any; theme?: string; out: string; rtl?: boolean }) {
   const seconds = manifest.duration / manifest.fps;
-  return renderToFile(manifest.cues || [], { fps: manifest.fps, seconds, theme, rtl, out, loudness: (manifest.soundtrack && manifest.soundtrack.loudness) ?? -16 });
+  return renderToFile(manifest.cues || [], { fps: manifest.fps, seconds, theme, rtl, out, dir: manifest.dir || '', loudness: (manifest.soundtrack && manifest.soundtrack.loudness) ?? -16 });
 }
 async function soundCmd(film, a) {
   const pf = path.join(film.dir, 'projects', (a.version || 'default') + '.json'), project = fs.existsSync(pf) ? JSON.parse(fs.readFileSync(pf, 'utf8')) : {};
