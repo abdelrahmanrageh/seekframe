@@ -16,8 +16,8 @@ export async function doctor(): Promise<DoctorReport> {
     const { chromium } = await import('playwright'); const exe = chromium.executablePath();
     checks.push({ name: 'Chromium (renders the frames)', ok: fs.existsSync(exe), detail: fs.existsSync(exe) ? exe.replace(process.env.HOME || '', '~') : 'not installed', fix: fs.existsSync(exe) ? undefined : 'Run: npx playwright install chromium' });
   } catch (e: any) { checks.push({ name: 'Playwright', ok: false, detail: e.message, fix: 'Run: npm install' }); }
-  try { const f = ffmpegPath(); const v = spawnSync(f, ['-version']).stdout?.toString().split('\n')[0] || ''; checks.push({ name: 'ffmpeg (encodes MP4, mixes sound)', ok: true, detail: `${f === 'ffmpeg' ? 'system' : 'bundled'}: ${v.replace('ffmpeg version ', '').slice(0, 40)}` }); }
-  catch (e: any) { checks.push({ name: 'ffmpeg', ok: false, detail: 'not found', fix: 'Run `npm rebuild ffmpeg-static`, or install ffmpeg (e.g. brew install ffmpeg).' }); }
+  try { const f = ffmpegPath(); const v = spawnSync(f, ['-version']).stdout?.toString().split('\n')[0] || ''; checks.push({ name: 'ffmpeg (encodes MP4, mixes sound)', ok: true, detail: `${process.env.SEEKFRAME_FFMPEG ? 'custom' : f === 'ffmpeg' ? 'system' : 'bundled'}: ${v.replace('ffmpeg version ', '').slice(0, 40)}` }); }
+  catch (e: any) { checks.push({ name: 'ffmpeg', ok: false, detail: 'not found', fix: 'Install ffmpeg (e.g. brew install ffmpeg), or run `npm rebuild ffmpeg-static`, or set SEEKFRAME_FFMPEG to a binary.' }); }
   checks.push({ name: 'Browser bundles (dist/)', ok: fs.existsSync(path.join(BROWSER_DIR, 'runtime.js')), detail: fs.existsSync(path.join(BROWSER_DIR, 'runtime.js')) ? 'built' : 'missing', fix: 'Run: npm run build (inside the seekframe folder)' });
   let writable = true; try { fs.mkdirSync(path.join(ROOT, 'output'), { recursive: true }); fs.accessSync(path.join(ROOT, 'output'), fs.constants.W_OK); } catch { writable = false; }
   checks.push({ name: 'Workspace', ok: writable, detail: ROOT === PKG_ROOT ? `${ROOT} (this clone)` : ROOT, fix: writable ? undefined : 'The folder is not writable.' });

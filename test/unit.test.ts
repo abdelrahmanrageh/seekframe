@@ -9,6 +9,7 @@ import Ajv from 'ajv';
 import * as schema from '../src/core/film.schema.json';
 import * as K from '../src/core/craft-checks';
 import * as KM from '../src/core/kit-math';
+import { ffmpegPath } from '../src/core/ffmpeg';
 
 
 
@@ -192,4 +193,13 @@ test('kit: counter ticks start fast and slow down, inside the roll', () => {
 });
 test('kit: pan follows screen position and is softened at the edges', () => {
   assert.equal(KM.panOf(960, 1920), 0); assert.ok(KM.panOf(0, 1920) < -.6 && KM.panOf(0, 1920) >= -1); assert.ok(KM.panOf(1920, 1920) > .6); assert.equal(KM.panOf(10, 0), 0);
+});
+
+test('ffmpeg: SEEKFRAME_FFMPEG wins, a bad path says so, and the setting is re-read', () => {
+  const before = process.env.SEEKFRAME_FFMPEG;
+  try {
+    process.env.SEEKFRAME_FFMPEG = '/no/such/ffmpeg'; assert.throws(() => ffmpegPath(), /SEEKFRAME_FFMPEG is set to "\/no\/such\/ffmpeg"/);
+    delete process.env.SEEKFRAME_FFMPEG; const p = ffmpegPath(); assert.ok(p.length > 0);
+    process.env.SEEKFRAME_FFMPEG = p; assert.equal(ffmpegPath(), p);
+  } finally { if (before === undefined) delete process.env.SEEKFRAME_FFMPEG; else process.env.SEEKFRAME_FFMPEG = before; }
 });

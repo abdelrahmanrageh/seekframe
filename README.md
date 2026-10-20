@@ -59,6 +59,13 @@ Seekframe stands on the shoulders of [Remotion](https://www.remotion.dev/), [Mot
 Seekframe's bet is different: films are plain HTML written by an **LLM** against a strict contract with automatic checks, and edited by a **non-developer** in a built-in editor with first-class variants, languages and sound.
 If you are a developer who wants to write video in React, use those.
 
+## What gets installed and downloaded
+Installing Seekframe downloads two large tools, and nothing else is fetched at run time (films make no network requests):
+- **ffmpeg** (about 70 MB) comes from the `ffmpeg-static` package, which downloads the binary during `npm install`. It is an *optional* dependency: use your own
+  ffmpeg instead with `npm install --omit=optional` (then `brew install ffmpeg` or similar), or point `SEEKFRAME_FFMPEG` at a binary.
+- **Chromium** (about 150 MB) comes from `npx playwright install chromium`, and renders the frames.
+Supply-chain scanners flag these as "install scripts" and "network access". That is the ffmpeg download and the web-server and MCP libraries, not Seekframe's own code. `seekframe doctor` shows what is in use.
+
 ## Status and limits
 The editor includes undo/redo, saved-version history, variants, cue waveform, scene resizing, safe areas, responsive sizes, brand setup, and a render queue. Workspaces can be created with `seekframe init` (and `npm create seekframe` once the packages are published); Docker, devcontainer, render Action, and Pages workflows are included. Sound uses synthesis and uploaded tracks; TTS adapters and caption export remain future work. See [ROADMAP.md](ROADMAP.md) for the current release checklist.
 

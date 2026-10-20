@@ -13,6 +13,10 @@ and, if the browser sends an `Origin`, an allowed one (blocks cross-site forms a
 `SEEKFRAME_ALLOWED_HOSTS` (comma separated, `*.example.com` wildcards allowed; the dev container sets the GitHub Codespaces domains). There is **no
 authentication**: only expose the port to yourself (Codespaces keeps forwarded ports private by default; never publish it).
 
+**Dependencies:** `npm install seekframe` runs one install script of ours to the outside world: `ffmpeg-static` downloads the ffmpeg binary (optional: `npm install --omit=optional`
+and use your own ffmpeg, or set `SEEKFRAME_FFMPEG`). Chromium comes from `npx playwright install chromium`. Dependency scanners will report network access, shell access, `eval`
+and install scripts for these and for the MCP server's web framework; none is used on film content.
+
 The MCP server exposes tools that read/write the workspace and run renders; it does not open network ports (stdio).
 
 Report vulnerabilities privately through GitHub: *Security → Report a vulnerability*. Please include a minimal film or request that reproduces the issue.
