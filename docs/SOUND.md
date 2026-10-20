@@ -30,6 +30,7 @@ return c.list;
 | `keys` | note, dur, bright | FM bell / electric piano for arps and melodies |
 | `impact` | gain, tail | cinematic hit: sub boom + noise burst + long tail (a drop, a reveal) |
 | `reverse` | to, notes | reverse swell that cuts dead at `to`, into a hit (range) |
+| `sample` | `src` (file in the film folder), gain, pan, rate, start, dur, fadeIn, fadeOut, flip, min | **a recorded sound**: your own, generated (ElevenLabs) or licensed effect. `rate` changes speed and pitch, `start`/`dur` trim, `flip` swaps channels (a whip pan travelling the other way). Dropped from the `minimal` theme unless `min: true`. Decoded with the bundled ffmpeg, so mp3, wav, ogg and m4a all work |
 | `glitch` | gain, pan, seed | digital stutter for cuts |
 | `key` | gain, pan, seed, `space` | one keystroke: click, keycap thock and release; `space: true` is the heavier space bar. One every 2-4 frames with a little jitter sounds like real typing |
 

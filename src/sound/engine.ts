@@ -6,13 +6,26 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
+/** decode an audio file to 48 kHz stereo float samples (cached per file) */
+const SAMPLES = new Map<string, { L: Float32Array; R: Float32Array } | null>();
+function loadSample(file: string): { L: Float32Array; R: Float32Array } | null {
+  if (SAMPLES.has(file)) return SAMPLES.get(file)!;
+  let out: { L: Float32Array; R: Float32Array } | null = null;
+  if (fs.existsSync(file)) {
+    const r = spawnSync(ffmpegPath(), ['-v', 'error', '-i', file, '-f', 'f32le', '-ac', '2', '-ar', '48000', '-'], { maxBuffer: 256 * 1024 * 1024 });
+    const info = spawnSync(ffmpegPath(), ['-hide_banner', '-i', file], { encoding: 'utf8' }).stderr || '', up = /Audio:[^\n]*(\bmono\b|\b1 channels\b)/.test(info) ? Math.SQRT2 : 1;   // ffmpeg's mono to stereo lowers each side by 3 dB
+    if (!r.status && r.stdout.length) { const f = new Float32Array(r.stdout.buffer.slice(r.stdout.byteOffset, r.stdout.byteOffset + r.stdout.length - (r.stdout.length % 8))), n = f.length >> 1, L = new Float32Array(n), R = new Float32Array(n); for (let i = 0; i < n; i++) { L[i] = f[2 * i] * up; R[i] = f[2 * i + 1] * up; } out = { L, R }; }
+  }
+  SAMPLES.set(file, out); return out;
+}
+
 const SR = 48000;
 
 class Mixer {
-  N: number; L: Float32Array; R: Float32Array; mir: number; seed: number; pendingSilence: Array<[number, number, number]> = [];
-  constructor(seconds, { rtl = false } = {}) {
+  N: number; L: Float32Array; R: Float32Array; mir: number; seed: number; dir: string; pendingSilence: Array<[number, number, number]> = [];
+  constructor(seconds, { rtl = false, dir = '' }: { rtl?: boolean; dir?: string } = {}) {
     this.N = Math.round(SR * seconds); this.L = new Float32Array(this.N); this.R = new Float32Array(this.N);
-    this.mir = rtl ? -1 : 1; this.seed = 7;
+    this.mir = rtl ? -1 : 1; this.seed = 7; this.dir = dir;
   }
   rnd() { this.seed = (this.seed * 1664525 + 1013904223) >>> 0; return this.seed / 4294967296 * 2 - 1; }
   put(t, n, fn, pan = 0, gain = 1) {                       // fn(i, tSec) -> sample
@@ -67,6 +80,24 @@ const I = {
   thud(m, t, o) { I.boom(m, t, { gain: o.gain ?? .16, decay: .35, f0: 84, f1: 50 }); I.tick(m, t, { gain: (o.gain ?? .16) * .5, freq: 900, pan: o.pan ?? 0 }); },
   stamp(m, t, o) { const g = o.gain ?? .32; I.boom(m, t, { gain: g, decay: .55, f0: 96, f1: 46 }); I.tick(m, t, { gain: g * .45, freq: 1300, pan: o.pan ?? 0 }); I.tick(m, t + .012, { gain: g * .3, freq: 700, pan: o.pan ?? 0 }); },
   roomtone(m, t, o) { const f = lp(380), n = Math.round((o.t1 - t) * SR); m.put(t, n, () => f(m.rnd()) * 4, 0, o.gain ?? .0012); },
+  // play a recorded sound (a generated or purchased effect): src is relative to the film folder.
+  //   gain: linear multiplier of the file; pan: -1..1 (a stereo file keeps its width, it is balanced); rate: playback speed (also pitch);
+  //   start/dur: seconds of the file to use; fadeIn/fadeOut: seconds; flip: swap channels (a whip pan that travels the other way);
+  //   min: keep this sound in the "minimal" theme (clicks only)
+  sample(m, t, o) {
+    const file = path.isAbsolute(o.src || '') ? o.src : path.join(m.dir || process.cwd(), o.src || '');
+    const s = loadSample(file); if (!s) { if (!I._warned.has(file)) { I._warned.add(file); console.warn(`sample not found or unreadable: ${file}`); } return; }
+    const rate = o.rate ?? 1, a = Math.max(0, Math.round((o.start ?? 0) * SR)), len = s.L.length, b = Math.min(len, o.dur != null ? a + Math.round(o.dur * SR * rate) : len);
+    const n = Math.floor((b - a) / rate), i0 = Math.round(t * SR), g = o.gain ?? 1, pan = Math.max(-1, Math.min(1, (o.pan ?? 0) * m.mir));
+    const gl = pan > 0 ? Math.cos(pan * Math.PI / 2) : 1, gr = pan < 0 ? Math.cos(-pan * Math.PI / 2) : 1, fi = Math.max(1, Math.round((o.fadeIn ?? .002) * SR)), fo = Math.max(1, Math.round((o.fadeOut ?? (o.dur != null ? .02 : .005)) * SR));
+    const [A, B] = o.flip ? [s.R, s.L] : [s.L, s.R];
+    for (let i = 0; i < n; i++) {
+      const k = i0 + i; if (k < 0 || k >= m.N) continue;
+      const x = a + i * rate, j = Math.floor(x), fr = x - j, j2 = Math.min(len - 1, j + 1), env = Math.min(1, (i + 1) / fi) * Math.min(1, (n - i) / fo);
+      m.L[k] += (A[j] * (1 - fr) + A[j2] * fr) * g * gl * env; m.R[k] += (B[j] * (1 - fr) + B[j2] * fr) * g * gr * env;
+    }
+  },
+  _warned: new Set<string>() as any,
   silence(m, t, o) { const a = Math.round(t * SR), b = Math.round(o.t1 * SR), fd = Math.round(.006 * SR); m.pendingSilence.push([a, b, fd]); },
 
   /* ---------- music: a beat, bass, chords and bells, so a film can have a build and a drop ---------- */
@@ -148,6 +179,7 @@ const THEMES = {
     return o;
   } },
   minimal: { eq: 'highpass=f=30,highshelf=f=8000:g=-4', map: c => {
+    if (c.kind === 'sample') return c.min ? c : null;       // recorded effects drop out of the clicks-only theme unless marked `min`
     if (['riser', 'whoosh', 'pad', 'shaker', 'kick', 'blip', 'drone', 'scribble', 'swipe', 'slide', 'hat', 'clap', 'bass', 'chord', 'reverse', 'glitch'].includes(c.kind)) return null;
     const o = { ...c }; if (['boom', 'stamp', 'thud', 'impact'].includes(c.kind)) { scale(o, 'gain', .6, 1); scale(o, 'decay', .6, 2.6); } return o;
   } },
@@ -155,8 +187,8 @@ const THEMES = {
 
 /* ---------- render ---------- */
 // cues: [{kind, f, to?, ...opts}], fps: film fps, seconds: total length
-function mix(cues, { fps, seconds, theme = 'deep', rtl = false }) {
-  const T = THEMES[theme] || THEMES.deep, m = new Mixer(seconds, { rtl }); m.pendingSilence = [];
+function mix(cues, { fps, seconds, theme = 'deep', rtl = false, dir = '' }: { fps: number; seconds: number; theme?: string; rtl?: boolean; dir?: string }) {
+  const T = THEMES[theme] || THEMES.deep, m = new Mixer(seconds, { rtl, dir }); m.pendingSilence = [];
   const ordered = [...cues].sort((a, b) => Number(a.kind === 'silence') - Number(b.kind === 'silence') || a.f - b.f);
   for (const raw of ordered) {
     const c = T.map(raw); if (!c) continue; const fn = I[c.kind]; if (!fn) continue;
@@ -189,5 +221,5 @@ function renderToFile(cues, o) {
   writeWav(m, raw, pk ? .7 / pk : 1);
   try { return master(raw, o.out, { eq, loudness: o.loudness ?? -16 }); } finally { fs.rmSync(raw, { force: true }); }
 }
-const KINDS = Object.keys(I);
+const KINDS = Object.keys(I).filter(k => !k.startsWith('_'));
 export { mix, renderToFile, THEMES, KINDS, RANGE, noteHz, SR };
