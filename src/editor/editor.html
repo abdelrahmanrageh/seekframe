@@ -64,6 +64,9 @@
       <p class="note" id="outname"></p>
       <label class="sw"><input type="checkbox" id="notify"> <span data-i18n="export.notify">Notify me when a render finishes</span></label>
       <button id="go" type="button" class="btn primary wide" data-i18n="export.add">Add to render queue</button>
+      <h3 data-i18n="export.project">Project file</h3>
+      <p class="note" data-i18n="export.projectNote">The whole film in one file: scenes, brand kit, saved versions and uploaded images. Send it to someone, or open it on another computer.</p>
+      <div class="row"><a id="packBtn" class="btn" download data-i18n="export.pack">Export project</a> <button id="importBtn" type="button" class="btn" data-i18n="export.import">Import project…</button><input type="file" id="importFile" accept=".tgz,.gz,application/gzip" hidden></div>
       <h3 data-i18n="export.queue">Render queue</h3>
       <div id="queue" aria-live="polite"></div>
     </div>

@@ -22,5 +22,6 @@ This creates a workspace (films/, brand/, agent files) that uses the `seekframe`
 
 **Share a film:** `seekframe pack <film>` writes `output/<film>.seekframe.tgz` (the film, its brand kit and fonts, saved versions and uploads).
 The other person runs `seekframe import <file>` and opens it in the editor to keep editing and export it.
+In the editor, the Export tab has the same thing as buttons: **Export project** downloads the file, **Import project…** opens one.
 
 Folders: `films/` (yours) · `examples/` (gallery) · `templates/blank` · `brand/` (your kit) · `output/` (renders, git-ignored).

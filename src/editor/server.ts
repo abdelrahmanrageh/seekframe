@@ -15,6 +15,7 @@ import { exportFilm } from '../core/export';
 import { ROOT, PKG_ROOT, BROWSER_DIR, slug, listFilms, findFilm, ensureBrands } from '../core/workspace';
 import { renderScore } from '../sound/score';
 import { scaffoldFilm } from '../core/scaffold';
+import { pack, importPack } from '../core/share';
 import { doctor } from '../core/doctor';
 import { addFont, applyBrand, contrastTable, defaultBrandDir, importLogo, initBrand, readBrand, removeFont, writeBrand } from '../brand/kit';
 import type { AudioTrack, BrandJson, FilmRef, Manifest, Project, ProjectInput } from '../types';
@@ -177,6 +178,22 @@ const server = http.createServer(async (req, res) => {
       if (!writable(f)) return json(res, 403, { error: READONLY(f) });
       const dst = path.join(f.dir, 'uploads'); fs.mkdirSync(dst, { recursive: true });
       fs.writeFileSync(path.join(dst, fn), await readBody(req)); return json(res, 200, { path: 'uploads/' + fn });
+    }
+
+    /* whole-project file: the film, brand kit, saved versions and uploads as one .seekframe.tgz */
+    if ((m = /^\/api\/pack\/([^/]+)$/.exec(p)) && req.method === 'GET') {
+      const f = findFilm(m[1]); if (!f) return json(res, 404, { error: 'unknown film' });
+      const tmp = path.join(CACHE, `pack-${Date.now()}-${f.id}.seekframe.tgz`);
+      try { pack(f.dir, f.id, tmp); const size = fs.statSync(tmp).size;
+        res.writeHead(200, { 'content-type': 'application/gzip', 'content-length': size, 'content-disposition': `attachment; filename="${f.id}.seekframe.tgz"`, 'cache-control': 'no-store' });
+        return fs.createReadStream(tmp).on('close', () => fs.rmSync(tmp, { force: true })).pipe(res);
+      } catch (e: any) { fs.rmSync(tmp, { force: true }); return json(res, 500, { error: e.message }); }
+    }
+    if (p === '/api/import' && req.method === 'POST') {
+      const tmp = path.join(CACHE, `import-${Date.now()}.seekframe.tgz`);
+      try { fs.writeFileSync(tmp, await readBody(req, 500e6)); const r = importPack(tmp, u.searchParams.get('name') || undefined, u.searchParams.get('force') === '1'); return json(res, 200, { id: r.id }); }
+      catch (e: any) { return json(res, 400, { error: e.message }); }
+      finally { fs.rmSync(tmp, { force: true }); }
     }
 
     /* brand kit */

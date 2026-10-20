@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- **Project file in the editor**: Export tab buttons **Export project** and **Import project…** (the whole film as one `.seekframe.tgz`: scenes, brand kit, saved versions, uploads); asks for a new name if the film already exists.
 - **Craft review**: `seekframe critique <film>` (also `review --craft`, MCP `critique_film`) scores how good a film is, not just whether it is correct: readability, occupancy, hierarchy, pacing, motion, entrances, transitions, sound coverage, sync and loudness, with a ranked fix list. Opt-outs need a reason and cost points. See docs/CRAFT.md.
 
 ## 0.2.0

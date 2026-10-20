@@ -29,6 +29,8 @@ export const api = {
   deleteProject: (film: string, v: string) => j<{ ok: true }>(`/api/project/${film}/${v}`, { method: 'DELETE' }),
   history: (film: string, v: string) => j<Snapshot[]>(`/api/history/${film}/${v}`),
   snapshot: (film: string, v: string, id: string) => j<Partial<Project>>(`/api/history/${film}/${v}/${id}`),
+  importProject: (f: File, o: { name?: string; force?: boolean } = {}) => upload<{ id: string }>(`/api/import?${new URLSearchParams({ ...(o.name ? { name: o.name } : {}), ...(o.force ? { force: '1' } : {}) })}`, f),
+  packUrl: (film: string) => `/api/pack/${encodeURIComponent(film)}`,
   uploadFile: (film: string, f: File) => upload<{ path: string }>(`/api/upload/${film}?name=${encodeURIComponent(f.name)}`, f),
   thumb: (film: string, project: unknown, frame: number) => post<{ url: string }>('/api/thumb', { film, project, frame, width: 480 }),
   score: (film: string, project: unknown) => post<{ url: string | null }>('/api/score', { film, project }),
