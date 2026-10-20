@@ -1,4 +1,5 @@
 // seekframe CLI. Keep this file thin: each command lives in its own module and is loaded on demand.
+import path from 'node:path';
 import { resolveFilm, listFilms } from './core/workspace';
 import type { FilmRef } from './types';
 
@@ -11,6 +12,8 @@ const HELP = `Seekframe — brand films as code.
   seekframe new <name> [--width W --height H --fps N] [--brand dir]
                                                       scaffold films/<name> from templates/blank
   seekframe copy <film> [new-name]                    copy a gallery film into films/ so you can edit it
+  seekframe pack <film> [--out file.tgz]              pack a film (brand, versions, uploads) to share with someone
+  seekframe import <file.tgz> [name] [--force]        unpack a shared film into films/ to keep editing and export it
   seekframe validate <film> [--fast] [--no-flash] [--stills dir]
                                                       contract + determinism + params + accessibility checks
   seekframe review <film> [--version v | --all] [--out dir]
@@ -50,6 +53,8 @@ export async function main(argv: string[]): Promise<void> {
     case 'init': { const { initWorkspace } = await import('./core/init'); initWorkspace(String(a._[1] || '.')); return; }
     case 'doctor': { const { doctor, printDoctor } = await import('./core/doctor'); const r = await doctor(); printDoctor(r); process.exit(r.ok ? 0 : 1); }
     case 'copy': { const f = need(a); const { copyFilm } = await import('./core/scaffold'); try { const r = copyFilm(f.dir, String(a._[2] || f.id + '-copy')); console.log(`Copied to films/${r.id}. Open it with: seekframe editor`); } catch (e: any) { console.error(e.message); process.exit(1); } return; }
+    case 'pack': { const f = need(a); const { pack } = await import('./core/share'); try { const out = pack(f.dir, f.id, a.out as string); console.log(`Packed ${f.id} -> ${path.relative(process.cwd(), out)}\nSend this file; the other person runs: seekframe import ${path.basename(out)}`); } catch (e: any) { console.error(e.message); process.exit(1); } return; }
+    case 'import': { const file = String(a._[1] || ''); if (!file) { console.error('usage: seekframe import <file.tgz> [name] [--force]'); process.exit(1); } const { importPack } = await import('./core/share'); try { const r = importPack(file, a._[2] ? String(a._[2]) : undefined, !!a.force); console.log(`Imported films/${r.id}. Open it with: seekframe editor`); } catch (e: any) { console.error(e.message); process.exit(1); } return; }
     case 'new': { const { scaffold } = await import('./core/scaffold'); return scaffold(a); }
     case 'validate': {
       const f = need(a); const { validate } = await import('./core/validate');

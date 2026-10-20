@@ -14,6 +14,7 @@
 - **Editor**: the Audio tab shows the sound style (params with `group: 'sound'`, the theme and loudness); Variants thumbnails render from one warm page per film and are pre-rendered after the film loads.
 - **Real logos and images** in the launch film (agent logos, a photo in the editor preview, your own logo and wordmark); the New film dialog's brand checkbox now works (it was disabled and ignored), is aligned, and shows a hint when there is no brand kit yet.
 - **Docs site** redesigned: logo, hero film, editor section with real screenshots, how it works, variants (`site/img/`).
+- **Share films**: `seekframe pack <film>` and `seekframe import <file>` (one `.seekframe.tgz` with the brand kit, saved versions and uploads; runtime paths adapt to a clone or a workspace).
 - `npm run site` builds and serves the docs site locally (the Pages workflow uses the same script).
 - **Contract**: `poster` frame (the editor opens there instead of a blank frame 0); `data-sf-ticker` skips the overflow check for scrolling text; the validator counts params that only change the sound.
 - **First run**: the editor opens your last film, then your own films, then the launch example; `allowScripts` approves the install scripts of `esbuild` and `ffmpeg-static` (npm 11 warns about, and will block, unreviewed ones).
