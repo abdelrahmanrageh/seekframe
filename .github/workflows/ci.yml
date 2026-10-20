@@ -15,6 +15,7 @@ jobs:
         run: |
           node bin/seekframe.js validate examples/seekframe-launch --fast
           node bin/seekframe.js validate examples/seekframe-feature-tour --fast
+          node bin/seekframe.js validate examples/seekframe-kit-demo --fast
           node bin/seekframe.js review examples/seekframe-launch --out review
           node bin/seekframe.js critique examples/seekframe-launch --version default --min-score 80 --out review
       - uses: actions/upload-artifact@v4

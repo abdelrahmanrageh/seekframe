@@ -10,6 +10,7 @@ Everything is pure (no clocks, no randomness).
 
 | API | What it does |
 |---|---|
+| `SF.timeline()`, `SF.ui`, `SF.canvas`, `SF.motion` | the motion + sound kit, ready-made pieces and the responsive canvas: see [MOTION.md](MOTION.md) |
 | `SF.define(spec)` | Creates `window.manifest`, `applyParams`, `seek`, `ready` from `{title,width,height,fps,duration,scenes,params,audio,cues,soundtrack,variants,sizes,build(values),seek(f)}`. `params`/`audio`/`cues` may be functions of the current values. |
 | `SF.value(id, default)` | current value of a param. |
 | `SF.clamp, lerp, rng(f,a,b)` | math. `rng` = progress 0..1 of `f` between `a` and `b`. |

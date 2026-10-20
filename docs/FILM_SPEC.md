@@ -158,7 +158,7 @@ then offers them under Export and loads the film in that viewport. Fixed-size fi
 ## 11. Reference
 
 - `templates/blank`: the smallest complete film, every param type, commented.
-- `examples/seekframe-launch`: a real 32 s film with 3 hooks × 4 looks, image options, brand kit, sound effects from cues. `examples/seekframe-feature-tour`: a shorter tour of the contract.
+- `examples/seekframe-launch`: a real 32 s film with 3 hooks × 4 looks, image options, brand kit, sound effects from cues. `examples/seekframe-feature-tour`: a shorter tour of the contract. `examples/seekframe-kit-demo`: a film built on the motion kit ([MOTION.md](MOTION.md)).
 - Guides: [RUNTIME](RUNTIME.md) · [SOUND](SOUND.md) · [BRAND](BRAND.md) · [VARIANTS](VARIANTS.md) · [ACCESSIBILITY](ACCESSIBILITY.md) · [RTL](RTL.md) · [LLM](LLM.md)
 
 ## 12. Types for film authors (optional)

@@ -2,6 +2,9 @@
    Include it from your film.html (path from `seekframe new`):  <script src="../../dist/browser/runtime.js"></script>
    Docs: docs/RUNTIME.md and docs/FILM_SPEC.md. Everything here is a pure function of its inputs (no clocks, no randomness). */
 import type { Manifest, Param, ParamValue } from '../types';
+import { createTimeline, type Timeline } from './kit';
+import { tokens } from '../core/kit-math';
+import { ui, canvas } from './components';
 import type { CueBuilder, Ease, FilmSpec, Keyframe, Layout, SFApi } from './api';
 
 const g = window as any;
@@ -112,8 +115,10 @@ const cues = (): CueBuilder => {
 };
 
 /* ---------- the contract ---------- */
-let currentValues: Record<string, ParamValue> = {};
+let currentValues: Record<string, ParamValue> = {}, currentFps = 30, currentTimeline: Timeline | null = null;
+const timeline = (o: { fps?: number } = {}): Timeline => createTimeline({ fps: o.fps || currentFps, rtl, lang, size: () => ({ W: g.innerWidth, H: g.innerHeight }) });
 const define = (spec: FilmSpec): Manifest => {
+  currentFps = spec.fps || 30;
   const m: Manifest = g.manifest = { schema: 1 as const, title: spec.title, width: spec.width, height: spec.height, fps: spec.fps || 30, duration: spec.duration, scenes: spec.scenes, params: [], audio: typeof spec.audio === 'function' ? [] : (spec.audio || []) };
   if (spec.sizes) m.sizes = spec.sizes; if (spec.variants) m.variants = spec.variants; if (spec.poster != null) m.poster = spec.poster; m.lang = { code: lang, rtl };
   const values = () => ({ ...currentValues });
@@ -123,13 +128,14 @@ const define = (spec: FilmSpec): Manifest => {
     if (typeof spec.audio === 'function') m.audio = spec.audio(values());
     if (spec.cues) m.cues = spec.cues(values());
     if (spec.soundtrack) m.soundtrack = typeof spec.soundtrack === 'function' ? spec.soundtrack(values()) : spec.soundtrack;
-    spec.build(values());
+    currentTimeline = null; spec.build(values());
+    if (spec.timeline) { currentTimeline = timeline({ fps: m.fps }); spec.timeline(currentTimeline, values()); m.cues = [...(m.cues || []), ...currentTimeline.cues()]; }
   };
-  g.seek = (f: number) => spec.seek(f);
+  g.seek = (f: number) => { if (spec.seek) spec.seek(f); if (currentTimeline) currentTimeline.draw(f); };
   g.ready = (async () => { await fontsReady(); g.applyParams({}); await fontsReady(); return true; })();
   return m;
 };
 const value = <T extends ParamValue>(id: string, dflt: T): T => (currentValues[id] == null ? dflt : (currentValues[id] as T));
 
-const SF: SFApi = { clamp, lerp, rng, E, kf, hash, wob, el, css, esc, place, lang: { code: lang, rtl }, X, dirSign: (rtl ? -1 : 1) as 1 | -1, layout, words, pop, wipe, typed, dash, strokeLogo, fontsReady, brandParams, cues, define, value };
+const SF: SFApi = { clamp, lerp, rng, E, kf, hash, wob, el, css, esc, place, lang: { code: lang, rtl }, X, dirSign: (rtl ? -1 : 1) as 1 | -1, layout, words, pop, wipe, typed, dash, strokeLogo, fontsReady, brandParams, timeline, motion: tokens(30), ui, canvas, cues, define, value };
 g.SF = SF;

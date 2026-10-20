@@ -6,7 +6,7 @@ You are probably here to build or change a film. Follow this file; it works for 
 ## Do this
 1. **Read `docs/FILM_SPEC.md` completely** (MCP: `read_docs`). It is the contract. Then skim `templates/blank/film.js` and `docs/RUNTIME.md`.
 2. Scaffold: `seekframe new <name> --width W --height H` (MCP: `create_film`). Brand kit in `brand/` is copied in. (In a clone run `npm link` once to get the `seekframe` command, or use `node bin/seekframe.js …`.)
-3. Write `films/<name>/film.js` with `SF.define({...})`: scenes, **params for everything a person might change**, **cues for sound**, `build`, `seek`.
+3. Write `films/<name>/film.js` with `SF.define({...})`: scenes, **params for everything a person might change**, `build`, and the animation. Prefer the motion kit (`timeline(T, v)` with `T.rise`, `T.type`, `T.pop`…: picture and sound declared once, see [docs/MOTION.md](docs/MOTION.md) and `examples/seekframe-kit-demo`); otherwise write `seek` and **cues** by hand.
 4. Loop until clean: `seekframe validate <name>` → `seekframe review <name>` → **open and look at the contact-sheet images** → `seekframe sync <name>` → `seekframe critique <name>` (MCP `critique_film`): fix its list from the top until the score is 80 or more ([docs/CRAFT.md](docs/CRAFT.md)).
 5. Variants: presets + saved versions (`set_params`), `seekframe matrix <name> --versions`. Export: `seekframe render <name> --fps 60`.
 
