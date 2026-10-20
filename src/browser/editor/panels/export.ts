@@ -54,7 +54,13 @@ export function initExport(): void {
   });
   const pack = $<HTMLAnchorElement>('#packBtn'), fileIn = $<HTMLInputElement>('#importFile');
   bus.on('project', () => { pack.href = api.packUrl(S.filmId); pack.download = `${S.filmId}.seekframe.tgz`; });
-  pack.addEventListener('click', () => { pause(); void saveNow(); });      // autosave first, so the file has the latest edits
+  pack.addEventListener('click', async e => {      // autosave first, so the file has the latest edits; fetch it so a failure says why instead of a dead download
+    e.preventDefault(); pause(); await saveNow();
+    try {
+      const r = await fetch(api.packUrl(S.filmId)); if (!r.ok) throw new Error(r.status === 404 ? t('export.restart') : `${r.status} ${r.statusText}`);
+      const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = `${S.filmId}.seekframe.tgz`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    } catch (err: any) { toast(err.message, 'err'); }
+  });
   $('#importBtn').addEventListener('click', () => fileIn.click());
   fileIn.addEventListener('change', async () => {
     const f = fileIn.files?.[0]; fileIn.value = ''; if (!f) return;
