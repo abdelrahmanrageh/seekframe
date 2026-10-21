@@ -124,7 +124,7 @@ async function craft(film: FilmRef, o: CraftOptions = {}): Promise<CraftResult> 
         else {
           const wav = path.join(os.tmpdir(), `sf-craft-${process.pid}-${v}.wav`);
           try {
-            if (manifest.cues && manifest.cues.length) await renderScore({ manifest, theme: (manifest.soundtrack && manifest.soundtrack.theme) || 'deep', out: wav, rtl: !!(manifest.lang && manifest.lang.rtl) });
+            if (manifest.cues && manifest.cues.length) await renderScore({ manifest: { ...manifest, dir: manifest.dir || film.dir }, theme: (manifest.soundtrack && manifest.soundtrack.theme) || 'deep', out: wav, rtl: !!(manifest.lang && manifest.lang.rtl) });
             const stats: C.SoundStats = manifest.cues && manifest.cues.length ? soundStats(wav, manifest, manifest.duration / fps) : { seconds: manifest.duration / fps, silences: [[0, manifest.duration / fps]], lufs: NaN, truePeak: -99, target: -16, cueCount: 0, pauses: [], hasCues: false };
             results.push(C.checkSilence(stats, scenes, fps, T));
             if (stats.hasCues) {

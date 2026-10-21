@@ -211,6 +211,10 @@ function master(rawFile, outFile, { eq, loudness = -16 }) {
   const af = `${eq},loudnorm=I=${loudness}:TP=-1:LRA=11`;
   const log = spawnSync(FF, ['-hide_banner', '-i', rawFile, '-af', `${af}:print_format=json`, '-f', 'null', '-']).stderr.toString();
   const j = JSON.parse(log.slice(log.lastIndexOf('{'), log.lastIndexOf('}') + 1));
+  if (!Number.isFinite(+j.input_i)) {                     // silence: nothing to normalise, just convert
+    const c = spawnSync(FF, ['-hide_banner', '-v', 'error', '-y', '-i', rawFile, '-af', `aresample=${SR}`, '-c:a', 'pcm_s24le', outFile]);
+    if (c.status) throw new Error('ffmpeg failed: ' + c.stderr); return { inputLUFS: -Infinity, lra: 0 };
+  }
   const r = spawnSync(FF, ['-hide_banner', '-v', 'error', '-y', '-i', rawFile, '-af', `${af}:measured_I=${j.input_i}:measured_TP=${j.input_tp}:measured_LRA=${j.input_lra}:measured_thresh=${j.input_thresh}:offset=${j.target_offset}:linear=true,aresample=${SR}`, '-c:a', 'pcm_s24le', outFile]);
   if (r.status) throw new Error('ffmpeg mastering failed: ' + r.stderr);
   return { inputLUFS: +j.input_i, lra: +j.input_lra };
