@@ -28,6 +28,8 @@ export interface Manifest {
   soundtrack?: { theme?: string; loudness?: number }; variants?: Variants; sizes?: SizeOption[]; lang?: { code: string; rtl: boolean };
   /** source frame the editor opens on and thumbnails use (a frame that shows what the film is) */
   poster?: number;
+  /** set on the server only: the film folder, where recorded sounds (sample cues) are found */
+  dir?: string;
 }
 
 /** One excerpt of a scene on the edited timeline. `frames` = how long it plays; `in`/`out` = which part of the scene (source frames). */

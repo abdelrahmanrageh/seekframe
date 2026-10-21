@@ -40,6 +40,7 @@ async function sync(film: FilmRef, o: { version?: string; log?: (line: string) =
     const page = await browser.newPage({ viewport: { width: m0.w, height: m0.h }, deviceScaleFactor: .2 }); await page.goto('file://' + path.join(film.dir, 'film.html')); await page.evaluate(() => window.ready);
     await page.addScriptTag({ path: path.join(BROWSER_DIR, 'timeline.js') });
     const manifest = await page.evaluate(p => JSON.parse(JSON.stringify(Timeline.applyToFilm(window, p))), project.params || {});
+    manifest.dir = film.dir;                                // recorded sounds (sample cues) resolve from the film folder
     const cues = manifest.cues || [];
     if (!cues.length) { log(`  [${v}] no cues declared`); await page.close(); continue; }
     // audio: length + loudness

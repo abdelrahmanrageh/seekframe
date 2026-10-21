@@ -35,7 +35,7 @@ const safeName = (s: string | null) => path.basename(s || '').replace(/[^\w.\-]+
 /* ---------- generated scores ---------- */
 async function generateScore(manifest: Manifest): Promise<string> {          // -> absolute path of a cached wav
   const theme = (manifest.soundtrack && manifest.soundtrack.theme) || 'deep', rtl = !!(manifest.lang && manifest.lang.rtl);
-  const f = path.join(CACHE, `score-${hash([manifest.cues, theme, rtl, manifest.duration, manifest.fps, manifest.soundtrack])}.wav`);
+  const f = path.join(CACHE, `score-${hash([manifest.cues, theme, rtl, manifest.duration, manifest.fps, manifest.soundtrack, (manifest as any).dir || ''])}.wav`);
   if (!fs.existsSync(f)) await renderScore({ manifest, theme, out: f, rtl });
   return f;
 }
