@@ -1,0 +1,13 @@
+{
+  "name": "Glow",
+  "colors": {
+    "accent": "#84FF00",
+    "ink": "#030403",
+    "paper": "#FFFFFF",
+    "muted": "#8E9590"
+  },
+  "fonts": [],
+  "voice": {
+    "tone": "calm, confident, short sentences"
+  }
+}

@@ -44,6 +44,9 @@
     "!**/brand/brand.js",
     "!examples/*/preview/**",
     "!**/uploads/**",
+    "!**/assets/sfx/*.mp3",
+    "!**/assets/sfx/*.wav",
+    "!**/projects/.history/**",
     "!**/.DS_Store"
   ],
   "scripts": {

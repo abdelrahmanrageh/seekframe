@@ -9,8 +9,9 @@ const HELP = `Seekframe — brand films as code.
   seekframe init [dir]                                set up a workspace (films/, brand/, agent files) in a folder
   seekframe doctor                                    check that Node, Chromium and ffmpeg are ready
   seekframe list                                      list films (films/ and examples/)
-  seekframe new <name> [--width W --height H --fps N] [--brand dir]
+  seekframe new <name> [--template glow] [--width W --height H --fps N] [--brand dir]
                                                       scaffold films/<name> from templates/blank
+                                                      (--template glow: the dark cinematic style, templates/glow/STYLE.md)
   seekframe copy <film> [new-name]                    copy a gallery film into films/ so you can edit it
   seekframe pack <film> [--out file.tgz]              pack a film (brand, versions, uploads) to share with someone
   seekframe import <file.tgz> [name] [--force]        unpack a shared film into films/ to keep editing and export it

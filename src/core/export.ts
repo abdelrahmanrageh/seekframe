@@ -4,22 +4,36 @@ import type { AudioTrack, CustomTrack, FilmRef, Manifest, ProjectInput } from '.
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import * as Timeline from './timeline';
 import { openFilm } from './render';
 import { ROOT } from './workspace';
 import { ffmpegPath } from './ffmpeg';
 
-
-
-
-
-
+/* Video encoder. Rendering is long and the encode used to take every core at full priority, so:
+   - macOS with VideoToolbox: the hardware H.264 encoder (almost no CPU), at a bitrate sized to the frame and frame rate;
+   - elsewhere: x264 `faster` at crf 20 on half the cores (`SEEKFRAME_ENCODER=x264` forces this; `x264-best` is the old crf 18 medium/slow);
+   - every child (render workers, ffmpeg) runs at low priority so the machine stays responsive. */
+let hwChecked: boolean | null = null;
+function hasVideoToolbox(): boolean {
+  if (hwChecked == null) { try { hwChecked = process.platform === 'darwin' && /h264_videotoolbox/.test(spawnSync(ffmpegPath(), ['-hide_banner', '-encoders'], { encoding: 'utf8' }).stdout || ''); } catch { hwChecked = false; } }
+  return hwChecked;
+}
+function videoArgs(w: number, h: number, fps: number): string[] {
+  const mode = (process.env.SEEKFRAME_ENCODER || 'auto').toLowerCase(), threads = String(Math.max(2, Math.floor(os.cpus().length / 2)));
+  if (mode === 'x264-best') return ['-c:v', 'libx264', '-crf', '18', '-preset', fps > 30 ? 'slow' : 'medium', '-threads', threads];
+  if ((mode === 'auto' || mode === 'hardware') && hasVideoToolbox()) {
+    const kbps = Math.round(Math.min(24000, Math.max(4000, w * h * fps * .2 / 1000)));    // ~12 Mbps for 1080p30: enough for grain and gradients
+    return ['-c:v', 'h264_videotoolbox', '-b:v', kbps + 'k', '-maxrate', Math.round(kbps * 1.5) + 'k', '-bufsize', kbps * 2 + 'k', '-profile:v', 'high', '-allow_sw', '1'];
+  }
+  return ['-c:v', 'libx264', '-crf', '20', '-preset', 'faster', '-threads', threads];
+}
+const lowPriority = (pid?: number) => { try { if (pid) os.setPriority(pid, 10); } catch { /* not allowed: keep the default */ } };
 
 function run(cmd: string, args: string[], opts?: any, procs?: any[]): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    const c = spawn(cmd, args, opts); let err = '';
+    const c = spawn(cmd, args, opts); let err = ''; lowPriority(c.pid);
     c.stderr.on('data', d => { err += d; if (err.length > 4000) err = err.slice(-4000); });
     c.stdout.on('data', () => {});
     c.on('error', reject);
@@ -49,7 +63,7 @@ async function exportFilm(o: ExportOptions): Promise<{ out: string; frames: numb
     const tl = Timeline.build(manifest, project);
     const n = Math.round(tl.total * fps / manifest.fps);
     const frames = path.join(tmp, 'frames'); fs.mkdirSync(frames);
-    const workers = Math.max(1, Math.min(4, os.cpus().length - 1)), per = Math.ceil(n / workers), ps: Promise<void>[] = [];
+    const workers = Math.max(1, Math.min(4, Math.floor(os.cpus().length / 2))), per = Math.ceil(n / workers), ps: Promise<void>[] = [];
     for (let w = 0; w < workers; w++) {
       const a = w * per, z = Math.min(n, a + per); if (a >= z) break;
       ps.push(run('node', [path.join(__dirname, 'render.js'), '--film', film.dir, '--project', pfile, '--out', frames, '--fps', String(fps), '--range', `${a}:${z}`, ...(size ? ['--size', size] : [])], { cwd: ROOT }, procs));
@@ -73,7 +87,8 @@ async function exportFilm(o: ExportOptions): Promise<{ out: string; frames: numb
       } else if (t.src) { f = path.resolve(film.dir, t.src); if (!(f.startsWith(ROOT + path.sep))) f = null; }
       if (f && fs.existsSync(f)) { args.push('-i', f); inputs.push({ index: inputs.length + 1, track: generated ? { ...t, sync: 'timeline' } : t }); }
     }
-    args.push('-vf', 'crop=trunc(iw/2)*2:trunc(ih/2)*2', '-c:v', 'libx264', '-crf', '18', '-preset', fps > 30 ? 'slow' : 'medium', '-pix_fmt', 'yuv420p');
+    const [vw, vh] = size ? String(size).split('x').map(Number) : [manifest.width, manifest.height];
+    args.push('-vf', 'crop=trunc(iw/2)*2:trunc(ih/2)*2', ...videoArgs(vw, vh, fps), '-pix_fmt', 'yuv420p');
     if (inputs.length) args.push('-filter_complex', Timeline.audioFilter(tl, manifest.fps, inputs), '-map', '0:v', '-map', '[aout]', '-c:a', 'aac', '-b:a', '192k');
     args.push('-t', (tl.total / manifest.fps).toFixed(3), '-movflags', '+faststart');
     fs.mkdirSync(path.dirname(out), { recursive: true }); args.push(out);

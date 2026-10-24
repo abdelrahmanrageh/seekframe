@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- **Faster, lighter export**: on macOS the MP4 is encoded with the hardware H.264 encoder (VideoToolbox) at a bitrate sized to the frame; elsewhere x264 `faster` crf 20 on half the cores. Render workers and ffmpeg run at low priority, and at most half the cores render frames. A 29 s 9:16 film: 119 s → 57 s and half the CPU time, for a 0.985 SSIM match. `SEEKFRAME_ENCODER=x264` forces software, `x264-best` the previous crf 18 medium/slow encode.
+- **Fix**: `SF.layout()` returned a 0×0 size when the editor built a film in a frame that was not shown yet, which crashed films that size canvases from it; it now falls back to the film's own size.
+- **Style template `glow`**: `seekframe new <name> --template glow` starts a film in a dark, cinematic style (drifting light blooms and swirls, grain, dot grid, words that blur into focus, glass cards, rim-lit UI in perspective, flash / light-leak / zoom / streak cuts, flat logo). It lays itself out for 16:9 and 9:16, takes its colours from the brand kit and plays generated sounds or a local sound pack. The grammar is written down for agents in `templates/glow/STYLE.md`.
 - **ffmpeg is optional**: `ffmpeg-static` moved to `optionalDependencies` (still installed by default). `npm install --omit=optional` skips the download and uses your own ffmpeg; `SEEKFRAME_FFMPEG` points at a specific binary. `doctor` and the error messages say which one is used. README and SECURITY.md explain what is downloaded and why scanners flag it.
 
 ## 0.3.0
@@ -24,7 +27,7 @@
 - **Editor**: the Audio tab shows the sound style (params with `group: 'sound'`, the theme and loudness); Variants thumbnails render from one warm page per film and are pre-rendered after the film loads.
 - **Real logos and images** in the launch film (agent logos, a photo in the editor preview, your own logo and wordmark); the New film dialog's brand checkbox now works (it was disabled and ignored), is aligned, and shows a hint when there is no brand kit yet.
 - **Docs site** redesigned: logo, hero film, editor section with real screenshots, how it works, variants (`site/img/`).
-- **Recorded sounds**: a `sample` cue plays an audio file from the film folder (mp3, wav, ogg, m4a) with gain, pan, rate, trim, fades and channel flip, in the same score as the synthesized sounds; the client v2 film uses ElevenLabs effects this way.
+- **Recorded sounds**: a `sample` cue plays an audio file from the film folder (mp3, wav, ogg, m4a) with gain, pan, rate, trim, fades and channel flip, in the same score as the synthesized sounds, for example generated or licensed effects.
 - **Share films**: `seekframe pack <film>` and `seekframe import <file>` (one `.seekframe.tgz` with the brand kit, saved versions and uploads; runtime paths adapt to a clone or a workspace).
 - `npm run site` builds and serves the docs site locally (the Pages workflow uses the same script).
 - **Contract**: `poster` frame (the editor opens there instead of a blank frame 0); `data-sf-ticker` skips the overflow check for scrolling text; the validator counts params that only change the sound.

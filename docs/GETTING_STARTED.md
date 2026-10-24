@@ -24,4 +24,4 @@ This creates a workspace (films/, brand/, agent files) that uses the `seekframe`
 The other person runs `seekframe import <file>` and opens it in the editor to keep editing and export it.
 In the editor, the Export tab has the same thing as buttons: **Export project** downloads the file, **Import project…** opens one.
 
-Folders: `films/` (yours) · `examples/` (gallery) · `templates/blank` · `brand/` (your kit) · `output/` (renders, git-ignored).
+Folders: `films/` (yours) · `examples/` (gallery) · `templates/blank` and `templates/glow` (a ready-made style: `seekframe new x --template glow`) · `brand/` (your kit) · `output/` (renders, git-ignored).

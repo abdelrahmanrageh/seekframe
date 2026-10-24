@@ -44,7 +44,8 @@ const rtl = (html.dir || (g.FILM_RTL ? 'rtl' : 'ltr')) === 'rtl' || g.FILM_LANG 
 
 /* ---------- layout (responsive films: 16:9, 9:16, 1:1) ---------- */
 const layout = (): Layout => {
-  const W = g.innerWidth, H = g.innerHeight, r = W / H;
+  // a hidden frame (the editor builds before it shows the film) has no size yet: use the film's own size then
+  const W = g.innerWidth || g.manifest?.width || 1920, H = g.innerHeight || g.manifest?.height || 1080, r = W / H;
   const aspect = Math.abs(r - 16 / 9) < .05 ? '16x9' : Math.abs(r - 9 / 16) < .05 ? '9x16' : Math.abs(r - 1) < .05 ? '1x1' : r > 1 ? 'wide' : 'tall';
   const unit = Math.min(W, H) / 1080;                                  // scale type/spacing with this
   return { W, H, aspect, unit, portrait: H > W, safe: { x: Math.round(W * .06), y: Math.round(H * (H > W ? .1 : .08)) } };

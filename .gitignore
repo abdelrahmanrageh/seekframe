@@ -19,3 +19,9 @@ dist-site/
 **/projects/.history/
 /*.wav
 /*.mp4
+
+# sound packs are third-party audio: keep them local (templates/glow/assets/sfx/README.md)
+templates/*/assets/sfx/*.mp3
+templates/*/assets/sfx/*.wav
+examples/*/assets/sfx/*.mp3
+examples/*/assets/sfx/*.wav

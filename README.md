@@ -43,7 +43,7 @@ seekframe matrix spring-sale --versions --fps 30  render every variant
 | | |
 |---|---|
 | `editor` | browser editor: scenes (reorder, duplicate, delete, stretch, trim), typed params, **Variants**, audio, versions, export |
-| `new`, `list` | scaffold a film from `templates/blank`; list `films/` and `examples/` |
+| `new`, `list` | scaffold a film from `templates/blank` (or `--template glow`, a dark cinematic style); list `films/` and `examples/` |
 | `validate`, `review`, `sync` | the checks above |
 | `render`, `matrix` | export MP4 (24/30/60 fps), one version or a whole matrix; audio re-timed to your edit |
 | `sound` | render a film's generated score to wav |
@@ -63,6 +63,7 @@ If you are a developer who wants to write video in React, use those.
 Installing Seekframe downloads two large tools, and nothing else is fetched at run time (films make no network requests):
 - **ffmpeg** (about 70 MB) comes from the `ffmpeg-static` package, which downloads the binary during `npm install`. It is an *optional* dependency: use your own
   ffmpeg instead with `npm install --omit=optional` (then `brew install ffmpeg` or similar), or point `SEEKFRAME_FFMPEG` at a binary.
+  Exports use the hardware H.264 encoder on macOS (low CPU); `SEEKFRAME_ENCODER=x264` forces software encoding, `x264-best` the slowest, highest-quality setting.
 - **Chromium** (about 150 MB) comes from `npx playwright install chromium`, and renders the frames.
 Supply-chain scanners flag these as "install scripts" and "network access". That is the ffmpeg download and the web-server and MCP libraries, not Seekframe's own code. `seekframe doctor` shows what is in use.
 

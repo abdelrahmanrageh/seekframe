@@ -158,6 +158,8 @@ then offers them under Export and loads the film in that viewport. Fixed-size fi
 ## 11. Reference
 
 - `templates/blank`: the smallest complete film, every param type, commented.
+- `templates/glow`: a dark, cinematic style (light blooms, grain, blur-in words, glass cards, rim-lit UI, flash / leak / zoom / streak cuts) as a
+  complete 16:9 + 9:16 starter film. `seekframe new my-film --template glow`; the style guide is `templates/glow/STYLE.md`.
 - `examples/seekframe-launch`: a real 32 s film with 3 hooks × 4 looks, image options, brand kit, sound effects from cues. `examples/seekframe-feature-tour`: a shorter tour of the contract. `examples/seekframe-kit-demo`: a film built on the motion kit ([MOTION.md](MOTION.md)).
 - Guides: [RUNTIME](RUNTIME.md) · [SOUND](SOUND.md) · [BRAND](BRAND.md) · [VARIANTS](VARIANTS.md) · [ACCESSIBILITY](ACCESSIBILITY.md) · [RTL](RTL.md) · [LLM](LLM.md)
 
