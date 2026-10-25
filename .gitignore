@@ -25,3 +25,7 @@ templates/*/assets/sfx/*.mp3
 templates/*/assets/sfx/*.wav
 examples/*/assets/sfx/*.mp3
 examples/*/assets/sfx/*.wav
+
+# your own films stay local: client or private work must never be committed to this public repo (see AGENTS.md)
+films/*
+!films/.gitkeep

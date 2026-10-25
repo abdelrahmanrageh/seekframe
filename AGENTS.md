@@ -19,6 +19,13 @@ You are probably here to build or change a film. Follow this file; it works for 
 - Never commit third-party videos/stills used as references. Commit only your written analysis.
 - Don't hand-edit `films/*/projects/*.json` (use the editor or `set_params`); don't overwrite files in `output/` you didn't create.
 
+## No client work in this repo
+This repository is public. **Never commit, name or quote a client's or a platform's work**: no client names, brands, logos, copy, footage, screenshots, briefs or film folders, in code, docs, examples, tests, changelog entries, commit messages or PR text.
+- A user's own films live in `films/` (git-ignored; keep it that way). Gallery films in `examples/` and starters in `templates/` are generic or about Seekframe itself.
+- When a real client film inspires a change, describe the *problem* generically ("a 9:16 product film") and put only generic fixtures in the repo.
+- Before every commit run `git status` and `git diff --cached --stat`; never `git add -A` or `git add .` here. If a name slipped in, fix it before pushing (history rewrites are painful).
+- Third-party sound packs and fonts are local only (see `.gitignore`).
+
 ## Commands (CLI `seekframe`; same as MCP tools)
 `editor` · `list` · `new` · `validate` · `review` · `critique` · `render` · `matrix` · `sound` · `sync` · `brand init|palette|import-logo|add-font|build` · `mcp`.
 Setup once: `npm install && npx playwright install chromium`. Tests: `npm test`.

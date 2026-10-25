@@ -27,3 +27,6 @@ Setup once: `npm install && npx playwright install chromium`. Tests: `npm test`.
 `films/` your films · `brand/` your brand kit · `output/` renders (git-ignored) · gallery and templates are inside `{{PKG}}/` (read `{{PKG}}/examples/seekframe-launch`).
 
 More: `{{DOCS}}/LLM.md` (setup per tool, MCP), `llm/prompts/` (copy-paste prompts), `{{DOCS}}/RTL.md`, `{{DOCS}}/SOUND.md`, `{{DOCS}}/VARIANTS.md`, `{{DOCS}}/ACCESSIBILITY.md`.
+
+## Client work
+Keep client or private material (names, logos, footage, copy) out of any repository you publish. Commit generic examples only.
